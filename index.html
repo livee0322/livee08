@@ -5,12 +5,14 @@
   <title>Livee - 홈</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- 메인 스타일 -->
+  <!-- 스타일 -->
   <link href="./css/main.css?v=1" rel="stylesheet" />
 
-  <!-- Pretendard (CDN) -->
+  <!-- Pretendard / Remixicon -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 </head>
+
 <body data-page="home">
   <div id="banner-container" class="lv-banner">
     <div class="lv-banner-in">현재 클로즈 베타 테스트 중입니다. 피드백을 환영합니다! 🚀</div>
@@ -35,9 +37,7 @@
         <h2>라이브 상품</h2>
         <a class="lv-more" href="./blank/blank.html?p=products" aria-label="라이브 상품 더보기">더보기</a>
       </div>
-      <div id="productGrid" class="lv-grid">
-        <!-- JS 렌더 -->
-      </div>
+      <div id="productGrid" class="lv-grid"></div>
     </section>
 
     <section class="lv-section">
@@ -45,15 +45,13 @@
         <h2>추천 공고</h2>
         <a class="lv-more" href="./recruitlist.html" aria-label="추천 공고 더보기">더보기</a>
       </div>
-      <div id="recruits" class="lv-jobs">
-        <!-- JS 렌더 -->
-      </div>
+      <div id="recruits" class="lv-jobs"></div>
     </section>
   </main>
 
   <nav id="bottom-tab-container" class="lv-bottom"></nav>
 
-  <!-- 공통 설정 및 페이지 스크립트 -->
+  <!-- 설정 & 페이지 스크립트 -->
   <script src="./js/config.js?v=1"></script>
   <script src="./js/home.js?v=1"></script>
 </body>
