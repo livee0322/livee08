@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Livee - 공고 등록</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <script src="./js/config.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="h-wrap">
+      <a class="h-icon" href="./index.html"><i class="ri-arrow-left-line"></i></a>
+      <div class="h-logo">공고 등록</div>
+      <div class="h-spacer"></div>
+    </div>
+  </header>
+
+  <main class="container" style="max-width:760px">
+    <form id="recruitForm">
+      <label for="title">제목</label>
+      <input id="title" class="input" required placeholder="예) 9월 신제품 쇼핑라이브 진행"/>
+
+      <label for="date">예정일</label>
+      <input id="date" class="input" type="date" required/>
+
+      <label for="pay">페이(또는 조건)</label>
+      <input id="pay" class="input" placeholder="예) 고정 30만 + 인센티브"/>
+
+      <label for="category">카테고리</label>
+      <select id="category">
+        <option>패션/뷰티</option>
+        <option>식품</option>
+        <option>생활/리빙</option>
+        <option>가전</option>
+        <option>기타</option>
+      </select>
+
+      <label for="desc">설명</label>
+      <textarea id="desc" rows="6" placeholder="브리프, 요구역량, 참고 링크 등"></textarea>
+
+      <label>대표 이미지</label>
+      <input id="imageFile" type="file" accept="image/*" class="input"/>
+      <div class="helper" id="recruitMsg">이미지 선택 시 자동 업로드됩니다.</div>
+
+      <div style="display:flex; gap:8px; margin-top:16px">
+        <button type="submit" class="btn pri">공고 등록</button>
+        <a class="btn" href="./index.html">취소</a>
+      </div>
+    </form>
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="bn-wrap">
+      <a class="bn-item" href="./index.html"><i class="ri-home-5-line"></i>홈</a>
+      <span class="bn-item active"><i class="ri-flag-2-line"></i>캠페인</span>
+      <a class="bn-item" href="./login.html"><i class="ri-user-line"></i>로그인</a>
+      <a class="bn-item" href="#"><i class="ri-team-line"></i>인플루언서</a>
+      <a class="bn-item" href="#"><i class="ri-folder-user-line"></i>포트폴리오</a>
+    </div>
+  </nav>
+
+  <script src="./js/recruit-new.js"></script>
+</body>
+</html>
