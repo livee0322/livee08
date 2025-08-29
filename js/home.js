@@ -36,18 +36,21 @@
     `;
   })();
 
-  // ---- fetch helper ----
-  async function getJson(path){
-    const res = await fetch(API + path, {
-      headers: { 'Content-Type':'application/json', ...(token?{Authorization:`Bearer ${token}`}:{}) }
-    });
-    const json = await res.json().catch(()=> ({}));
-    const items = (Array.isArray(json)&&json) || json.items || json.data?.items || json.docs || json.result || [];
-    return { ok: res.ok && json.ok !== false, items: Array.isArray(items)?items:[], json };
+  // fetch helper (교체본)
+async function getJson(path){
+  try{
+    const url = (API + path).replace(/(?<!:)\/{2,}/g,'/'); // //중복슬래시 방지
+    const res = await fetch(url, { headers: { 'Content-Type':'application/json' } });
+    const text = await res.text();
+    let json = {}; try { json = JSON.parse(text); } catch {}
+    const ok = res.ok && json.ok !== false;
+    const arr = (Array.isArray(json) && json) || json.items || json.data?.items || json.docs || json.result || [];
+    if (!ok) throw new Error(`${res.status} ${res.statusText} · ${json.message || text.slice(0,120)}`);
+    return { ok, items: Array.isArray(arr) ? arr : [], json };
+  } catch (e){
+    return { ok:false, items:[], error:e.message };
   }
-  const ph = (k,w=640,h=360)=>`https://picsum.photos/seed/${encodeURIComponent(k)}/${w}/${h}`;
-  const esc = s => String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-
+}
   // ---- normalizers (campaigns) ----
   const N = {
     live: it => ({
