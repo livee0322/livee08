@@ -3,40 +3,43 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Livee - 로그인</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="./css/main.css">
-  <script src="./js/config.js"></script>
+  <title>로그인 - Livee</title>
+
+  <!-- 공통/페이지 스타일 -->
+  <link rel="stylesheet" href="./css/styles.css"/>
+  <link rel="stylesheet" href="./css/login.css"/>
 </head>
-<body>
-  <header class="app-header">
-    <div class="h-wrap">
-      <a class="h-icon" href="./index.html"><i class="ri-arrow-left-line"></i></a>
-      <div class="h-logo">로그인</div>
-      <div class="h-spacer"></div>
-    </div>
-  </header>
+<body data-page="login">
+  <!-- 상단 배너 (원하면 지워도 됨) -->
+  <div class="lg-banner">
+    <div class="lg-banner-in">현재 클로즈 베타 테스트 중입니다. 피드백 환영! 🚀</div>
+  </div>
 
-  <main class="container" style="max-width:520px">
-    <div class="pills" id="rolePills" role="tablist" aria-label="역할 선택">
-      <button class="pill active" data-role="brand" aria-selected="true">브랜드</button>
-      <button class="pill" data-role="showhost" aria-selected="false">쇼호스트</button>
+  <main class="lg-wrap" role="main">
+    <div class="lg-brand">
+      <img src="./liveelogo.png" alt="Livee" onerror="this.style.display='none'"/>
     </div>
 
-    <form id="loginForm" style="margin-top:16px">
-      <label for="email">이메일</label>
-      <input id="email" class="input" type="email" autocomplete="email" required placeholder="you@example.com"/>
+    <!-- 역할 선택 -->
+    <div class="role-switch" role="tablist" aria-label="역할 선택">
+      <button type="button" class="pill active" data-role="brand" aria-pressed="true">브랜드</button>
+      <button type="button" class="pill" data-role="showhost" aria-pressed="false">쇼호스트</button>
+    </div>
 
-      <label for="password">비밀번호</label>
-      <input id="password" class="input" type="password" autocomplete="current-password" required placeholder="••••••••"/>
-
-      <div class="helper" id="loginError" style="margin-top:8px;color:var(--err);display:none"></div>
-      <button class="btn pri full" type="submit" style="margin-top:14px">로그인</button>
+    <!-- 로그인 폼 -->
+    <form id="loginForm" class="lg-form" novalidate>
+      <input type="email" id="email" placeholder="you@example.com"
+             aria-label="이메일" required autocomplete="username" inputmode="email" />
+      <input type="password" id="password" placeholder="••••••••"
+             aria-label="비밀번호" required autocomplete="current-password" />
+      <button id="loginBtn" type="submit" class="lg-submit">로그인</button>
+      <p id="loginError" class="lg-error" hidden></p>
     </form>
 
-    <p class="helper" style="margin-top:12px">계정이 없으신가요? 역할은 로그인 후 자동 분기됩니다.</p>
+    <p class="lg-links">아직 계정이 없으신가요? <a href="./signup.html">회원가입</a></p>
   </main>
 
+  <!-- 하단 탭이 있으면 유지 -->
   <nav class="bottom-nav">
     <div class="bn-wrap">
       <a class="bn-item" href="./index.html"><i class="ri-home-5-line"></i>홈</a>
@@ -47,6 +50,9 @@
     </div>
   </nav>
 
+  <!-- 스크립트 -->
+  <script src="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.js"></script>
+  <script src="./js/config.js"></script>
   <script src="./js/login.js"></script>
 </body>
 </html>
