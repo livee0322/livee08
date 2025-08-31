@@ -1,200 +1,196 @@
-/* Livee v2.5 - Recruit New (Server Integration)
-   - POST /api/v1/campaigns  (type: 'recruit')
-   - Optional: POST /api/v1/uploads  (multipart image upload)
-   - Bearer token from localStorage 'livee_token'
-*/
-
+/* Livee v2.5 – Recruit Create (Refactor)
+ * - POST {API_BASE}/campaigns
+ * - optional: POST {API_BASE}/uploads (multipart)
+ * - needs: localStorage 'livee_token'
+ */
 (() => {
-  const $ = (id) => document.getElementById(id);
+  // ---------- config ----------
+  const CFG = window.LIVEE_CONFIG || {};
+  const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
+  const BASE_PATH = CFG.BASE_PATH || ""; // e.g., '/alpa'
+  const TOKEN = localStorage.getItem("livee_token") || "";
 
-  // ===== DOM =====
-  const form = $('recruitForm');
-  const title = $('title');
-  const desc = $('desc');
-  const category = $('category');
-  const locationEl = $('location');
-  const shootDate = $('shootDate');
-  const deadline = $('deadline');
-  const startTime = $('startTime');
-  const endTime = $('endTime');
-  const pay = $('pay');
-  const neg = $('negotiable');
-  const file = $('imageFile');
-  const preview = $('preview');
-  const msg = $('recruitMsg');
+  // 기본 저장 상태(홈에서 보이게 하려면 published). ?status=draft 로 강제 가능
+  const urlParams = new URLSearchParams(location.search);
+  const DEFAULT_STATUS = (urlParams.get("status") || "published").toLowerCase();
 
-  // ===== Config =====
-  const API_BASE = (window.API_BASE || '/api/v1').replace(/\/$/, ''); // from config.js or fallback
-  const TOKEN = localStorage.getItem('livee_token') || '';
+  // ---------- dom ----------
+  const $id = (s) => document.getElementById(s);
+  const form       = $id("recruitForm");
+  const titleEl    = $id("title");
+  const descEl     = $id("desc");
+  const categoryEl = $id("category");
+  const locationEl = $id("location");
+  const shootDate  = $id("shootDate");
+  const startTime  = $id("startTime");
+  const endTime    = $id("endTime");
+  const deadline   = $id("deadline");
+  const payEl      = $id("pay");
+  const negEl      = $id("negotiable");
+  const fileEl     = $id("imageFile");
+  const previewEl  = $id("preview");
+  const msgEl      = $id("recruitMsg");
 
-  // ===== Helpers =====
-  const todayISO = new Date().toISOString().slice(0,10);
-  shootDate.min = todayISO;
-  deadline.min   = todayISO;
+  // ---------- init ----------
+  const todayISO = new Date().toISOString().slice(0, 10);
+  if (shootDate) shootDate.min = todayISO;
+  if (deadline)  deadline.min  = todayISO;
 
-  function alertFail(message = '요청 중 오류가 발생했습니다.') {
-    alert(message);
-  }
-
-  function buildHeaders(isJSON = true) {
+  // ---------- helpers ----------
+  const headers = (json = true) => {
     const h = {};
-    if (isJSON) h['Content-Type'] = 'application/json';
-    if (TOKEN)  h['Authorization'] = `Bearer ${TOKEN}`;
+    if (json) h["Content-Type"] = "application/json";
+    if (TOKEN) h["Authorization"] = `Bearer ${TOKEN}`;
     return h;
-  }
+  };
+  const fail = (m = "요청 중 오류가 발생했습니다.") => alert(m);
 
-  function validTimes() {
-    if (!shootDate.value || !startTime.value || !endTime.value) return false;
+  const isValidTimes = () => {
+    if (!shootDate?.value || !startTime?.value || !endTime?.value) return false;
     const s = new Date(`${shootDate.value}T${startTime.value}`);
     const e = new Date(`${shootDate.value}T${endTime.value}`);
     return e > s;
-  }
+  };
 
-  function validDeadline() {
-    if (!deadline.value || !shootDate.value) return false;
+  const isValidDeadline = () => {
+    if (!deadline?.value || !shootDate?.value) return false;
+    // 마감일은 촬영일과 같거나 그 이전
     return deadline.value <= shootDate.value;
-  }
+  };
 
-  // 파일 → 서버 업로드 (멀티파트)
   async function uploadImage(file) {
     if (!file) return null;
-    const form = new FormData();
-    form.append('file', file);
+    const fd = new FormData();
+    fd.append("file", file);
     try {
       const res = await fetch(`${API_BASE}/uploads`, {
-        method: 'POST',
-        headers: TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : undefined,
-        body: form
+        method: "POST",
+        headers: TOKEN ? { Authorization: `Bearer ${TOKEN}` } : undefined,
+        body: fd,
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) {
         throw new Error(data.message || `업로드 실패 (${res.status})`);
       }
-      // 기대 형태: { ok:true, url:'...', thumbnail:'...' } 혹은 {url}
       return {
-        coverImageUrl: data.url || data.secure_url || data.coverImageUrl || '',
-        thumbnailUrl:  data.thumbnail || data.thumbnailUrl || ''
+        coverImageUrl: data.url || data.secure_url || data.coverImageUrl || "",
+        thumbnailUrl:  data.thumbnail || data.thumbnailUrl || "",
       };
     } catch (err) {
-      console.error('Upload error:', err);
-      alertFail(err.message);
+      console.error("[upload]", err);
+      fail(err.message);
       return null;
     }
   }
 
-  // 이미지 미리보기
-  file.addEventListener('change', (e) => {
+  // 미리보기
+  fileEl?.addEventListener("change", (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith('image/')) {
-      msg.textContent = '이미지 파일만 업로드할 수 있습니다.';
-      e.target.value = '';
+    if (!f.type.startsWith("image/")) {
+      msgEl.textContent = "이미지 파일만 업로드할 수 있습니다.";
+      e.target.value = "";
       return;
     }
-    const maxSize = 2 * 1024 * 1024;
-    if (f.size > maxSize) {
-      msg.textContent = '파일 용량이 커요. 2MB 이하로 올려주세요.';
-      e.target.value = '';
+    const max = 2 * 1024 * 1024;
+    if (f.size > max) {
+      msgEl.textContent = "용량이 커요. 2MB 이하로 올려주세요.";
+      e.target.value = "";
       return;
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      preview.src = ev.target.result;
-      msg.textContent = '미리보기가 적용되었습니다.';
+      previewEl.src = ev.target.result;
+      msgEl.textContent = "미리보기가 적용되었습니다.";
     };
     reader.readAsDataURL(f);
   });
 
-  // 협의 가능 체크 → pay 비활성화
-  neg.addEventListener('change', () => {
-    if (neg.checked) {
-      pay.value = '';
-      pay.setAttribute('disabled', 'disabled');
-      pay.classList.add('disabled');
+  // 협의 가능 → pay 잠금
+  negEl?.addEventListener("change", () => {
+    if (negEl.checked) {
+      payEl.value = "";
+      payEl.setAttribute("disabled", "disabled");
+      payEl.classList.add("disabled");
     } else {
-      pay.removeAttribute('disabled');
-      pay.classList.remove('disabled');
+      payEl.removeAttribute("disabled");
+      payEl.classList.remove("disabled");
     }
   });
 
-  // ===== Submit =====
-  form.addEventListener('submit', async (e) => {
+  // ---------- submit ----------
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // 로그인 토큰 확인
-    if (!TOKEN) {
-      return alertFail('로그인이 필요합니다. (토큰 없음)');
+    if (!TOKEN) return fail("로그인이 필요합니다.");
+
+    // 필드 검증
+    const title = (titleEl?.value || "").trim();
+    const desc  = (descEl?.value || "").trim();
+    if (!title) return fail("제목을 입력해주세요.");
+    if (!desc || desc.length < 30) return fail("내용(브리프)을 30자 이상 입력해주세요.");
+    if (!categoryEl?.value) return fail("카테고리를 선택해주세요.");
+    if (!shootDate?.value) return fail("촬영일을 선택해주세요.");
+    if (!deadline?.value)  return fail("공고 마감일을 선택해주세요.");
+    if (!startTime?.value || !endTime?.value) return fail("촬영 시작/종료 시간을 입력해주세요.");
+    if (!isValidTimes()) return fail("종료 시간은 시작 시간 이후여야 합니다.");
+    if (!isValidDeadline()) return fail("공고 마감일은 촬영일과 같거나 그 이전이어야 합니다.");
+
+    // pay
+    let pay = "";
+    if (!negEl?.checked) {
+      const raw = String(payEl?.value || "").trim();
+      const n = Number(raw);
+      if (!raw || isNaN(n) || n < 0) return fail("출연료를 숫자로 입력해주세요. 협의 가능이면 체크하세요.");
+      pay = raw;
     }
 
-    // 기본 검증
-    if (!title.value.trim()) return alertFail('제목을 입력해주세요.');
-    if (!desc.value.trim() || desc.value.trim().length < 30) return alertFail('내용을 30자 이상 입력해주세요.');
-    if (!category.value) return alertFail('카테고리를 선택해주세요.');
-    if (!shootDate.value) return alertFail('촬영일을 선택해주세요.');
-    if (!deadline.value) return alertFail('공고 마감일을 선택해주세요.');
-    if (!startTime.value || !endTime.value) return alertFail('촬영 시작/종료 시간을 입력해주세요.');
-    if (!validTimes()) return alertFail('종료 시간은 시작 시간 이후여야 합니다.');
-    if (!validDeadline()) return alertFail('공고 마감일은 촬영일 이전(또는 동일)이어야 합니다.');
-
-    // 업로드(선택)
+    // 이미지 업로드(선택)
     let imagePayload = {};
-    const picked = file.files?.[0];
+    const picked = fileEl?.files?.[0];
     if (picked) {
       const up = await uploadImage(picked);
       if (up) imagePayload = up;
     }
 
-    // 페이/협의
-    const payStr = neg.checked ? '' : String(pay.value || '').trim();
-    if (!neg.checked) {
-      const n = Number(payStr);
-      if (!payStr || isNaN(n) || n < 0) return alertFail('출연료를 숫자로 입력해주세요. 협의 가능이면 체크하세요.');
-    }
-
-    // 서버 스키마에 맞춰 페이로드 구성
+    // payload (v2.5 Campaign)
     const payload = {
-      type: 'recruit',
-      status: 'draft', // 최초 생성은 임시저장(필요시 published)
-      title: title.value.trim(),
-      category: category.value,
-      descriptionHTML: undefined, // 필요 시 WYSIWYG 사용 시에만 적용
-      ...imagePayload, // coverImageUrl / thumbnailUrl
-
-      // 마감일 -> closeAt
+      type: "recruit",
+      status: DEFAULT_STATUS, // 'published' | 'draft'
+      title,
+      category: categoryEl.value,
       closeAt: `${deadline.value}T23:59:59.000Z`,
-
-      // 모집형 상세
+      ...imagePayload,
       recruit: {
-        recruitType: 'product', // 기본값(선택 컴포넌트 생기면 변경)
-        location: (locationEl.value || '').trim(),
+        recruitType: "product",
+        location: (locationEl?.value || "").trim(),
         shootDate: new Date(`${shootDate.value}T00:00:00.000Z`), // 날짜만
         shootTime: `${startTime.value}~${endTime.value}`,        // "HH:MM~HH:MM"
-        pay: payStr,
-        payNegotiable: !!neg.checked,
-        requirements: desc.value.trim(), // 브리프
-        preferred: '',
-        questions: []                     // 커스텀 질문 UI가 생기면 채움
+        pay,
+        payNegotiable: !!negEl?.checked,
+        requirements: desc,
+        preferred: "",
+        questions: []
       }
     };
 
     try {
       const res = await fetch(`${API_BASE}/campaigns`, {
-        method: 'POST',
-        headers: buildHeaders(true),
-        body: JSON.stringify(payload)
+        method: "POST",
+        headers: headers(true),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok || data.ok === false) {
-        // 서버의 fail 포맷 사용
         throw new Error(data.message || `등록 실패 (${res.status})`);
       }
-
-      alert('공고가 등록되었습니다.');
-      window.location.href = './index.html#recruits';
+      alert("공고가 등록되었습니다.");
+      // 홈으로 (그리드 위치로 스크롤되게 앵커)
+      const to = (BASE_PATH || "") + "/index.html#recruits";
+      location.href = to;
     } catch (err) {
-      console.error('Create campaign error:', err);
-      alertFail(err.message);
+      console.error("[create]", err);
+      fail(err.message);
     }
   });
 })();
