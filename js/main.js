@@ -13,20 +13,13 @@
     ],
     portfolios: [
       { name:"최예나", years:5, intro:"뷰티 방송 전문", region:"서울" },
-      { name:"김소라", years:3, intro:"테크/라이프 쇼호스트", region:"부산" }
+      { name:"김소라", years:3, intro:"테크/라이프 쇼호스트", region:"부산" },
+      { name:"박민주", years:7, intro:"푸드 전문", region:"서울" },
+      { name:"이지수", years:1, intro:"뷰티 쇼호스트", region:"대구" }
     ]
   };
 
-  const pad = (n) => String(n).padStart(2,'0');
   const money = (n) => (n||0).toLocaleString('ko-KR') + '원';
-
-  function timeParts(iso){
-    const d = new Date(iso);
-    return {
-      day: d.getDate(),
-      hm: `${pad(d.getHours())}:${pad(d.getMinutes())}`
-    };
-  }
 
   function renderHome(){
     return `
@@ -35,18 +28,17 @@
         <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more">더보기</a></div>
         <div class="list-vert">
           ${state.schedule.map(it=>{
-            const t = timeParts(it.start);
+            const d = new Date(it.start);
+            const day = d.getDate();
+            const hh = String(d.getHours()).padStart(2,'0');
+            const mm = String(d.getMinutes()).padStart(2,'0');
+            const meta = `${it.promo} · ${day}일 ${hh}:${mm} 예정`;
             return `
               <article class="item">
                 <img class="thumb" src="default.jpg" alt="라이브 썸네일" />
-                <div>
+                <div style="min-width:0">
                   <div class="title">${it.title}</div>
-                  <div class="meta">${it.promo}</div>
-                </div>
-                <div class="time-badge">
-                  <span class="d">${t.day}일</span>
-                  <span class="hm">${t.hm}</span>
-                  <span class="lbl">예정</span>
+                  <div class="meta one-line">${meta}</div>
                 </div>
               </article>
             `;
@@ -54,7 +46,7 @@
         </div>
       </section>
 
-      <!-- 추천 공고 : 가로 스크롤 미니 카드 -->
+      <!-- 추천 공고 -->
       <section class="section">
         <div class="section-head"><h2>추천 공고</h2><a class="more">더보기</a></div>
         <div class="hscroll-mini">
@@ -70,7 +62,7 @@
         </div>
       </section>
 
-      <!-- 추천 인플루언서: 기존 카드 그리드 유지 -->
+      <!-- 추천 인플루언서 -->
       <section class="section">
         <div class="section-head"><h2>추천 인플루언서</h2><a class="more">더보기</a></div>
         <div class="grid grid-2">
