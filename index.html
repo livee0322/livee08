@@ -1,58 +1,99 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title>Livee - 홈</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Livee - 매칭 전문 플랫폼</title>
+
+  <!-- SUIT 폰트 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
 
   <!-- 스타일 -->
-  <link href="./css/main.css?v=1" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=1.0" />
 
-  <!-- Pretendard / Remixicon -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable-dynamic-subset.css" />
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <!-- 전역 설정 (배포 시 값만 교체) -->
+  <script>
+    window.LIVEE_CONFIG = {
+      BASE_PATH: '/livee',
+      API_BASE: 'https://main-server-ekgr.onrender.com/api/v1',  // ← 백엔드 주소 맞추기
+      thumb: {
+        square: 'c_fill,g_auto,w_320,h_320,f_auto,q_auto',
+        card169: 'c_fill,g_auto,w_640,h_360,f_auto,q_auto'
+      }
+    };
+  </script>
 </head>
+<body>
+  <!-- 상단 앱바 -->
+  <header class="appbar">
+    <button class="icon-btn" aria-label="뒤로가기" onclick="history.back()">
+      <span class="i-chevron">&larr;</span>
+    </button>
+    <div class="title">라이비</div>
+    <nav class="actions">
+      <button class="icon-btn" aria-label="알림">🔔</button>
+      <button class="icon-btn" aria-label="문서">📄</button>
+      <button class="icon-btn" aria-label="더보기">⋮</button>
+    </nav>
+  </header>
 
-<body data-page="home">
-  <div id="banner-container" class="lv-banner">
-    <div class="lv-banner-in">현재 클로즈 베타 테스트 중입니다. 피드백을 환영합니다! 🚀</div>
+  <!-- 상단 탭 -->
+  <div class="tabs">
+    <a class="tab active" href="#">숏클립</a>
+    <a class="tab" href="#">쇼핑라이브</a>
+    <a class="tab" href="#">뉴스</a>
+    <a class="tab" href="#">이벤트</a>
+    <a class="tab" href="#">서비스</a>
   </div>
 
-  <header id="header-container" class="lv-header"></header>
-  <nav id="top-tab-container" class="lv-top"></nav>
+  <main class="container">
 
-  <main class="lv-main">
-    <section class="lv-section">
-      <div class="lv-section-head">
+    <!-- 히어로 카피 & CTA -->
+    <section class="hero">
+      <p class="eyebrow">매칭 전문 플랫폼, 라이비</p>
+      <h1 class="headline">브랜드와 쇼호스트를 연결합니다.</h1>
+      <a class="cta" href="/frontend/campaign-edit.html">공고 등록하기</a>
+    </section>
+
+    <!-- 오늘의 라이브 라인업 -->
+    <section class="section">
+      <div class="section-head">
         <h2>오늘의 라이브 라인업</h2>
-        <a class="lv-more" href="./blank/blank.html?p=schedule" aria-label="라이브 일정 더보기">더보기</a>
+        <a class="more" href="/frontend/live-list.html">더보기</a>
       </div>
-      <div id="schedule" class="lv-schedule" aria-live="polite">
-        <div class="lv-empty">불러오는 중…</div>
-      </div>
+      <ul id="todayLives" class="live-list"></ul>
     </section>
 
-    <section class="lv-section">
-      <div class="lv-section-head">
-        <h2>라이브 상품</h2>
-        <a class="lv-more" href="./blank/blank.html?p=products" aria-label="라이브 상품 더보기">더보기</a>
+    <!-- 추천 공고 -->
+    <section class="section">
+      <div class="section-head">
+        <h2>추천공고</h2>
+        <a class="more" href="/frontend/campaign-list.html">더보기</a>
       </div>
-      <div id="productGrid" class="lv-grid"></div>
+      <div id="recCampaigns" class="cards"></div>
     </section>
 
-    <section class="lv-section">
-      <div class="lv-section-head">
-        <h2>추천 공고</h2>
-        <a class="lv-more" href="./recruitlist.html" aria-label="추천 공고 더보기">더보기</a>
+    <!-- 추천 인플루언서 -->
+    <section class="section">
+      <div class="section-head">
+        <h2>추천 인플루언서</h2>
+        <a class="more" href="/frontend/creator-list.html">더보기</a>
       </div>
-      <div id="recruits" class="lv-jobs"></div>
+      <div id="recCreators" class="grid grid-2"></div>
     </section>
+
+    <div class="bottom-space"></div>
   </main>
 
-  <nav id="bottom-tab-container" class="lv-bottom"></nav>
+  <!-- 하단 탭바 -->
+  <footer class="tabbar">
+    <a class="tbi active" href="#">홈</a>
+    <a class="tbi" href="/frontend/campaign-list.html">캠페인</a>
+    <a class="tbi" href="/frontend/portfolio-list.html">포트폴리오</a>
+    <a class="tbi" href="/frontend/creator-list.html">인플루언서</a>
+    <a class="tbi" href="/frontend/login.html">로그인</a>
+  </footer>
 
-  <!-- 설정 & 페이지 스크립트 -->
-  <script src="./js/config.js?v=1"></script>
-  <script src="./js/home.js?v=1"></script>
+  <script src="./main.js?v=1.0"></script>
 </body>
 </html>
