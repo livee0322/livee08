@@ -1,26 +1,31 @@
 /* Livee Home - campaigns(recruit) 연동 렌더링
-   - GET /api/v1/campaigns?type=recruit&status=published
-   - config.js 의 window.API_BASE 사용 (없으면 /api/v1)
+   - GET {API_BASE}{endpoints.recruits} (기본: type=recruit&status=published)
+   - config.js 의 window.LIVEE_CONFIG 사용
 */
-
 (() => {
   const $ = (sel) => document.querySelector(sel);
 
-  const API_BASE = (window.API_BASE || '/api/v1').replace(/\/$/, '');
+  // ==== config ====
+  const CFG = window.LIVEE_CONFIG || {};
+  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
+  let BASE_PATH = CFG.BASE_PATH || '';
+  if (BASE_PATH && !BASE_PATH.startsWith('/')) BASE_PATH = `/${BASE_PATH}`;
+  if (BASE_PATH === '/') BASE_PATH = '';
+  const EP = (CFG.endpoints || {});
+  const EP_RECRUITS = EP.recruits || '/campaigns?type=recruit&status=published&limit=20';
+
   const DEFAULT_IMG = 'default.jpg';
 
   /* ===== 날짜/문자 포맷 ===== */
   const pad2 = (n) => String(n).padStart(2, '0');
 
   function fmtDayHM(dateISO, timeRange) {
-    // dateISO: 2025-09-07T00:00:00.000Z | timeRange: "HH:MM~HH:MM" or "HH:MM"
+    // dateISO: ...Z | timeRange: "HH:MM~HH:MM" or "HH:MM"
     const d = new Date(dateISO || '');
     if (isNaN(d)) return '';
     const day = d.getDate();
     let hm = '';
-    if (timeRange) {
-      hm = timeRange.split('~')[0]; // 시작시각만 노출
-    }
+    if (timeRange) hm = String(timeRange).split('~')[0]; // 시작시각만
     return `${day}일 ${hm || ''}`.trim();
   }
 
@@ -32,19 +37,27 @@
   }
 
   function metaForLineup(item) {
-    const pay = item.payNegotiable ? '협의 가능' : (item.pay ? `${Number(item.pay).toLocaleString('ko-KR')}원` : '모집중');
+    const pay = item.payNegotiable ? '협의 가능'
+               : (item.pay ? `${Number(item.pay).toLocaleString('ko-KR')}원` : '모집중');
     const when = fmtDayHM(item.shootDate, item.shootTime);
     return `${pay} · ${when} 예정`;
   }
 
   /* ===== 서버 호출 ===== */
   async function fetchRecruits() {
-    const url = `${API_BASE}/campaigns?type=recruit&status=published&limit=20`;
+    // config의 recruits 엔드포인트 사용
+    const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try {
       const res = await fetch(url);
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) throw new Error(data.message || `(${res.status})`);
-      const items = (data.items || []).map((c) => ({
+
+      const list =
+        (Array.isArray(data) && data) ||
+        data.items || data.data?.items ||
+        data.docs  || data.data?.docs  || [];
+
+      const items = list.map((c) => ({
         id: c.id || c._id,
         title: c.title || '',
         thumb: c.thumbnailUrl || c.coverImageUrl || DEFAULT_IMG,
@@ -120,7 +133,6 @@
   }
 
   function tplPortfoliosStatic() {
-    // 아직 백엔드 연동 전: 기존 샘플 그대로
     const samples = [
       { name:"최예나", years:5, intro:"뷰티 방송 전문", region:"서울" },
       { name:"김소라", years:3, intro:"테크/라이프 쇼호스트", region:"부산" },
@@ -145,12 +157,11 @@
   async function renderHome() {
     const recruits = await fetchRecruits();
 
-    // 오늘의 라인업: 촬영일이 미래(= 오늘 이후 또는 오늘이고 아직 시간이 남음)인 항목 중 상위 2개
+    // 오늘의 라인업: 미래 촬영일 기준 상위 2개
     const now = new Date();
     const upcoming = recruits
       .filter(r => r.shootDate)
       .map(r => {
-        // 비교용 시작 Date
         let start = new Date(r.shootDate);
         try {
           const startHM = (r.shootTime || '').split('~')[0] || '00:00';
@@ -163,16 +174,18 @@
       .sort((a,b) => a._start - b._start)
       .slice(0, 2);
 
+    const moreHref = BASE_PATH ? `${BASE_PATH}/index.html#recruits` : './index.html#recruits';
+
     $('#app').innerHTML = `
       <!-- 오늘의 라이브 라인업 -->
       <section class="section">
-        <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="./index.html#recruits">더보기</a></div>
+        <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="${moreHref}">더보기</a></div>
         ${tplLineup(upcoming)}
       </section>
 
       <!-- 추천 공고 -->
       <section class="section">
-        <div class="section-head"><h2>추천 공고</h2><a class="more" href="./index.html#recruits">더보기</a></div>
+        <div class="section-head"><h2>추천 공고</h2><a class="more" href="${moreHref}">더보기</a></div>
         ${tplRecruits(recruits)}
       </section>
 
@@ -184,6 +197,5 @@
     `;
   }
 
-  // kick
   renderHome();
 })();
