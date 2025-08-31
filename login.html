@@ -5,33 +5,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>로그인 - Livee</title>
 
-  <!-- 공통/페이지 스타일 -->
   <link rel="stylesheet" href="./css/styles.css"/>
   <link rel="stylesheet" href="./css/login.css"/>
 </head>
 <body data-page="login">
-  <!-- 상단 배너 (원하면 지워도 됨) -->
+
   <div class="lg-banner">
-    <div class="lg-banner-in">현재 클로즈 베타 테스트 중입니다. 피드백 환영! 🚀</div>
+    <div class="lg-banner-in">현재 클로즈 베타 테스트 중입니다. 피드백 환영 🚀</div>
   </div>
 
   <main class="lg-wrap" role="main">
-    <div class="lg-brand">
-      <img src="./liveelogo.png" alt="Livee" onerror="this.style.display='none'"/>
-    </div>
+    <div class="lg-brand"><img src="./liveelogo.png" alt="Livee"/></div>
 
     <!-- 역할 선택 -->
-    <div class="role-switch" role="tablist" aria-label="역할 선택">
-      <button type="button" class="pill active" data-role="brand" aria-pressed="true">브랜드</button>
-      <button type="button" class="pill" data-role="showhost" aria-pressed="false">쇼호스트</button>
+    <div class="role-switch">
+      <button type="button" class="pill active" data-role="brand">브랜드</button>
+      <button type="button" class="pill" data-role="showhost">쇼호스트</button>
     </div>
 
-    <!-- 로그인 폼 -->
     <form id="loginForm" class="lg-form" novalidate>
-      <input type="email" id="email" placeholder="you@example.com"
-             aria-label="이메일" required autocomplete="username" inputmode="email" />
-      <input type="password" id="password" placeholder="••••••••"
-             aria-label="비밀번호" required autocomplete="current-password" />
+      <input type="email" id="email" placeholder="you@example.com" required/>
+      <input type="password" id="password" placeholder="••••••••" required/>
       <button id="loginBtn" type="submit" class="lg-submit">로그인</button>
       <p id="loginError" class="lg-error" hidden></p>
     </form>
@@ -39,18 +33,17 @@
     <p class="lg-links">아직 계정이 없으신가요? <a href="./signup.html">회원가입</a></p>
   </main>
 
-  <!-- 하단 탭이 있으면 유지 -->
+  <!-- 하단탭 -->
   <nav class="bottom-nav">
     <div class="bn-wrap">
       <a class="bn-item" href="./index.html"><i class="ri-home-5-line"></i>홈</a>
-      <a class="bn-item" href="./recruit-new.html"><i class="ri-flag-2-line"></i>캠페인</a>
-      <span class="bn-item active"><i class="ri-user-line"></i>로그인</span>
-      <a class="bn-item" href="#"><i class="ri-team-line"></i>인플루언서</a>
-      <a class="bn-item" href="#"><i class="ri-folder-user-line"></i>포트폴리오</a>
+      <a class="bn-item" href="./recruit-new.html"><i class="ri-flag-2-line"></i>모집캠페인</a>
+      <a class="bn-item" href="./library.html"><i class="ri-archive-line"></i>라이브러리</a>
+      <a class="bn-item" href="./influencer.html"><i class="ri-team-line"></i>인플루언서</a>
+      <span class="bn-item active"><i class="ri-user-line"></i>마이페이지</span>
     </div>
   </nav>
 
-  <!-- 스크립트 -->
   <script src="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.js"></script>
   <script src="./js/config.js"></script>
   <script src="./js/login.js"></script>
