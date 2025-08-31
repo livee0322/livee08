@@ -1,4 +1,4 @@
-/* Livee v2.5 – Recruit Create (Refactor)
+/* Livee v2.5 – Recruit Create (Refactor, redirect fix)
  * - POST {API_BASE}/campaigns
  * - optional: POST {API_BASE}/uploads (multipart)
  * - needs: localStorage 'livee_token'
@@ -7,12 +7,18 @@
   // ---------- config ----------
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
-  const BASE_PATH = CFG.BASE_PATH || ""; // e.g., '/alpa'
+  // BASE_PATH 정규화: '', '/livee08' 처럼만 남김
+  let BASE_PATH = CFG.BASE_PATH || "";
+  if (BASE_PATH && !BASE_PATH.startsWith("/")) BASE_PATH = `/${BASE_PATH}`;
+  if (BASE_PATH === "/") BASE_PATH = "";
+
   const TOKEN = localStorage.getItem("livee_token") || "";
 
   // 기본 저장 상태(홈에서 보이게 하려면 published). ?status=draft 로 강제 가능
   const urlParams = new URLSearchParams(location.search);
+  const allowedStatus = new Set(["published", "draft", "scheduled", "closed"]);
   const DEFAULT_STATUS = (urlParams.get("status") || "published").toLowerCase();
+  const CREATE_STATUS = allowedStatus.has(DEFAULT_STATUS) ? DEFAULT_STATUS : "published";
 
   // ---------- dom ----------
   const $id = (s) => document.getElementById(s);
@@ -100,7 +106,7 @@
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      previewEl.src = ev.target.result;
+      if (previewEl) previewEl.src = ev.target.result;
       msgEl.textContent = "미리보기가 적용되었습니다.";
     };
     reader.readAsDataURL(f);
@@ -108,6 +114,7 @@
 
   // 협의 가능 → pay 잠금
   negEl?.addEventListener("change", () => {
+    if (!payEl) return;
     if (negEl.checked) {
       payEl.value = "";
       payEl.setAttribute("disabled", "disabled");
@@ -156,7 +163,7 @@
     // payload (v2.5 Campaign)
     const payload = {
       type: "recruit",
-      status: DEFAULT_STATUS, // 'published' | 'draft'
+      status: CREATE_STATUS, // 'published' | 'draft' | ...
       title,
       category: categoryEl.value,
       closeAt: `${deadline.value}T23:59:59.000Z`,
@@ -185,9 +192,10 @@
         throw new Error(data.message || `등록 실패 (${res.status})`);
       }
       alert("공고가 등록되었습니다.");
-      // 홈으로 (그리드 위치로 스크롤되게 앵커)
-      const to = (BASE_PATH || "") + "/index.html#recruits";
-      location.href = to;
+
+      // 홈으로 (그리드 위치로 스크롤되게 앵커) — BASE_PATH 없으면 상대경로 사용
+      const next = BASE_PATH ? `${BASE_PATH}/index.html#recruits` : `./index.html#recruits`;
+      location.replace(next);
     } catch (err) {
       console.error("[create]", err);
       fail(err.message);
