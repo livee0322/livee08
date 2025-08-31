@@ -17,12 +17,15 @@
     ]
   };
 
-  function dtLabel(iso){
+  const pad = (n) => String(n).padStart(2,'0');
+  const money = (n) => (n||0).toLocaleString('ko-KR') + '원';
+
+  function timeParts(iso){
     const d = new Date(iso);
-    const day = d.getDate();
-    const hh = String(d.getHours()).padStart(2,'0');
-    const mm = String(d.getMinutes()).padStart(2,'0');
-    return `${day}일 ${hh}:${mm} 예정`;
+    return {
+      day: d.getDate(),
+      hm: `${pad(d.getHours())}:${pad(d.getMinutes())}`
+    };
   }
 
   function renderHome(){
@@ -31,36 +34,43 @@
       <section class="section">
         <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more">더보기</a></div>
         <div class="list-vert">
-          ${state.schedule.map(it=>`
-            <article class="item">
-              <img class="thumb" src="default.jpg" alt="라이브 썸네일" />
-              <div>
-                <div class="title">${it.title}</div>
-                <div class="meta">${it.promo}</div>
-              </div>
-              <div class="time-badge">${dtLabel(it.start)}</div>
-            </article>
-          `).join('')}
+          ${state.schedule.map(it=>{
+            const t = timeParts(it.start);
+            return `
+              <article class="item">
+                <img class="thumb" src="default.jpg" alt="라이브 썸네일" />
+                <div>
+                  <div class="title">${it.title}</div>
+                  <div class="meta">${it.promo}</div>
+                </div>
+                <div class="time-badge">
+                  <span class="d">${t.day}일</span>
+                  <span class="hm">${t.hm}</span>
+                  <span class="lbl">예정</span>
+                </div>
+              </article>
+            `;
+          }).join('')}
         </div>
       </section>
 
-      <!-- 추천 공고 : 가로 스크롤 1줄 -->
+      <!-- 추천 공고 : 가로 스크롤 미니 카드 -->
       <section class="section">
         <div class="section-head"><h2>추천 공고</h2><a class="more">더보기</a></div>
-        <div class="hscroll">
+        <div class="hscroll-mini">
           ${state.recruits.map(r=>`
-            <article class="hcard">
-              <img class="cover" src="default.jpg" alt="공고 썸네일" />
-              <div class="body">
-                <div class="title">${r.title}</div>
-                <div class="meta">출연료 ${r.fee.toLocaleString()}원 · 마감 ${r.due}</div>
+            <article class="mini-card">
+              <div class="mini-body">
+                <div class="mini-title">${r.title}</div>
+                <div class="mini-meta">출연료 ${money(r.fee)} · 마감 ${r.due}</div>
               </div>
+              <img class="mini-thumb" src="default.jpg" alt="공고 썸네일" />
             </article>
           `).join('')}
         </div>
       </section>
 
-      <!-- 추천 인플루언서 (그리드) -->
+      <!-- 추천 인플루언서: 기존 카드 그리드 유지 -->
       <section class="section">
         <div class="section-head"><h2>추천 인플루언서</h2><a class="more">더보기</a></div>
         <div class="grid grid-2">
