@@ -1,91 +1,86 @@
-/* Livee v2.5 - Recruit New (page-scope CSS only) */
+/* Recruit New 페이지 전용 스타일 (글씨 검정 통일 + UI 개선) */
 
-/* 토큰(없으면 기본값으로 동작) */
+/* 색상 토큰 */
 :root{
-  --bg:#f6f7f9; --surface:#fff; --ink:#111; --muted:#6b7280; --line:#e5e7eb;
-  --brand:#3b5ddd; --danger:#e45656; --radius:20px;
+  --bg:#f9f9f9;
+  --surface:#ffffff;
+  --ink:#111111;
+  --line:#e5e7eb;
+  --radius:16px;
 }
 
-/* 컨테이너 간격 */
+/* 기본 레이아웃 */
+body{background:var(--bg);color:var(--ink)}
 .container{padding-bottom:88px}
 
-/* 섹션 카드 */
+/* 카드형 섹션 */
 .section{margin-top:22px}
 .card{
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:var(--radius);
-  padding:16px;
+  padding:18px;
 }
 
 /* 섹션 타이틀 */
-.section-title{
-  margin:0 0 12px;
-  font-size:16px; font-weight:800;
-}
+.section-title{margin:0 0 12px;font-size:16px;font-weight:700;color:var(--ink)}
 
-/* 입력 공통 (main.css가 있으면 이 블록은 보강만 함) */
+/* 입력 UI */
 .input, select, textarea{
   width:100%;
-  padding:12px 12px;
+  padding:12px;
   border:1px solid var(--line);
   border-radius:12px;
   background:#fff;
   font-size:15px;
+  color:var(--ink);
   outline:none;
 }
-.input:focus, select:focus, textarea:focus{
-  border-color:#cbd5e1;
-}
-.input.disabled{background:#f3f4f6;color:#9ca3af}
+.input:focus, select:focus, textarea:focus{border-color:#999}
 
-/* 그리드 2분할 */
-.grid-2{
-  display:grid; grid-template-columns:1fr 1fr; gap:12px;
-}
-@media (max-width:560px){
-  .grid-2{grid-template-columns:1fr}
-}
+/* 비활성화 */
+.input.disabled{background:#f3f4f6;color:#aaa}
 
-/* 인라인(체크박스 라벨 정렬) */
-.inline{display:flex; align-items:center; gap:8px; height:100%}
-.inline label{font-weight:700}
+/* 두 칸 그리드 */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.grid-2{grid-template-columns:1fr}}
 
-/* 헬퍼 텍스트 */
-.helper{
-  margin-top:8px; color:var(--muted); font-size:13px;
-}
+/* 체크박스 인라인 */
+.inline{display:flex;align-items:center;gap:8px}
+.inline label{font-weight:600;color:var(--ink)}
 
-/* 요구 표시 */
-.req{color:var(--danger); font-weight:700}
+/* 설명 텍스트 */
+.helper{margin-top:6px;font-size:13px;color:#555}
+
+/* 필수표시 */
+.req{color:#111;font-weight:700}
 
 /* 대표 이미지 프리뷰 */
 .thumb-wrap{margin:8px 0 10px}
 .thumb-wrap img{
-  width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:12px;
-  border:1px solid var(--line);
+  width:100%;aspect-ratio:16/9;object-fit:cover;
+  border-radius:12px;border:1px solid var(--line);
 }
 
 /* 버튼 */
 .btn{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:12px 14px; border:1px solid var(--line); border-radius:12px;
-  background:#fff; font-weight:800;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 14px;
+  border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--ink);
+  font-weight:700;
 }
-.btn.pri{
-  color:#fff; background:#111; border-color:#111;
-}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
 .btn:active{transform:translateY(1px)}
 
-/* 상단 헤더/하단 네비가 공통 CSS에 없을 때 최소 보강 */
-.app-header{position:sticky;top:0;z-index:10;background:#fff;
-  border-bottom:1px solid var(--line)}
+/* 헤더/네비 최소 보강 */
+.app-header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
 .h-wrap{height:56px;display:flex;align-items:center;gap:12px;padding:0 12px}
-.h-icon{font-size:22px}
-.h-logo{font-weight:900}
+.h-icon{font-size:22px;color:var(--ink)}
+.h-logo{font-weight:800;color:var(--ink)}
 .h-spacer{flex:1}
 
 .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line)}
 .bn-wrap{display:flex;justify-content:space-around}
-.bn-item{display:flex;flex-direction:column;align-items:center;padding:8px 6px;font-weight:800;color:#111}
-.bn-item.active{color:var(--brand)}
+.bn-item{display:flex;flex-direction:column;align-items:center;padding:8px 6px;font-weight:700;color:var(--ink);font-size:13px}
+.bn-item.active{font-weight:900;text-decoration:underline}
