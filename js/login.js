@@ -55,20 +55,20 @@
       // 서버 응답 기대: { ok:true, token, name, role }
       const data = await postJSON("/users/login", { email, password });
 
-      // 저장 (토큰 키는 프런트 전역에서 쓰는 'livee_token'으로 통일)
+      // 저장 (전역 통일 키)
       localStorage.setItem("livee_token", data.token || "");
       if (data.name) localStorage.setItem("liveeName", data.name);
       if (data.role) localStorage.setItem("liveeRole", data.role);
 
-      // 역할 안내는 경고만
       if (data.role && data.role !== selectedRole) {
         console.warn(`[LOGIN] 선택역할(${selectedRole}) ≠ 서버역할(${data.role})`);
       }
 
-      // 돌아갈 위치 (prev 파라미터가 있으면 우선 사용)
+      // prev 파라미터 우선, 없으면 홈으로
       const params = new URLSearchParams(location.search);
       const prev = params.get("prev");
-      const next = prev ? decodeURIComponent(prev) : (BASE_PATH ? `${BASE_PATH}/index.html` : "./index.html");
+      const next = prev ? decodeURIComponent(prev) :
+                  (BASE_PATH ? `${BASE_PATH}/index.html` : "./index.html");
       location.href = next;
     } catch (e2) {
       showError(e2.message);
