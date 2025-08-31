@@ -3,42 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee Wireframe v2.5</title>
-  <!-- CSS 경로 -->
+  <title>Livee — Wireframe v2.5</title>
+
+  <!-- 한국어 가독성 폰트 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <!-- 프로젝트 스타일 -->
   <link rel="stylesheet" href="css/styles.css" />
+  <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
   <!-- 상단 앱바 -->
-  <header class="appbar">
-    <div class="logo">라이비</div>
-    <nav class="role">
-      <button class="pill active">쇼호스트</button>
-      <button class="pill">브랜드</button>
+  <header class="appbar" role="banner">
+    <div class="logo" aria-label="Livee 홈">라이비</div>
+    <nav class="role" aria-label="역할 전환">
+      <button class="pill active" type="button" aria-pressed="true">쇼호스트</button>
+      <button class="pill" type="button" aria-pressed="false">브랜드</button>
     </nav>
   </header>
 
   <!-- 상단 탭 -->
-  <div class="tabs">
+  <nav class="tabs" role="navigation" aria-label="상단 탭">
     <a class="tab active" href="#/home">숏클립</a>
     <a class="tab" href="#/live">쇼핑라이브</a>
     <a class="tab" href="#/news">뉴스</a>
     <a class="tab" href="#/event">이벤트</a>
     <a class="tab" href="#/service">서비스</a>
-  </div>
+  </nav>
 
-  <!-- 콘텐츠 영역 -->
-  <main id="app" class="container"></main>
+  <!-- 히어로 영역 -->
+  <section class="container" aria-label="소개 및 주요 액션">
+    <div class="section hero" role="region">
+      <p class="meta">매칭 전문 플랫폼, 라이비</p>
+      <h1 style="margin:6px 0 10px">브랜드와 쇼호스트를 연결합니다</h1>
+      <div class="toolbar" role="group" aria-label="주요 액션">
+        <a class="pill" href="recruit-new.html">공고 등록하기</a>
+        <a class="pill" href="login.html">로그인</a>
+        <a class="pill" href="#/portfolios">포트폴리오 보기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 메인 콘텐츠 -->
+  <main id="app" class="container" role="main" aria-live="polite">
+    <!-- js/main.js가 홈 섹션(오늘의 라이브/추천공고/포트폴리오)을 렌더링합니다. -->
+  </main>
 
   <!-- 하단 탭 -->
-  <footer class="tabbar">
-    <a class="tbi active" href="#/home">홈</a>
-    <a class="tbi" href="#/campaign/new">모집캠페인</a>
+  <footer class="tabbar" role="contentinfo">
+    <a class="tbi active" href="#/home" aria-current="page">홈</a>
+    <a class="tbi" href="recruit-new.html">모집캠페인</a>
     <a class="tbi" href="#/library">라이브러리</a>
     <a class="tbi" href="#/portfolios">인플루언서</a>
-    <a class="tbi" href="#/mypage">마이페이지</a>
+    <a class="tbi" href="login.html">마이페이지</a>
   </footer>
 
-  <!-- JS 경로 -->
+  <!-- 스크립트 -->
   <script src="js/main.js"></script>
 </body>
 </html>
