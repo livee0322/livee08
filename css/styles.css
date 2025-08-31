@@ -1,11 +1,13 @@
 :root{
   --bg:#fafafa; --card:#fff; --ink:#111; --muted:#666; --line:#eaeaea;
-  --brand:#3b5ddd; --radius:16px; --space:16px; --shadow:0 6px 20px rgba(0,0,0,.06);
+  --brand:#3b5ddd; --accent:#e45656; --radius:16px;
+  --shadow:0 4px 12px rgba(0,0,0,.06);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:"SUIT",sans-serif}
 a{text-decoration:none;color:inherit}
-.container{padding:16px}
+
+.container{padding:16px;max-width:960px;margin:0 auto}
 
 .appbar{height:56px;display:flex;align-items:center;padding:0 12px;background:#fff;border-bottom:1px solid var(--line)}
 .logo{font-weight:900}
@@ -17,21 +19,29 @@ a{text-decoration:none;color:inherit}
 .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--line);font-weight:700}
 .tab.active{background:var(--ink);color:#fff}
 
-.section{margin-top:20px}
+.section{margin-top:24px}
 .section-head{display:flex;align-items:center;margin-bottom:8px}
 .section-head h2{margin:0;font-size:18px}
 .more{margin-left:auto;font-weight:700;color:var(--brand)}
 
 .list-vert{display:flex;flex-direction:column;gap:10px}
 .item{display:flex;gap:12px;align-items:center;background:var(--card);padding:12px;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-.thumb{width:56px;height:56px;background:#ddd;border-radius:12px}
+.thumb{width:56px;height:56px;background:#ddd;border-radius:12px;flex-shrink:0}
+.item .title{font-weight:900}
+.item .meta{font-size:13px;color:var(--muted)}
 
 .grid{display:grid;gap:12px}
 .grid-2{grid-template-columns:1fr 1fr}
 .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
 .card .cover{aspect-ratio:1/1;background:#ddd}
 .card .body{padding:12px}
+.card .title{font-weight:900;margin-bottom:4px}
+.card .meta{font-size:13px;color:var(--muted)}
 
 .tabbar{height:56px;display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line)}
 .tbi{display:flex;align-items:center;justify-content:center;font-weight:800}
 .tbi.active{color:var(--brand)}
+
+@media(min-width:760px){
+  .grid-2{grid-template-columns:repeat(3,1fr)}
+}
