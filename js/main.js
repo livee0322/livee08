@@ -2,58 +2,61 @@
   const $ = (s) => document.querySelector(s);
   const state = {
     schedule: [
-      { title:"가을 시즌 라이브", brand:"ACME", start:"2025-09-01T18:30:00" },
-      { title:"신상 런칭 라이브", brand:"Cosmo", start:"2025-09-01T20:00:00" }
+      { title:"추리예능, 여고추리반 출시 기념 라이브 방송", brand:"예나", promo:"예나 안경 할인 최대 50%", start:"2025-08-30T18:30:00" },
+      { title:"예나 컴백 기념 라이브 방송", brand:"예나", promo:"예나 안경 할인 최대 50%", start:"2025-08-30T19:30:00" }
     ],
     recruits: [
       { title:"여고추리반 라이브", fee:300000, due:"2025-09-07" },
       { title:"뷰티 콜라보", fee:250000, due:"2025-09-15" }
     ],
     portfolios: [
-      { name:"최예나", years:5, region:"서울", intro:"뷰티 전문 5년차" },
-      { name:"김소라", years:3, region:"부산", intro:"테크/라이프 쇼호스트" }
+      { name:"최예나", years:5, intro:"뷰티 방송 전문", region:"서울" },
+      { name:"김소라", years:3, intro:"테크/라이프 쇼호스트", region:"부산" }
     ]
   };
 
   function renderHome(){
     return `
       <section class="section">
-        <div class="section-head"><h2>오늘의 라이브 일정</h2></div>
+        <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more">더보기</a></div>
         <div class="list-vert">
           ${state.schedule.map(it=>`
             <article class="item">
               <div class="thumb"></div>
               <div>
-                <div><b>${it.title}</b></div>
-                <div class="meta">${it.brand} · ${new Date(it.start).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}</div>
+                <div class="title">${it.title}</div>
+                <div class="meta">${it.promo}</div>
+              </div>
+              <div style="margin-left:auto;color:#3b5ddd;font-weight:700">
+                ${new Date(it.start).getDate()}일 ${new Date(it.start).getHours()}:${String(new Date(it.start).getMinutes()).padStart(2,'0')} 예정
               </div>
             </article>`).join('')}
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>추천 공고</h2></div>
+        <div class="section-head"><h2>추천 공고</h2><a class="more">더보기</a></div>
         <div class="grid grid-2">
           ${state.recruits.map(r=>`
             <article class="card">
               <div class="cover"></div>
               <div class="body">
-                <b>${r.title}</b><br/>
-                출연료 ${r.fee.toLocaleString()}원 · 마감 ${r.due}
+                <div class="title">${r.title}</div>
+                <div class="meta">출연료 ${r.fee.toLocaleString()}원 · 마감 ${r.due}</div>
               </div>
             </article>`).join('')}
         </div>
       </section>
 
       <section class="section">
-        <div class="section-head"><h2>포트폴리오</h2></div>
+        <div class="section-head"><h2>추천 인플루언서</h2><a class="more">더보기</a></div>
         <div class="grid grid-2">
           ${state.portfolios.map(p=>`
             <article class="card">
               <div class="cover"></div>
               <div class="body">
-                <b>${p.name}</b><br/>
-                ${p.intro} (${p.region})
+                <div class="title">${p.name}</div>
+                <div class="meta">경력 ${p.years}년 · ${p.intro} (${p.region})</div>
               </div>
             </article>`).join('')}
         </div>
@@ -61,6 +64,5 @@
     `;
   }
 
-  // 초기 화면
   $('#app').innerHTML = renderHome();
 })();
