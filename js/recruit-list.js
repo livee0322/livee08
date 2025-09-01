@@ -1,6 +1,6 @@
 /* recruit-list.js */
 (() => {
-  const $ = s => document.querySelector(s);
+  const $  = s => document.querySelector(s);
   const $$ = s => Array.from(document.querySelectorAll(s));
 
   // 로그인 유저
@@ -40,7 +40,8 @@
     if (isNaN(d)) return String(iso).slice(0,10);
     return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   };
-  const thumbOr = (src, seed='lv') => src || `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
+  const thumbOr = (src, seed='lv') =>
+    src || `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
 
   function mapStatus(s){
     if(s==='open')   return {key:'open',   label:'모집중',  cls:'open'};
@@ -98,6 +99,10 @@
     state.cursor = nextCursor;
     state.ended  = !nextCursor && items.length < 20;
     state.loading = false;
+
+    // 더보기 버튼 토글
+    const moreBtn = $('#rlMore');
+    if (moreBtn) moreBtn.style.display = state.ended ? 'none' : 'inline-flex';
   }
 
   function renderList(items, {append=false} = {}){
@@ -121,7 +126,7 @@
         <article class="rl-card">
           <img class="rl-thumb" src="${thumbOr(it.thumb,it.id)}" alt="">
           <div class="rl-body">
-            <div class="rl-title">${it.title}</div>
+            <div class="rl-title nowrap">${it.title}</div>
             <div class="rl-meta">
               <span class="rl-chip ${st.cls}">${st.label}</span>
               ${it.category ? `<span>${it.category}</span>` : ''}
@@ -156,32 +161,39 @@
     });
 
     // 검색 / 정렬
-    $('#rlSearch').addEventListener('change', e=>{
-      state.query = e.target.value.trim();
-      state.cursor = null; state.ended = false;
-      fetchMine();
-    });
-    $('#rlSort').addEventListener('change', e=>{
-      state.sort = e.target.value;
-      state.cursor = null; state.ended = false;
-      fetchMine();
-    });
+    const searchEl = $('#rlSearch');
+    if (searchEl) {
+      searchEl.addEventListener('input', e=>{
+        state.query = e.target.value.trim();
+        state.cursor = null; state.ended = false;
+        fetchMine();
+      });
+    }
+    const sortEl = $('#rlSort');
+    if (sortEl) {
+      sortEl.addEventListener('change', e=>{
+        state.sort = e.target.value;
+        state.cursor = null; state.ended = false;
+        fetchMine();
+      });
+    }
 
     // 더보기
-    $('#rlMore').addEventListener('click', ()=> fetchMine({append:true}));
+    const moreBtn = $('#rlMore');
+    if (moreBtn) moreBtn.addEventListener('click', ()=> fetchMine({append:true}));
 
     // 카드 액션(권한 체크)
     $('#rlList').addEventListener('click', e=>{
       const btn = e.target.closest('.ic'); if(!btn) return;
-      const { act, id } = btn.dataset;
+      const act = btn.dataset.act; const id = btn.dataset.id;
 
       const canManage = user && (user.role === 'brand' || user.role === 'admin');
       if(!canManage){ toast('브랜드만 이용 가능한 기능입니다.'); return; }
 
       if (act === 'edit')  location.href = `recruit-new.html?id=${encodeURIComponent(id)}`;
-      if (act === 'dup')   toast('복제 준비중');
-      if (act === 'close') toast('마감 처리 준비중');
-      if (act === 'del')   toast('삭제 준비중');
+      else if (act === 'dup')   toast('복제 준비중');
+      else if (act === 'close') toast('마감 처리 준비중');
+      else if (act === 'del')   toast('삭제 준비중');
     });
   }
 
