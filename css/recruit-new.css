@@ -1,87 +1,58 @@
-/* ===== Recruit New – Mobile-first form layout ===== */
-
-/* 공통 */
 :root{
   --bg:#ffffff; --ink:#111; --sub:#6b7280; --pri:#2563eb;
   --bd:#e5e7eb; --bd-strong:#d1d5db; --radius:12px;
   --gap:12px; --gap-sm:8px; --field-h:48px;
 }
+
+/* reset */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
 img{max-width:100%;height:auto;border:0}
 
-/* 컨테이너 */
-.container{max-width:760px;margin:0 auto;padding:16px}
-.form-card{
-  background:#fff;border:1px solid var(--bd);border-radius:16px;
-  padding:16px; margin:12px 0;
-  /* 카드 그림자 제거 요청 */
-  box-shadow:none;
-}
+/* 상단 */
+.app-header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #eee}
+.h-wrap{max-width:100%;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.h-logo{font-weight:800;font-size:16px}
+.back{color:#111;text-decoration:none}
+
+/* 컨테이너: 꽉 차게 */
+.container{max-width:100%;margin:0 auto;padding:16px}
+
+/* 공지/상태 */
+.notice{display:none;margin:0 0 10px;padding:10px 12px;border-radius:10px;border:1px solid #ffd6d6;background:#fff4f4;color:#a32020}
+.notice.show{display:block}
+.notice.ok{border-color:#b9efc9;background:#f5fff5;color:#0f6b2b}
 
 /* 레이블/헬퍼 */
 label{display:block;font-size:14px;font-weight:600;margin:14px 2px 6px}
-.helper{font-size:12px;color:var(--sub);margin:6px 2px}
+.helper{font-size:12px;color:var(--sub);margin-left:4px}
 
-/* 인풋 계열 – 공통 */
-.input, select, textarea{
-  width:100%;
-  height:var(--field-h);
-  padding:0 14px;
+/* 입력 */
+.input, .select, textarea{
+  width:100%; height:var(--field-h); padding:0 14px;
   font-size:16px; line-height:1.3; color:var(--ink);
-  border:1px solid var(--bd-strong); border-radius:12px;
-  background:#fff; outline:none;
+  border:1px solid var(--bd-strong); border-radius:12px; background:#fff; outline:none;
 }
 textarea{min-height:120px;height:auto;padding:12px 14px;resize:vertical}
 .input::placeholder, textarea::placeholder{color:#9ca3af}
 
-/* 2-열 그리드 (라벨+필드 각각 아니라 필드 쌍을 옆으로) */
-.grid{
-  display:grid; grid-template-columns:1fr; gap:var(--gap);
-}
-@media (min-width:600px){
-  .grid.grid-2{ grid-template-columns:1fr 1fr; }
-}
+/* 그리드 */
+.grid{display:grid;grid-template-columns:1fr;gap:var(--gap)}
+@media (min-width:600px){ .grid.grid-2{grid-template-columns:1fr 1fr} }
 
-/* 셀 내부가 넘칠 경우 줄바꿈 / 말줄임 */
-.nowrap{white-space:nowrap}
-.one-line{
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-
-/* 시간 필드(셀렉트/타임) 높이 보정 */
-input[type="date"], input[type="time"], select{
-  height:var(--field-h);
-}
-
-/* 체크박스 라인 */
-.checkbox{
-  display:flex; align-items:center; gap:8px; margin-top:8px;
-}
-.checkbox input[type="checkbox"]{width:20px;height:20px}
+/* 체크박스 */
+.checkbox{display:flex;align-items:center;gap:8px;height:var(--field-h)}
 
 /* 버튼 */
-.btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--bd);
-  background:#fff; color:var(--ink); font-weight:600; text-decoration:none;
-}
-.btn.pri{background:var(--pri); color:#fff; border-color:var(--pri)}
-.btn:disabled{opacity:.6; pointer-events:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--bd);background:#fff;color:var(--ink);font-weight:600;text-decoration:none}
+.btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn:disabled{opacity:.6;pointer-events:none}
+.btns{display:flex;gap:8px;margin-top:10px}
 
-/* 이미지 업로드 미리보기 */
-.preview{
-  width:100%; aspect-ratio:16/9; border:1px solid var(--bd);
-  border-radius:12px; object-fit:cover; background:#f8fafc;
-}
+/* 이미지 미리보기 */
+.media{display:flex;gap:12px;align-items:center}
+.preview{width:140px;aspect-ratio:16/9;border:1px solid var(--bd);border-radius:12px;object-fit:cover;background:#f8fafc}
 
-/* 헤더/바텀 그림자 제거 */
-.app-header, .bottom-nav{box-shadow:none;border-bottom:1px solid var(--bd)}
-
-/* iOS/안드 듀얼 탭바가 겹칠 때 여백 */
-.page-bottom-space{height:80px}
-
-/* 강제 overflow 방지 */
-main, .container, .form-card{overflow:visible}
-body{overflow-x:hidden}
+/* 탭바 겹침 방지 */
+.page-bottom-space{height:84px}
