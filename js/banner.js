@@ -1,35 +1,27 @@
-/* 3장의 배너를 좌우 살짝 보이게, 스크롤-스냅 + 오토롤링 */
 (() => {
-  const el = document.getElementById('banner');
-  if (!el) return;
+  const wrap = document.getElementById('banner');
+  if (!wrap) return;
 
-  const cards = [
-    { title:'라이브 캠페인 등록', sub:'지금 바로 공고를 올려보세요', img:'https://picsum.photos/seed/livee1/256/256', href:'recruit-new.html' },
-    { title:'인플루언서 포트폴리오', sub:'나와 맞는 쇼호스트 찾기', img:'https://picsum.photos/seed/livee2/256/256', href:'#/portfolios' },
-    { title:'베타 피드백 모집', sub:'의견을 보내주세요', img:'https://picsum.photos/seed/livee3/256/256', href:'#/feedback' },
-  ];
+  const data = (window.LIVEE_BANNERS && window.LIVEE_BANNERS.length)
+    ? window.LIVEE_BANNERS
+    : [
+        { id: 1, title: '샘플 배너', desc: '데이터가 없습니다', color: '#f5f5f5' },
+        { id: 2, title: '샘플 배너2', desc: 'index.html에서 관리', color: '#eef2ff' },
+        { id: 3, title: '샘플 배너3', desc: '좌우 스크롤',         color: '#fff7ee' },
+      ];
 
-  el.innerHTML = cards.map(c=>`
-    <a class="banner-card" href="${c.href}">
-      <img class="cover" src="${c.img}" alt="" />
-      <div>
-        <div class="title">${c.title}</div>
-        <div class="sub">${c.sub}</div>
-      </div>
-    </a>
+  wrap.innerHTML = data.map(b => `
+    <article class="bannerCard" style="background:${b.color}">
+      <h3>${b.title}</h3>
+      <p>${b.desc}</p>
+    </article>
   `).join('');
 
-  // 네비(스크롤)
-  const wrap = el.parentElement;
-  const prev = wrap.querySelector('.prev');
-  const next = wrap.querySelector('.next');
-  const step = () => el.scrollBy({left: el.clientWidth*0.86, behavior:'smooth'});
-  const back = () => el.scrollBy({left: -el.clientWidth*0.86, behavior:'smooth'});
-  next?.addEventListener('click', step);
-  prev?.addEventListener('click', back);
+  // 좌/우 버튼
+  const prev = document.querySelector('.bannerNav.prev');
+  const next = document.querySelector('.bannerNav.next');
+  const step = () => wrap.clientWidth * 0.8;
 
-  // 오토롤링
-  let timer = setInterval(step, 3500);
-  wrap.addEventListener('pointerenter', ()=>clearInterval(timer));
-  wrap.addEventListener('pointerleave', ()=>timer=setInterval(step, 3500));
+  prev?.addEventListener('click', () => wrap.scrollBy({ left: -step(), behavior: 'smooth' }));
+  next?.addEventListener('click', () => wrap.scrollBy({ left:  step(), behavior: 'smooth' }));
 })();
