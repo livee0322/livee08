@@ -1,0 +1,62 @@
+.mypage {
+  padding: 20px;
+}
+
+.profile-card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.profile-card img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-card .name {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.profile-card .role {
+  color: #666;
+  font-size: 14px;
+}
+
+.mypage-sections {
+  margin-top: 24px;
+}
+
+.mypage-sections h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.mypage-sections ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mypage-sections li {
+  margin-bottom: 8px;
+}
+
+.mypage-sections a {
+  display: block;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: background 0.2s;
+}
+
+.mypage-sections a:hover {
+  background: #f0f0f0;
+}
