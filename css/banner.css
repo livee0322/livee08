@@ -1,0 +1,38 @@
+/* Banner wrapper */
+.banner-wrap{position:relative}
+.banner{
+  display:flex;gap:14px;padding:2px 8px 2px 16px;
+  overflow-x:auto;scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+}
+.banner::-webkit-scrollbar{display:none}
+
+/* 각 카드가 화면의 78%를 차지 → 좌우 살짝 보이게 */
+.banner-card{
+  flex:0 0 78%;
+  background:#f5f7fa;border:1px solid var(--line);
+  border-radius:16px;overflow:hidden;
+  scroll-snap-align:center;
+  display:grid;grid-template-columns:96px 1fr;gap:12px;
+  align-items:center;min-height:132px;
+}
+.banner-card .thumb{
+  width:96px;height:96px;border-radius:12px;margin-left:12px;
+  background:#dde3ea center/cover no-repeat;
+}
+.banner-card .body{padding:12px 12px 12px 0}
+.banner-card .title{font-weight:800;font-size:16px}
+.banner-card .desc{color:var(--sub);font-size:13px;margin-top:4px}
+
+/* 좌/우 네비(선택사항) — 아이콘은 JS에서 넣어도 되고 빈 버튼이어도 OK */
+.banner-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;border-radius:999px;border:1px solid var(--line);
+  background:#fff;color:#111;display:grid;place-items:center;
+  opacity:.95;
+}
+.banner-nav.prev{left:6px}
+.banner-nav.next{right:6px}
+@media (min-width:720px){
+  .banner-card{flex-basis:60%;min-height:140px}
+}
