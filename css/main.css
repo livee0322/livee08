@@ -1,187 +1,190 @@
-/* =========================
-   Livee v2.5 — MAIN CSS (unified)
-   ========================= */
+/* ===============================
+   Livee main.css (single source)
+   =============================== */
 
-/* --- Design Tokens --- */
+/* ---------- CSS 변수 ---------- */
 :root{
-  --bg:#ffffff;
-  --text:#101114;
-  --muted:#6b7280;
-  --line:#e6e9ef;
+  /* color */
+  --bg:#fff;
+  --text:#111;
+  --sub:#6B7280;              /* 중간 텍스트 */
+  --border:#E5E7EB;           /* 연한 테두리 */
+  --muted:#F5F7FA;            /* 연한 배경 */
 
-  /* 포인트 컬러 (블루+라벤더 톤) */
-  --pri:#5c7cfa;
-  --pri-weak:#e9edff;
+  /* point */
+  --primary:#3B82F6;          /* 파란 */
+  --lavender:#A78BFA;         /* 라벤더 */
 
-  --radius:16px;
-  --radius-sm:12px;
-  --radius-lg:22px;
+  /* layout */
+  --container-w: 980px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
 
-  /* 레이아웃 */
-  --container-max:1080px;
+  /* bars */
+  --appbar-h: 56px;
+  --topTabs-h: 56px;
+  --tabbar-h: 72px;           /* 하단 탭 고정 높이 */
 
-  /* 하단 탭 높이(컨텐츠 패딩 보정에도 사용) */
-  --tabbar-h:82px; /* 아이콘+레이블 기준 */
+  /* safe area */
+  --safe-b: env(safe-area-inset-bottom, 0px);
 }
 
-/* --- Base --- */
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
-body{font-family:SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo","Malgun Gothic",sans-serif; line-height:1.5}
-img{max-width:100%; display:block}
-a{color:inherit; text-decoration:none}
+/* ---------- 기본 ---------- */
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body{ height:100%; }
+html{ background:var(--bg); color:var(--text); }
+body{
+  margin:0;
+  font-family: SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  line-height:1.5;
+}
 
-/* 컨테이너 & 섹션 */
-.container{max-width:var(--container-max); margin:0 auto; padding:0 16px;}
+/* 링크 공통 */
+a{ color:inherit; text-decoration:none; }
 
-/* 섹션 기본 간격 */
-.section{margin:18px 0;}
-.section-head{display:flex; align-items:center; gap:10px; margin:6px 2px 10px;}
-.section-head h2{margin:0; font-size:22px;}
-.more{margin-left:auto; font-size:14px; color:var(--muted)}
+/* 컨테이너: 하단탭 높이만큼 패딩 확보(가려짐 방지) */
+.container{
+  max-width:var(--container-w);
+  margin:0 auto;
+  padding: 12px 16px calc(var(--tabbar-h) + var(--safe-b) + 24px);
+}
 
-/* =========================
-   헤더(Appbar)
-   ========================= */
+/* 섹션 */
+.section{ margin: 18px 0; }
+.section-head{
+  display:flex; align-items:center; gap:8px;
+  margin: 10px 2px 14px;
+}
+.section-head h2{
+  margin:0; font-size: clamp(18px, 4.3vw, 22px);
+}
+.section-head .more{
+  margin-left:auto; font-size:14px; color:var(--sub);
+}
+
+/* ---------- 헤더(AppBar) ---------- */
 .lv-appbar{
   position:sticky; top:0; z-index:30;
+  height:var(--appbar-h);
   display:flex; align-items:center; justify-content:space-between;
-  height:56px; padding:0 16px;
-  background:#fff; border-bottom:1px solid var(--line);
+  padding:0 16px; background:var(--bg);
+  border-bottom:1px solid var(--border);
 }
-.lv-title{font-size:22px; font-weight:800; letter-spacing:.2px}
-.lv-actions{display:flex; gap:10px}
+.lv-title{ font-size:20px; font-weight:800; letter-spacing:.2px; }
+.lv-actions{ display:flex; align-items:center; gap:10px; }
 .lv-action{
-  width:40px; height:40px; border-radius:12px;
+  width:36px; height:36px; border-radius:10px;
   display:grid; place-items:center;
-  color:var(--text);
+  color:#111; border:1px solid var(--border); background:#fff;
 }
-.lv-action i{font-size:22px; line-height:1}
+.lv-action i{ font-size:20px; line-height:1; }
 
-/* =========================
-   상단 탭 (흰배경/활성 포인트)
-   ========================= */
-.lv-topTabs{position:sticky; top:56px; z-index:29; background:#fff; border-bottom:1px solid var(--line)}
+/* ---------- 상단 탭 ---------- */
+.lv-topTabs{
+  position:sticky; top:var(--appbar-h); z-index:29;
+  background:var(--bg); border-bottom:1px solid var(--border);
+}
 .lv-topTabs__in{
-  display:flex; gap:8px; padding:10px 16px; overflow:auto;
+  display:flex; gap:10px; padding:10px 16px; overflow:auto;
   scrollbar-width:none;
 }
-.lv-topTabs__in::-webkit-scrollbar{display:none}
-.tab{
-  padding:8px 14px; border-radius:999px;
-  color:#111; white-space:nowrap;
+.lv-topTabs__in::-webkit-scrollbar{ display:none; }
+.lv-topTabs .tab{
+  padding:8px 14px; border-radius:999px; white-space:nowrap;
+  color:#111; background:transparent; border:0;
 }
-.tab.is-active{
-  color:var(--pri); background:var(--pri-weak);
+.lv-topTabs .tab.is-active{
+  color:#fff; background:linear-gradient(90deg,var(--primary),var(--lavender));
 }
 
-/* =========================
-   배너 (좌우 살짝 보이게)
-   ========================= */
-.banner-wrap{position:relative; margin:8px -8px 6px;}
+/* ---------- 배너 ---------- */
+/* 좌우 살짝 보이게(카드 폭 86%) / 높이 키움 */
+.banner-wrap{ margin:16px 0 24px; }
 .banner{
-  display:flex; gap:14px; padding:6px 8px 12px 8px;
+  display:flex; align-items:stretch; gap:14px;
   overflow-x:auto; scroll-snap-type:x mandatory;
+  padding: 4px 4px 10px;  /* 모바일 스크롤 편하게 */
 }
-.banner::-webkit-scrollbar{display:none}
-.banner-card{
-  flex:0 0 88%; /* 좌우가 약간 보이도록 폭 확대 */
-  min-height:160px; border-radius:22px;
-  padding:18px;
-  color:#0b0c0f; background:#eee;
-  scroll-snap-align:start;
-  border:1px solid var(--line);
+.banner::-webkit-scrollbar{ display:none; }
+.banner .card{
+  flex:0 0 86%;
+  background:#EDF2FF; border-radius:var(--radius-lg);
+  padding:22px; color:#111;
+  scroll-snap-align:center;
 }
-.banner-card h3{margin:6px 0 6px; font-size:22px}
-.banner-card p{margin:0; color:#1f2937}
+.banner .title{ font-size:22px; font-weight:800; margin:0 0 8px; }
+.banner .desc{ color:var(--sub); margin:0; }
+/* 좌/우 작은 버튼 모양 제거 */
+.banner-nav{ display:none; }
 
-/* 양옆 페이드 마스크(점 같은 장식 제거) */
-.banner-wrap::before,
-.banner-wrap::after{content:none}
-
-/* =========================
-   오늘의 라이브 라인업 (네이버 느낌)
-   ========================= */
-.list-vert{display:grid; gap:12px; margin-top:14px;}
-.item{
-  display:grid; grid-template-columns:112px 1fr; gap:12px;
-  border:1px solid var(--line); border-radius:14px; background:#fff;
-  padding:10px;
+/* ---------- 오늘의 라이브 라인업 (네이버 스타일) ---------- */
+.list-vert{ display:grid; gap:12px; }
+.list-vert .item{
+  display:grid; grid-template-columns: 84px 1fr; gap:12px;
+  border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:10px; background:#fff;
 }
-.item .thumb{
-  width:100%; aspect-ratio:1/1; border-radius:12px; object-fit:cover;
-  background:#f3f4f6;
+.list-vert .thumb{
+  width:84px; height:84px; object-fit:cover; border-radius:12px;
+  background:#eee;
 }
-.item .title{font-weight:700; margin:2px 0 4px}
-.item .meta{font-size:13px; color:var(--pri); font-weight:600} /* 날짜 포인트 */
+.list-vert .title{ font-weight:700; margin-top:2px; }
+.list-vert .meta{ font-size:13px; color:var(--sub); margin-top:4px; }
+.list-vert .meta .date{ color:var(--primary); } /* 포인트 색 날짜 */
 
-/* =========================
-   추천 공고 (오늘공구 느낌 / 가로 85%)
-   ========================= */
+/* 섹션 타이틀과 목록 사이 여백 */
+#home .section:first-child{ margin-top:8px; }
+#home .section .list-vert{ margin-top:8px; }
+
+/* ---------- 추천 공고 (톡딜-오늘공구 스타일) ---------- */
 .hscroll{
-  display:flex; gap:12px; padding:8px 0 6px 2px;
-  overflow-x:auto; scroll-snap-type:x proximity;
-  margin: 4px -8px 0; padding-right: 16px; /* 우측 여유 */
+  display:flex; gap:12px; overflow-x:auto; padding:4px 2px 2px 2px;
+  scroll-snap-type:x mandatory;
 }
-.hscroll::-webkit-scrollbar{display:none}
+.hscroll::-webkit-scrollbar{ display:none; }
 
 .card-mini{
-  flex:0 0 85%;
-  display:grid; grid-template-columns:108px 1fr; gap:12px;
-  border:1px solid var(--line); background:#fff; border-radius:16px;
+  flex:0 0 85%;                          /* 살짝 더 넓게 보이도록 */
+  display:grid; grid-template-columns: 96px 1fr; gap:10px;
+  border:1px solid var(--border); background:#fff;
+  border-radius:var(--radius-md);
   padding:10px; scroll-snap-align:center;
 }
-.mini-thumb{
-  width:100%; aspect-ratio:1/1; border-radius:12px; object-fit:cover; background:#f3f4f6;
+.card-mini .mini-thumb{
+  width:96px; height:96px; border-radius:12px; object-fit:cover; background:#eee;
 }
-.mini-body{display:flex; flex-direction:column; justify-content:center; min-width:0}
-.mini-title{font-weight:700; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.mini-meta{font-size:13px; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.card-mini .mini-title{ font-weight:700; }
+.card-mini .mini-meta{ font-size:13px; color:var(--sub); margin-top:6px; }
+.card-mini .mini-meta .price{ font-weight:700; color:#111; }
+.card-mini .mini-meta .due{ color:var(--primary); }
 
-/* 출연료 · 마감 한 줄 정렬 보장 */
-.mini-meta b{font-weight:700}
-
-/* =========================
-   빈 상태
-   ========================= */
-.lv-empty{
-  padding:18px 12px; text-align:center;
-  color:var(--muted); border:1px dashed var(--line); border-radius:12px;
-}
-
-/* =========================
-   하단 탭바 (고정 & 가림 방지)
-   ========================= */
+/* ---------- 하단 탭바 ---------- */
 .lv-tabbar{
   position:fixed; left:0; right:0; bottom:0; z-index:40;
-  background:#fff; border-top:1px solid var(--line);
-  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  background:#fff; border-top:1px solid var(--border);
 }
 .lv-tabbar__in{
+  height: calc(var(--tabbar-h) + var(--safe-b));
+  padding-bottom: var(--safe-b);
   display:grid; grid-template-columns:repeat(5,1fr);
-  gap:2px; padding:10px 8px 8px;
-  align-items:center;
 }
 .tbi{
-  height:64px; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  color:#6b7280; font-size:12px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; color:#6B7280; font-size:12px;
 }
-.tbi i{font-size:22px; line-height:1.1; margin-bottom:4px}
-.tbi.is-active{color:var(--pri)}
-.tbi.is-active i{color:var(--pri)}
+.tbi i{ font-size:22px; line-height:1; }
+.tbi.is-active{ color:var(--primary); }
 
-/* 컨텐츠가 하단탭에 가려지지 않도록 패딩 보정 */
-main{padding-bottom: calc(var(--tabbar-h) + 24px)}
+/* ---------- 유틸 ---------- */
+img{ max-width:100%; display:block; }
+hr{ border:none; border-top:1px solid var(--border); margin:16px 0; }
 
-/* =========================
-   반응형
-   ========================= */
+/* (의도치 않은 마커/불릿/장식 제거) */
+ul,ol{ list-style:none; padding:0; margin:0; }
+::marker{ content:''; }
+
+/* ---------- 반응형 ---------- */
 @media (min-width:720px){
-  .item{grid-template-columns:146px 1fr}
-  .card-mini{grid-template-columns:132px 1fr}
-  .banner-card{min-height:180px; flex-basis:70%}
-}
-
-@media (min-width:1024px){
-  .banner-card{min-height:200px; flex-basis:56%}
+  .list-vert{ grid-template-columns: 1fr 1fr; }
 }
