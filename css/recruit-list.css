@@ -46,15 +46,16 @@
 /* 본문 */
 .rl-body{
   min-width:0;
-  display:flex; flex-direction:column; justify-content:center; gap:2px;
+  display:flex; flex-direction:column; justify-content:center; gap:6px;
 }
 .rl-title{
-  font-weight:700; margin:2px 0 2px;
+  font-weight:700; margin:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .rl-meta{
   font-size:13px; color:var(--sub);
-  display:flex; flex-wrap:wrap; gap:6px; line-height:1.35; min-width:0;
+  display:flex; gap:10px; align-items:center; min-width:0; flex-wrap:wrap;
+  line-height:1.35;
 }
 .rl-meta span{white-space:nowrap}
 .rl-meta .date{color:var(--pri); font-weight:700}
