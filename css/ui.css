@@ -1,0 +1,66 @@
+:root{
+  --bg:#fff; --text:#111; --muted:#6b7280; --line:#e5e7eb;
+  --brand:#1d4ed8; --chip:#f1f5f9; --card:#f9fafb;
+  --shadow:0 6px 24px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"SUIT",system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Helvetica,Arial,"Noto Sans KR","Nanum Gothic",sans-serif}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+.container{padding:0 16px}
+
+/* ===== Appbar ===== */
+.appbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+.appbar .row{display:flex;align-items:center;height:56px;padding:0 12px;gap:12px}
+.appbar .logo{font-weight:800;font-size:18px;letter-spacing:-.2px}
+.appbar .spacer{flex:1}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);display:inline-grid;place-items:center;background:#fff}
+.icon-btn svg{width:18px;height:18px;stroke:#374151}
+
+/* ===== Top tabs ===== */
+.tabs{display:flex;gap:10px;overflow:auto;border-bottom:1px solid var(--line);padding:10px 12px 8px}
+.tabs .tab{padding:8px 10px;border-radius:999px;background:var(--chip);font-weight:600;color:#374151;white-space:nowrap}
+.tabs .tab.active{background:#111;color:#fff}
+
+/* ===== Banner (3롤링, 좌우 살짝 보이기) ===== */
+.banner-wrap{position:relative}
+.banner{display:flex;gap:12px;overflow:auto;padding:8px 4px 8px 16px;scroll-snap-type:x mandatory}
+.banner::-webkit-scrollbar{display:none}
+.banner-card{min-width:82%; /* 좌우 살짝 보이도록 82% */
+  scroll-snap-align:center;background:#fff;border:1px solid var(--line);
+  border-radius:16px;box-shadow:var(--shadow);padding:16px;display:flex;gap:12px;align-items:center}
+.banner-card .cover{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#eee}
+.banner-card .title{font-weight:800}
+.banner-card .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.banner-nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow)}
+.banner-nav.prev{left:8px}
+.banner-nav.next{right:8px}
+
+/* ===== Section heads ===== */
+.section{margin:18px 0}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:6px 4px 10px}
+.section-head h2{margin:0;font-size:18px;letter-spacing:-.3px}
+.section-head .more{font-weight:700;color:var(--brand)}
+
+/* ===== ‘오늘의 라이브 라인업’ (네이버식) ===== */
+.list-vert{display:flex;flex-direction:column;gap:12px;padding:0 2px}
+.item{display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:10px 4px}
+.item:last-child{border-bottom:none}
+.item .thumb{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#eee}
+.item .title{font-weight:800;letter-spacing:-.2px}
+.item .meta{font-size:13px;color:var(--muted);margin-top:2px}
+
+/* ===== ‘추천 공고’ (가로 스크롤 카드) ===== */
+.hscroll{display:flex;gap:12px;overflow:auto;padding:2px 2px 8px}
+.hscroll::-webkit-scrollbar{display:none}
+.card-mini{min-width:76%; background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);display:flex;gap:12px;padding:10px}
+.card-mini .mini-thumb{width:84px;height:84px;border-radius:14px;object-fit:cover;background:#eee}
+.card-mini .mini-title{font-weight:800;margin-bottom:4px}
+.card-mini .mini-meta{font-size:13px;color:var(--muted)}
+
+/* ===== Tabbar ===== */
+.tabbar{position:sticky;bottom:0;z-index:15;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 6px}
+.tbi{display:grid;place-items:center;gap:4px;font-size:12px;color:#374151}
+.tbi svg{width:20px;height:20px;stroke:#374151}
+.tbi.active{color:#111}
+.tbi.active svg{stroke:#111}
