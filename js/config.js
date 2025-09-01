@@ -1,18 +1,18 @@
-// /js/config.js
+// /livee08/js/config.js
 window.LIVEE_CONFIG = {
-  // ✅ 현재 Pages 레포 경로
   BASE_PATH: '/livee08',
-
-  // 백엔드 API 서버
   API_BASE: 'https://main-server-ekgr.onrender.com/api/v1',
 
-  // 리스트 엔드포인트(서버 라우터 규약과 일치)
+  // 기본 엔드포인트
   endpoints: {
+    // ⚠️ 서버 저장 상태가 draft/scheduled일 수도 있으니, 홈 리스트는 상태 필터를 빼거나(권장)
+    // recruit-test 라우터를 우선 시도하도록 구성
+    recruits: '/recruit-test?limit=20',
+    // 필요시 campaigns도 사용 가능: '/campaigns?type=recruit&limit=20'
     schedule: '/campaigns?type=recruit&status=published&limit=6',
-    products: '/campaigns?type=product&status=published&limit=6',
-    recruits: '/campaigns?type=recruit&status=published&limit=10'
+    products: '/campaigns?type=product&status=published&limit=6'
   },
 
-  // 탭 라벨
-  ui: { tabs: ['숏클립','쇼핑라이브','뉴스','이벤트','서비스'] }
+  // 디버그 스위치 (콘솔 로깅 on/off)
+  debug: true
 };
