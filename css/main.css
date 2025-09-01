@@ -98,25 +98,64 @@ a{ color:inherit; text-decoration:none; }
   color:#fff; background:linear-gradient(90deg,var(--primary),var(--lavender));
 }
 
-/* ---------- 배너 ---------- */
-/* 좌우 살짝 보이게(카드 폭 86%) / 높이 키움 */
-.banner-wrap{ margin:16px 0 24px; }
+/* ====== Banner (horizontal scroll, side peeking) ====== */
+.banner-wrap{
+  position: relative;
+  margin: 12px -12px 20px;         /* 좌우 여백을 줄여 카드가 화면 끝을 살짝 넘겨 보이게 */
+  overflow: visible;
+}
+
 .banner{
-  display:flex; align-items:stretch; gap:14px;
-  overflow-x:auto; scroll-snap-type:x mandatory;
-  padding: 4px 4px 10px;  /* 모바일 스크롤 편하게 */
+  display: flex;
+  gap: 14px;
+  padding: 0 12px;                 /* 스크린 좌우 여백 */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;   /* 스냅 스크롤 */
+  -webkit-overflow-scrolling: touch;
 }
 .banner::-webkit-scrollbar{ display:none; }
-.banner .card{
-  flex:0 0 86%;
-  background:#EDF2FF; border-radius:var(--radius-lg);
-  padding:22px; color:#111;
-  scroll-snap-align:center;
+
+.banner-card{
+  scroll-snap-align: start;
+  flex: 0 0 86%;                   /* 한 장이 화면의 약 86% → 옆 카드가 살짝 보임 */
+  min-width: 86%;
+  border-radius: 22px;
+  padding: 22px 20px 24px;
+  color: #000;
+  background: #eee;
+  border: 1px solid rgba(0,0,0,.06);
 }
-.banner .title{ font-size:22px; font-weight:800; margin:0 0 8px; }
-.banner .desc{ color:var(--sub); margin:0; }
-/* 좌/우 작은 버튼 모양 제거 */
-.banner-nav{ display:none; }
+.banner-card h3{
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+}
+.banner-card p{
+  margin: 0;
+  font-size: 15px;
+  color: #222;
+  opacity: .85;
+}
+
+/* 좌/우 네비 버튼 (선택) */
+.banner-nav{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  z-index: 2;
+}
+.banner-nav.prev{ left: 6px; }
+.banner-nav.next{ right: 6px; }
+.banner-nav i{ font-size: 18px; color:#333; }
 
 /* ---------- 오늘의 라이브 라인업 (네이버 스타일) ---------- */
 .list-vert{ display:grid; gap:12px; }
