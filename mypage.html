@@ -3,33 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee — 마이페이지</title>
-
-  <!-- SUIT & Remix Icon -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
-
-  <!-- 메인 CSS(단일 관리) -->
+  <title>마이페이지 - Livee</title>
   <link rel="stylesheet" href="css/main.css" />
-  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="css/mypage.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" />
 </head>
 <body>
-  <!-- 앱 셸 -->
+  <!-- 공통 헤더/탭 -->
   <header id="appbar"></header>
-  <!-- 마이페이지는 상단 탭 생략 가능. 필요하면 아래 주석 해제 -->
-  <!-- <nav id="top-tabs"></nav> -->
+  <nav id="top-tabs"></nav>
 
-  <main class="container" style="padding-bottom: calc(72px + 16px);">
-    <section class="section">
-      <div id="mypage-root" class="mp"></div>
+  <main class="mypage container">
+    <section class="profile">
+      <h2>내 프로필</h2>
+      <div class="profile-card">
+        <img src="default-profile.png" alt="프로필" />
+        <div>
+          <div class="name">사용자 이름</div>
+          <div class="role">브랜드 / 쇼호스트</div>
+          <button class="btn">프로필 수정</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="mypage-sections">
+      <!-- 로그인된 역할에 따라 다르게 표시 -->
+      <div class="brand-only">
+        <h3>브랜드 전용 메뉴</h3>
+        <ul>
+          <li><a href="campaigns.html">내 캠페인</a></li>
+          <li><a href="#">지원자 현황</a></li>
+          <li><a href="#">제안하기</a></li>
+          <li><a href="#">결제 관리</a></li>
+          <li><a href="#">서비스 관리</a></li>
+        </ul>
+      </div>
+
+      <div class="host-only">
+        <h3>쇼호스트 전용 메뉴</h3>
+        <ul>
+          <li><a href="portfolio-edit.html">내 포트폴리오</a></li>
+          <li><a href="#">내 지원 내역</a></li>
+          <li><a href="#">받은 제안</a></li>
+          <li><a href="#">찜한 공고</a></li>
+          <li><a href="#">정산 내역</a></li>
+        </ul>
+      </div>
     </section>
   </main>
 
   <footer id="bottom-tabs"></footer>
 
-  <!-- 설정 & UI 모듈 & 마이페이지 렌더 -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/mypage.js"></script>
+  <script>
+    // 역할에 따라 UI 토글 (예: localStorage.role 값)
+    const role = localStorage.getItem('liveeRole');
+    document.querySelector('.brand-only').style.display = role === 'brand' ? '' : 'none';
+    document.querySelector('.host-only').style.display = role === 'showhost' ? '' : 'none';
+  </script>
 </body>
 </html>
