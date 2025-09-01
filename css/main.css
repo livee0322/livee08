@@ -1,102 +1,187 @@
-/* ========== Livee v2.5 — main.css (single source of truth) ========== */
+/* =========================
+   Livee v2.5 — MAIN CSS (unified)
+   ========================= */
 
-/* --- Design tokens --- */
+/* --- Design Tokens --- */
 :root{
   --bg:#ffffff;
-  --text:#111;
-  --sub:#6b7280;
-  --line:#e5e7eb;
-  --line-soft:#f1f5f9;
+  --text:#101114;
+  --muted:#6b7280;
+  --line:#e6e9ef;
 
-  --primary:#3b82f6;     /* 파랑 */
-  --accent:#8b5cf6;      /* 라벤더 */
-  --pill:#f3f4f6;
+  /* 포인트 컬러 (블루+라벤더 톤) */
+  --pri:#5c7cfa;
+  --pri-weak:#e9edff;
 
-  --radius:18px;
-  --radius-sm:14px;
+  --radius:16px;
+  --radius-sm:12px;
+  --radius-lg:22px;
 
-  --tabbar-h:72px;
-  --container-w:1080px;
+  /* 레이아웃 */
+  --container-max:1080px;
+
+  /* 하단 탭 높이(컨텐츠 패딩 보정에도 사용) */
+  --tabbar-h:82px; /* 아이콘+레이블 기준 */
 }
 
-/* --- Reset / base --- */
+/* --- Base --- */
 *{box-sizing:border-box}
-html,body{height:100%}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
-body{font-family:SUIT,system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans KR','Malgun Gothic',sans-serif; line-height:1.5}
-a{color:inherit;text-decoration:none}
-img{display:block;max-width:100%}
+body{font-family:SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo","Malgun Gothic",sans-serif; line-height:1.5}
+img{max-width:100%; display:block}
+a{color:inherit; text-decoration:none}
 
-/* 유틸 */
-.container{max-width:var(--container-w);margin:0 auto;padding:0 16px 24px;
-/* 하단탭에 안 가리도록 여유 */
-padding-bottom:calc(var(--tabbar-h) + 28px);
+/* 컨테이너 & 섹션 */
+.container{max-width:var(--container-max); margin:0 auto; padding:0 16px;}
+
+/* 섹션 기본 간격 */
+.section{margin:18px 0;}
+.section-head{display:flex; align-items:center; gap:10px; margin:6px 2px 10px;}
+.section-head h2{margin:0; font-size:22px;}
+.more{margin-left:auto; font-size:14px; color:var(--muted)}
+
+/* =========================
+   헤더(Appbar)
+   ========================= */
+.lv-appbar{
+  position:sticky; top:0; z-index:30;
+  display:flex; align-items:center; justify-content:space-between;
+  height:56px; padding:0 16px;
+  background:#fff; border-bottom:1px solid var(--line);
 }
-.section{margin:22px 0}
-.section-head{display:flex;align-items:center;margin:0 2px 12px}
-.section-head h2{margin:0;font-size:22px}
-.more{margin-left:auto;color:var(--sub);font-size:14px}
+.lv-title{font-size:22px; font-weight:800; letter-spacing:.2px}
+.lv-actions{display:flex; gap:10px}
+.lv-action{
+  width:40px; height:40px; border-radius:12px;
+  display:grid; place-items:center;
+  color:var(--text);
+}
+.lv-action i{font-size:22px; line-height:1}
 
-/* --- Appbar --- */
-.lv-appbar{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
-.lv-title{font-weight:800;font-size:22px;letter-spacing:.2px}
-.lv-actions{display:flex;gap:10px}
-.lv-action{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:#fff}
-.lv-action i{font-size:19px;color:#374151}
-
-/* --- Top tabs (흰배경 / 활성=파랑+라벤더) --- */
-.lv-topTabs{position:sticky;top:57px;z-index:35;background:#fff;border-bottom:1px solid var(--line)}
-.lv-topTabs__in{display:flex;gap:10px;padding:10px 16px;overflow:auto}
+/* =========================
+   상단 탭 (흰배경/활성 포인트)
+   ========================= */
+.lv-topTabs{position:sticky; top:56px; z-index:29; background:#fff; border-bottom:1px solid var(--line)}
+.lv-topTabs__in{
+  display:flex; gap:8px; padding:10px 16px; overflow:auto;
+  scrollbar-width:none;
+}
 .lv-topTabs__in::-webkit-scrollbar{display:none}
-.tab{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid transparent;color:#111}
-.tab.is-active{color:var(--primary);border-color:#e0e7ff;background:#eff6ff}
+.tab{
+  padding:8px 14px; border-radius:999px;
+  color:#111; white-space:nowrap;
+}
+.tab.is-active{
+  color:var(--pri); background:var(--pri-weak);
+}
 
-/* --- Banner (좌우 살짝 보이고, 위아래 도트 제거) --- */
-.banner-wrap{position:relative}
-.banner{display:flex;gap:14px;overflow-x:auto;padding:0 16px;scroll-snap-type:x mandatory}
+/* =========================
+   배너 (좌우 살짝 보이게)
+   ========================= */
+.banner-wrap{position:relative; margin:8px -8px 6px;}
+.banner{
+  display:flex; gap:14px; padding:6px 8px 12px 8px;
+  overflow-x:auto; scroll-snap-type:x mandatory;
+}
 .banner::-webkit-scrollbar{display:none}
-/* 좌우 살짝 보이게 – 카드 88% 폭 */
-.banner-card{flex:0 0 88%; height:180px; border-radius:26px; padding:24px;
- color:#111; display:flex; flex-direction:column; justify-content:flex-end; scroll-snap-align:start}
-.banner-title{font-size:22px;font-weight:800;margin:0 0 6px}
-.banner-sub{font-size:15px;color:#111;opacity:.85;margin:0}
-/* 도트 같은 가상요소 무력화 */
-.banner::before,.banner::after{content:none !important}
+.banner-card{
+  flex:0 0 88%; /* 좌우가 약간 보이도록 폭 확대 */
+  min-height:160px; border-radius:22px;
+  padding:18px;
+  color:#0b0c0f; background:#eee;
+  scroll-snap-align:start;
+  border:1px solid var(--line);
+}
+.banner-card h3{margin:6px 0 6px; font-size:22px}
+.banner-card p{margin:0; color:#1f2937}
 
-/* --- “오늘의 라이브 라인업” (네이버 느낌) --- */
-.list-vert{display:grid;gap:12px;margin-top:8px}
-.item{display:grid;grid-template-columns:112px 1fr;gap:12px;border:1px solid var(--line);background:#fff;border-radius:var(--radius-sm);padding:10px}
-.thumb{width:100%;aspect-ratio:1/1;border-radius:14px;object-fit:cover;background:#f3f4f6}
-.title{font-weight:700;font-size:16px}
-.meta{font-size:13px;color:var(--sub);margin-top:2px}
-.meta .date{color:var(--primary);font-weight:600}
+/* 양옆 페이드 마스크(점 같은 장식 제거) */
+.banner-wrap::before,
+.banner-wrap::after{content:none}
 
-/* --- 추천 공고 (오늘공구 카드 톤) --- */
-.hscroll{display:flex;overflow-x:auto;gap:12px;padding:2px 2px 2px 2px;scroll-snap-type:x proximity}
+/* =========================
+   오늘의 라이브 라인업 (네이버 느낌)
+   ========================= */
+.list-vert{display:grid; gap:12px; margin-top:14px;}
+.item{
+  display:grid; grid-template-columns:112px 1fr; gap:12px;
+  border:1px solid var(--line); border-radius:14px; background:#fff;
+  padding:10px;
+}
+.item .thumb{
+  width:100%; aspect-ratio:1/1; border-radius:12px; object-fit:cover;
+  background:#f3f4f6;
+}
+.item .title{font-weight:700; margin:2px 0 4px}
+.item .meta{font-size:13px; color:var(--pri); font-weight:600} /* 날짜 포인트 */
+
+/* =========================
+   추천 공고 (오늘공구 느낌 / 가로 85%)
+   ========================= */
+.hscroll{
+  display:flex; gap:12px; padding:8px 0 6px 2px;
+  overflow-x:auto; scroll-snap-type:x proximity;
+  margin: 4px -8px 0; padding-right: 16px; /* 우측 여유 */
+}
 .hscroll::-webkit-scrollbar{display:none}
-/* 카드 폭 85%로 키우고 그림자 제거, 연한 테두리 */
-.card-mini{flex:0 0 85%; display:grid; grid-template-columns:1fr 110px; gap:12px; padding:12px;
- border:1px solid var(--line); border-radius:18px; background:#fff; scroll-snap-align:center}
-.mini-thumb{width:110px;height:80px;border-radius:14px;object-fit:cover;background:#f3f4f6}
-.mini-body{min-width:0}
-.mini-title{font-weight:700;font-size:16px; margin:4px 0 6px}
-.mini-meta{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mini-meta .price{font-weight:700;color:#111}
-.mini-meta .close{color:var(--primary);font-weight:600}
 
-/* --- Tabbar --- */
-.lv-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid var(--line)}
-.lv-tabbar__in{height:var(--tabbar-h);display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
-.tbi{display:grid;place-items:center;gap:4px;color:#6b7280;font-size:12px}
-.tbi i{font-size:22px}
-.tbi.is-active{color:var(--primary)}
-.tbi.is-active i{color:var(--primary)}
+.card-mini{
+  flex:0 0 85%;
+  display:grid; grid-template-columns:108px 1fr; gap:12px;
+  border:1px solid var(--line); background:#fff; border-radius:16px;
+  padding:10px; scroll-snap-align:center;
+}
+.mini-thumb{
+  width:100%; aspect-ratio:1/1; border-radius:12px; object-fit:cover; background:#f3f4f6;
+}
+.mini-body{display:flex; flex-direction:column; justify-content:center; min-width:0}
+.mini-title{font-weight:700; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.mini-meta{font-size:13px; color:#374151; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
-/* --- Responsive tweaks --- */
+/* 출연료 · 마감 한 줄 정렬 보장 */
+.mini-meta b{font-weight:700}
+
+/* =========================
+   빈 상태
+   ========================= */
+.lv-empty{
+  padding:18px 12px; text-align:center;
+  color:var(--muted); border:1px dashed var(--line); border-radius:12px;
+}
+
+/* =========================
+   하단 탭바 (고정 & 가림 방지)
+   ========================= */
+.lv-tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  background:#fff; border-top:1px solid var(--line);
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+}
+.lv-tabbar__in{
+  display:grid; grid-template-columns:repeat(5,1fr);
+  gap:2px; padding:10px 8px 8px;
+  align-items:center;
+}
+.tbi{
+  height:64px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color:#6b7280; font-size:12px;
+}
+.tbi i{font-size:22px; line-height:1.1; margin-bottom:4px}
+.tbi.is-active{color:var(--pri)}
+.tbi.is-active i{color:var(--pri)}
+
+/* 컨텐츠가 하단탭에 가려지지 않도록 패딩 보정 */
+main{padding-bottom: calc(var(--tabbar-h) + 24px)}
+
+/* =========================
+   반응형
+   ========================= */
 @media (min-width:720px){
-  .banner-card{height:200px}
-  .item{grid-template-columns:136px 1fr}
-  .thumb{aspect-ratio:16/9}
-  .card-mini{grid-template-columns:1fr 128px}
-  .mini-thumb{width:128px;height:88px}
+  .item{grid-template-columns:146px 1fr}
+  .card-mini{grid-template-columns:132px 1fr}
+  .banner-card{min-height:180px; flex-basis:70%}
+}
+
+@media (min-width:1024px){
+  .banner-card{min-height:200px; flex-basis:56%}
 }
