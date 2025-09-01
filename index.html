@@ -1,73 +1,75 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee v2.5 — Home</title>
+  <title>Livee — v2.5 TEST</title>
 
   <!-- 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-
-  <!-- 단일 메인 CSS -->
+  <!-- 통합 CSS (한 파일) -->
   <link rel="stylesheet" href="css/main.css" />
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
 
-  <!-- 상단탭/하단탭은 ui.js가 주입 -->
-  <header id="appbar"></header>
-  <nav id="top-tabs" aria-label="상단 탭"></nav>
+  <!-- 상단 앱바 -->
+  <header class="appbar" role="banner" aria-label="앱바">
+    <div class="appbar__in">
+      <div class="appbar__title">라이비</div>
+      <nav class="appbar__icons" aria-label="빠른 액션">
+        <button class="ic" aria-label="알림">🔔</button>
+        <button class="ic" aria-label="검색">🔎</button>
+        <button class="ic" aria-label="로그아웃">↩︎</button>
+      </nav>
+    </div>
+  </header>
 
-  <main id="page" class="container" role="main" aria-live="polite">
+  <!-- 상단 탭 -->
+  <nav class="topTabs" role="navigation" aria-label="상단 탭">
+    <div class="topTabs__in">
+      <a class="topTab is-active" href="#/home">숏클립</a>
+      <a class="topTab" href="#/live">쇼핑라이브</a>
+      <a class="topTab" href="#/news">뉴스</a>
+      <a class="topTab" href="#/event">이벤트</a>
+      <a class="topTab" href="#/service">서비스</a>
+    </div>
+  </nav>
 
-    <!-- 배너(데이터는 아래 script 내에서 관리) -->
-    <section class="section" aria-label="프로모션">
-      <div class="banner-wrap">
-        <button class="banner-nav prev" aria-label="이전">‹</button>
-        <div id="banner" class="banner"></div>
-        <button class="banner-nav next" aria-label="다음">›</button>
-      </div>
-    </section>
+  <!-- 배너 -->
+  <section class="section" aria-label="프로모션 배너">
+    <div class="bannerWrap">
+      <button class="bannerNav prev" aria-label="이전 배너">‹</button>
+      <div id="banner" class="banner"></div>
+      <button class="bannerNav next" aria-label="다음 배너">›</button>
+    </div>
+  </section>
 
-    <!-- 오늘의 라이브 라인업 -->
-    <section class="section">
-      <div class="section-head">
-        <h2>오늘의 라이브 라인업</h2>
-        <a class="more" href="#">더보기</a>
-      </div>
-      <div id="lineup" class="lineup"></div>
-    </section>
+  <!-- 홈 섹션(여기에 리스트가 렌더됨) -->
+  <main id="home" class="container" role="main" aria-live="polite"></main>
 
-    <!-- 추천 공고 -->
-    <section class="section">
-      <div class="section-head">
-        <h2>추천 공고</h2>
-        <a class="more" href="#">더보기</a>
-      </div>
-      <div id="recruits" class="recruits-hscroll"></div>
-    </section>
+  <!-- 하단 탭 -->
+  <footer class="tabbar" role="contentinfo" aria-label="하단 탭">
+    <a class="tbi is-active" href="#/home"><span>홈</span></a>
+    <a class="tbi" href="recruit-new.html"><span>모집캠페인</span></a>
+    <a class="tbi" href="#/library"><span>라이브러리</span></a>
+    <a class="tbi" href="#/portfolios"><span>인플루언서</span></a>
+    <a class="tbi" href="login.html"><span>마이페이지</span></a>
+  </footer>
 
-  </main>
-
-  <footer id="tabbar" aria-label="하단 탭"></footer>
-
-  <!-- 설정 (API_BASE 등) 필요 시 사용 -->
-  <script src="js/config.js"></script>
-
-  <!-- 공통 UI 모듈 -->
-  <script src="js/ui.js"></script>
-
-  <!-- 홈 렌더 (배너/라인업/공고) -->
+  <!-- 배너 데이터(원하는 문구 여기서 관리) -->
   <script>
-    // ===== 배너 데이터: 색상 + 텍스트(간단 문구) =====
     window.LIVEE_BANNERS = [
-      { color: "#F3F6FF", title: "베타 피드백 모집", desc: "여러분의 의견이 서비스 품질을 높여요" },
-      { color: "#FFF5F2", title: "신규 브랜드 온보딩", desc: "지금 등록하면 노출 우선 혜택" },
-      { color: "#F6FFF5", title: "라이브 페스티벌", desc: "이번 주말, 특별 라인업 공개!" },
-      { color: "#FAF7FF", title: "인플루언서 초대", desc: "프로필 채우고 기회 잡기" },
-      { color: "#F9FBFC", title: "파트너 안내", desc: "브랜드-쇼호스트 가이드 확인" }
+      { id: 1, title: '베타 피드백 모집', desc: '여러분의 의견을 들려주세요', color: '#eef5ff' },
+      { id: 2, title: '신규 기능 오픈',   desc: '캘린더/라인업 개선',      color: '#f9f5ff' },
+      { id: 3, title: '브랜드 입점 혜택', desc: '9월 한정 프로모션',       color: '#fff7ee' },
+      { id: 4, title: '인플루언서 추천',  desc: '검증된 쇼호스트 매칭',      color: '#f0fff6' },
     ];
   </script>
-  <script src="js/main.js"></script>
+
+  <!-- 스크립트 로딩 순서 매우 중요 -->
+  <script defer src="js/config.js"></script>
+  <script defer src="js/banner.js"></script>
+  <script defer src="js/main.js"></script>
 </body>
 </html>
