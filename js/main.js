@@ -1,11 +1,11 @@
-/* Livee Home (TEST) — recruit-test 기반
- * - GET {API_BASE}/recruit-test?status=published
- * - 권한/토큰 불필요, 절대경로 사용
+/* Livee Home (TEST+Fallback)
+ * 1) GET {API_BASE}/recruit-test?status=published
+ * 2) 404 또는 빈 리스트면  GET {API_BASE}/campaigns?type=recruit&status=published 로 폴백
  */
 (() => {
   const $ = (s) => document.querySelector(s);
 
-  // ===== config =====
+  // ==== config ====
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   let BASE_PATH = CFG.BASE_PATH || '';
@@ -13,13 +13,14 @@
   if (BASE_PATH === '/') BASE_PATH = '';
 
   const EP = CFG.endpoints || {};
-  const EP_RECRUITS = EP.recruits || '/recruit-test?status=published&limit=20';
+  const EP_PRIMARY   = EP.recruits || '/recruit-test?status=published&limit=20';
+  const EP_FALLBACK  = '/campaigns?type=recruit&status=published&limit=20';
 
-  // 안전한 썸네일(없으면 picsum)
-  const thumbOr = (src, seed='lv') =>
-    src || `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
+  // 안전 썸네일
+  const pic = (seed, w=640, h=360) => `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
+  const thumbOr = (src, seed='lv') => src || pic(seed);
 
-  // ===== utils =====
+  // utils
   const pad2 = (n) => String(n).padStart(2, '0');
   const fmtDate = (iso) => {
     if (!iso) return '';
@@ -35,49 +36,49 @@
     return `${day}일 ${hm}`.trim();
   };
 
-  // ===== fetch =====
-  async function fetchRecruits() {
-    // 절대 URL 보장
-    const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
-    console.debug('[HOME] fetch recruits:', url);
+  // fetch helper
+  async function callList(path) {
+    const url = `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
+    console.debug('[HOME] fetch:', url);
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    let data;
+    try { data = await res.json(); } catch { data = {}; }
 
-    try {
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      const data = await res.json().catch(() => ({}));
+    console.debug('[HOME] status:', res.status, 'payload:', data);
+    const list =
+      (Array.isArray(data) && data) ||
+      data.items || data.data?.items ||
+      data.docs  || data.data?.docs  || [];
 
-      console.debug('[HOME] response status:', res.status, 'payload:', data);
-
-      if (!res.ok || data.ok === false) {
-        throw new Error(data.message || `HTTP_${res.status}`);
-      }
-
-      // 다양한 포맷 호환
-      const list =
-        (Array.isArray(data) && data) ||
-        data.items || data.data?.items ||
-        data.docs  || data.data?.docs  || [];
-
-      // 표준화
-      const items = list.map((c, i) => ({
-        id: c.id || c._id || `${i}`,
-        title: c.title || c.recruit?.title || '(제목 없음)',
-        thumb: c.thumbnailUrl || c.coverImageUrl || '',
-        closeAt: c.closeAt,
-        shootDate: c.recruit?.shootDate,
-        shootTime: c.recruit?.shootTime,
-        pay: c.recruit?.pay,
-        payNegotiable: !!c.recruit?.payNegotiable,
-      }));
-
-      console.debug('[HOME] normalized recruits:', items);
-      return items;
-    } catch (err) {
-      console.warn('[HOME] fetch recruits error:', err);
-      return [];
-    }
+    return { res, list, url, raw: data };
   }
 
-  // ===== templates =====
+  async function fetchRecruits() {
+    // 1차: /recruit-test
+    let { res, list, url, raw } = await callList(EP_PRIMARY);
+    let source = 'primary';
+    // 404 또는 리스트가 비어있으면 폴백
+    if (res.status === 404 || list.length === 0) {
+      console.warn('[HOME] primary empty/404. fallback to /campaigns');
+      ({ res, list, url, raw } = await callList(EP_FALLBACK));
+      source = 'fallback';
+    }
+
+    const items = list.map((c, i) => ({
+      id: c.id || c._id || `${i}`,
+      title: c.title || c.recruit?.title || '(제목 없음)',
+      thumb: c.thumbnailUrl || c.coverImageUrl || '',
+      closeAt: c.closeAt,
+      shootDate: c.recruit?.shootDate,
+      shootTime: c.recruit?.shootTime,
+      pay: c.recruit?.pay,
+      payNegotiable: !!c.recruit?.payNegotiable,
+    }));
+
+    return { items, meta: { status: res.status, url, source, count: items.length }, raw };
+  }
+
+  // templates
   const metaForLineup = (it) => {
     const pay = it.payNegotiable ? '협의 가능'
               : (it.pay ? `${Number(it.pay).toLocaleString('ko-KR')}원` : '모집중');
@@ -148,32 +149,23 @@
       </div>`;
   }
 
-  function tplPortfoliosStatic() {
-    const samples = [
-      { name:"최예나", years:5, intro:"뷰티 방송 전문", region:"서울" },
-      { name:"김소라", years:3, intro:"테크/라이프 쇼호스트", region:"부산" },
-      { name:"박민주", years:7, intro:"푸드 전문", region:"서울" },
-      { name:"이지수", years:1, intro:"뷰티 쇼호스트", region:"대구" },
-    ];
+  function tplDebug(meta) {
+    // 테스트용: 화면 맨 아래 작은 디버그 박스
+    const m = meta || {};
     return `
-      <div class="grid grid-2">
-        ${samples.map(p=>`
-          <article class="card">
-            <img class="cover" src="${thumbOr('', `pf-${p.name}`)}" alt="포트폴리오 썸네일"/>
-            <div class="body">
-              <div class="title">${p.name}</div>
-              <div class="meta">경력 ${p.years}년 · ${p.intro} (${p.region})</div>
-            </div>
-          </article>
-        `).join('')}
-      </div>`;
+      <div style="margin:12px 0;padding:8px;border:1px dashed #ccc;border-radius:8px;font-size:12px;color:#555;word-break:break-all">
+        <div><b>endpoint</b>: ${m.url || '-'}</div>
+        <div><b>status</b>: ${m.status ?? '-'}</div>
+        <div><b>source</b>: ${m.source || '-'}</div>
+        <div><b>count</b>: ${m.count ?? '-'}</div>
+      </div>
+    `;
   }
 
-  // ===== render =====
+  // render
   async function renderHome() {
-    const recruits = await fetchRecruits();
+    const { items: recruits, meta } = await fetchRecruits();
 
-    // 오늘의 라인업: 미래(= 지금 이후) 시작 기준 상위 2개
     const now = new Date();
     const upcoming = recruits
       .filter(r => r.shootDate)
@@ -203,8 +195,19 @@
 
       <section class="section">
         <div class="section-head"><h2>추천 인플루언서</h2><a class="more" href="#">더보기</a></div>
-        ${tplPortfoliosStatic()}
+        <div class="grid grid-2">
+          <article class="card">
+            <img class="cover" src="${pic('pf-1')}" alt="포트폴리오 썸네일"/>
+            <div class="body"><div class="title">최예나</div><div class="meta">경력 5년 · 뷰티 방송 전문 (서울)</div></div>
+          </article>
+          <article class="card">
+            <img class="cover" src="${pic('pf-2')}" alt="포트폴리오 썸네일"/>
+            <div class="body"><div class="title">김소라</div><div class="meta">경력 3년 · 테크/라이프 쇼호스트 (부산)</div></div>
+          </article>
+        </div>
       </section>
+
+      ${tplDebug(meta)}
     `;
   }
 
