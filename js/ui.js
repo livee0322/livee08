@@ -1,36 +1,44 @@
-<script>
+// 상단/하단 공통 UI 모듈
 (() => {
-  const shell = document.getElementById('app-shell');
-  shell.innerHTML = `
-    <header class="lv-appbar">
-      <div class="row">
-        <div class="lv-logo">라이비</div>
-        <div class="lv-spacer"></div>
-        <button class="lv-ico" title="알림">🔔</button>
-        <button class="lv-ico" title="검색">🔎</button>
-        <button class="lv-ico" title="로그아웃">↩️</button>
-      </div>
-    </header>
+  const $ = (s, d=document) => d.querySelector(s);
 
-    <nav class="lv-top-tabs" role="navigation" aria-label="상단 탭">
-      <div class="in">
-        <a class="lv-tab active" href="#/home">숏클립</a>
+  // Appbar
+  $('#appbar').innerHTML = `
+    <div class="lv-appbar">
+      <div class="lv-appbar__in">
+        <div class="lv-appbar__title">라이비</div>
+        <div class="lv-appbar__icons">
+          <button class="lv-ic" aria-label="알림">🔔</button>
+          <button class="lv-ic" aria-label="검색">🔎</button>
+          <button class="lv-ic" aria-label="로그아웃">↩︎</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Top tabs
+  $('#top-tabs').innerHTML = `
+    <div class="lv-topTabs">
+      <div class="lv-topTabs__in">
+        <a class="lv-tab is-active" href="#/home">숏클립</a>
         <a class="lv-tab" href="#/live">쇼핑라이브</a>
         <a class="lv-tab" href="#/news">뉴스</a>
         <a class="lv-tab" href="#/event">이벤트</a>
         <a class="lv-tab" href="#/service">서비스</a>
       </div>
-    </nav>
+    </div>
+  `;
 
-    <footer class="tabbar">
-      <div class="in">
-        <a class="tbi active" href="#/home"><i>🏠</i>홈</a>
-        <a class="tbi" href="recruit-new.html"><i>📅</i>모집캠페인</a>
-        <a class="tbi" href="#/library"><i>🔖</i>라이브러리</a>
-        <a class="tbi" href="#/portfolios"><i>👤</i>인플루언서</a>
-        <a class="tbi" href="login.html"><i>⚙️</i>마이</a>
+  // Bottom tabbar
+  $('#tabbar').innerHTML = `
+    <div class="lv-tabbar">
+      <div class="lv-tabbar__in">
+        <a class="lv-tbi is-active" href="#/home">홈</a>
+        <a class="lv-tbi" href="recruit-new.html">모집캠페인</a>
+        <a class="lv-tbi" href="#/library">라이브러리</a>
+        <a class="lv-tbi" href="#/portfolios">인플루언서</a>
+        <a class="lv-tbi" href="login.html">마이페이지</a>
       </div>
-    </footer>
+    </div>
   `;
 })();
-</script>
