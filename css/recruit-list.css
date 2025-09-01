@@ -1,99 +1,76 @@
-/* ===== Recruit List (rl-) — refreshed ===== */
-
-/* 공통 */
+/* ===== Recruit List (rl-) ===== */
 :root{
-  --pri:#3b82f6;          /* 포인트 파랑 */
-  --pri-weak:#e8f1ff;     /* 연한 포인트 배경 */
-  --txt:#111827;
-  --muted:#6b7280;
-  --line:#e5e7eb;
-  --card:#fff;
-  --radius:14px;
+  --pri:#437BFF; --pri-weak:#EDF3FF;
+  --txt:#111; --sub:#6b7280; --line:#e5e7eb;
 }
 
-/* 상단 툴바 */
-.toolbar{
-  display:flex; gap:12px; align-items:center; justify-content:space-between;
-  margin:8px 0 14px;
-}
-.rl-controls{display:flex; gap:8px; align-items:center; flex:1}
-.rl-controls .input{
-  flex:1 1 auto; min-width:0; height:40px; padding:0 12px;
-  border:1.5px solid var(--line); border-radius:10px; background:#fff;
-  font-size:14px; color:var(--txt); outline:none;
-  transition:border-color .15s ease;
-}
-.rl-controls .input:focus{border-color:var(--pri); box-shadow:0 0 0 2px color-mix(in srgb,var(--pri) 15%, transparent)}
-.rl-controls .select{
-  height:40px; padding:0 10px; border:1.5px solid var(--line);
-  border-radius:10px; background:#fff; color:var(--txt);
-}
-
-/* 필터 칩 */
-.chips{display:flex; gap:8px; overflow:auto; padding:2px 0 6px}
-.chip{
-  padding:8px 12px; border-radius:999px; border:1px solid var(--line);
-  background:#fff; color:#333; white-space:nowrap; font-weight:600;
-}
+/* 툴바 */
+.toolbar{display:flex; gap:12px; align-items:center; justify-content:space-between; margin:8px 0 14px}
+.chips{display:flex; gap:8px; overflow:auto; padding:2px 0}
+.chip{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; color:#333; white-space:nowrap}
 .chip.is-active{background:var(--pri-weak); color:var(--pri); border-color:transparent}
 
-/* 리스트 */
-.rl-list{display:flex; flex-direction:column; gap:12px}
+.rl-controls{display:flex; gap:8px; align-items:center}
+.input{height:40px; padding:0 12px; border:2px solid var(--pri); border-radius:12px; background:#fff; min-width:46vw}
+.select{height:40px; padding:0 12px; border:1px solid var(--line); border-radius:12px; background:#fff}
 
-/* 카드 */
+/* 리스트 기본: 상속된 위험한 줄바꿈 정책 무력화 */
+.rl-list, .rl-list *{
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+
+/* 카드 리스트 */
+.rl-list{display:flex; flex-direction:column; gap:12px}
 .rl-card{
-  display:grid; grid-template-columns:112px 1fr auto; gap:12px; align-items:center;
-  border:1px solid var(--line); border-radius:var(--radius); padding:12px; background:var(--card);
+  display:grid; grid-template-columns:112px 1fr auto;
+  gap:12px; align-items:center;
+  padding:12px; background:#fff;
+  border:1px solid var(--line); border-radius:14px;
 }
-.rl-thumb{
-  width:112px; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6; overflow:hidden;
-}
+
+.rl-thumb{width:112px; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6}
+
 .rl-body{min-width:0}
 .rl-title{
-  font-weight:800; margin:0 0 6px;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  margin:2px 0 6px;
+  font-weight:800; color:var(--txt);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .rl-meta{
-  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-  font-size:13px; color:var(--muted); line-height:1.2;
-  min-height:18px;
+  display:flex; gap:10px; flex-wrap:wrap;
+  font-size:13px; color:var(--sub);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
+.rl-meta .date{color:#437BFF; font-weight:700}
 
-/* 상태 칩 */
 .rl-chip{
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line);
+  white-space:nowrap;
 }
 .rl-chip.open{background:#eef7ff; color:#1677ff; border-color:transparent}
 .rl-chip.closed{background:#f7f7f7; color:#777}
 .rl-chip.draft{background:#fff7e6; color:#b35a00; border-color:transparent}
 
-/* 액션 */
-.rl-actions{
-  display:flex; gap:8px; align-items:center;
-}
+.rl-actions{display:flex; gap:8px; align-items:center}
 .rl-actions .ic{
-  width:36px; height:36px; display:grid; place-items:center;
-  border:1px solid var(--line); border-radius:10px; background:#fff; color:#374151;
-  font-size:18px;
-  touch-action:manipulation;
+  width:40px; height:40px; display:grid; place-items:center;
+  border:1px solid var(--line); border-radius:12px; background:#fff; color:#333;
 }
 .rl-actions .ic:active{transform:scale(.98)}
 
-/* 더보기/빈 상태 */
 .more-wrap{display:flex; justify-content:center; margin:14px 0 6px}
-.empty{
-  display:grid; place-items:center; gap:8px; padding:32px 0; color:var(--muted);
-}
-.empty i{font-size:28px; color:var(--muted)}
+.empty{display:grid; place-items:center; gap:8px; padding:28px 0; color:var(--sub)}
+.empty i{font-size:28px; color:var(--sub)}
 
 /* 반응형 */
-@media (min-width:480px){
-  .rl-card{grid-template-columns:140px 1fr auto}
-  .rl-thumb{width:140px}
+@media (max-width:380px){
+  .input{min-width:42vw}
+  .rl-card{grid-template-columns:96px 1fr auto}
+  .rl-thumb{width:96px}
 }
 @media (min-width:720px){
-  .toolbar{margin:12px 0 16px}
   .rl-card{grid-template-columns:160px 1fr auto}
   .rl-thumb{width:160px}
 }
