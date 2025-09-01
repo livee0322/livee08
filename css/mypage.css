@@ -1,62 +1,44 @@
-.mypage {
-  padding: 20px;
-}
+/* 마이페이지 전용 레이아웃 */
+.mypage { padding: 16px; }
 
+.profile { margin-bottom: 16px; }
 .profile-card {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  padding: 16px;
+  display: flex; gap: 12px; align-items: center;
+  background: #fff; border: 1px solid #eef0f3; border-radius: 12px; padding: 14px;
 }
-
 .profile-card img {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background:#f2f4f7;
 }
+.profile-info .name { font-weight: 700; font-size: 18px; }
+.profile-info .role { color: #667085; font-size: 13px; margin-top: 2px; }
+.profile-actions { margin-top: 8px; }
+.btn { display:inline-block; padding:8px 12px; border-radius:10px; font-size:14px; line-height:1; }
+.btn.primary { background:#5c7cfa; color:#fff; }
+.btn.outline { border:1px solid #d0d5dd; color:#1f2937; background:#fff; }
 
-.profile-card .name {
-  font-weight: 700;
-  font-size: 18px;
+/* 섹션 블록 */
+.mp-sections { display: grid; gap: 16px; }
+.mp-block { background:#fff; border:1px solid #eef0f3; border-radius: 12px; }
+.mp-block-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 14px; border-bottom:1px solid #eef0f3;
 }
+.mp-block-head h3 { font-size:16px; margin:0; }
 
-.profile-card .role {
-  color: #666;
-  font-size: 14px;
+/* 리스트 */
+.mp-list { list-style:none; margin:0; padding: 6px; }
+.mp-item {
+  display:flex; align-items:center; gap:12px;
+  padding:12px; border-radius:10px; text-decoration:none;
+  color:#111827;
 }
+.mp-item:hover { background:#f8fafc; }
+.mp-item i { font-size:20px; color:#5c6b8b; }
+.mp-item .title { font-weight:600; }
+.mp-item .meta { font-size:12px; color:#667085; }
+.mp-item .arrow { margin-left:auto; color:#c0c4cc; }
 
-.mypage-sections {
-  margin-top: 24px;
-}
-
-.mypage-sections h3 {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-
-.mypage-sections ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.mypage-sections li {
-  margin-bottom: 8px;
-}
-
-.mypage-sections a {
-  display: block;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background: #fafafa;
-  transition: background 0.2s;
-}
-
-.mypage-sections a:hover {
-  background: #f0f0f0;
+/* 반응형 */
+@media (min-width: 768px){
+  .mypage { max-width: 860px; margin: 0 auto; }
 }
