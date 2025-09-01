@@ -8,83 +8,74 @@
 }
 .chips{display:flex; gap:8px; overflow:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
-.chip{
-  padding:8px 12px; border-radius:999px; border:1px solid var(--line);
-  background:#fff; color:#333; white-space:nowrap;
-}
+.chip{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; color:#333; white-space:nowrap}
 .chip.is-active{background:var(--pri-weak); color:var(--pri); border-color:transparent}
 
 .rl-controls{display:flex; gap:8px; align-items:center; width:100%; max-width:420px}
-.input{
-  height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px; flex:1; background:#fff;
-}
-.input:focus{
-  outline:none; border-color:var(--pri);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--pri) 18%, #fff);
-}
-.select{
-  height:40px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:#fff;
-}
+.input{height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px; flex:1; background:#fff}
+.input:focus{outline:none; border-color:var(--pri); box-shadow:0 0 0 3px color-mix(in srgb, var(--pri) 18%, #fff)}
+.select{height:40px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:#fff}
 
-/* 리스트 */
+/* 목록 */
 .rl-list{display:flex; flex-direction:column; gap:12px}
 
-/* 카드: 우측 액션 열 고정, 본문은 줄어들지 않도록 */
+/* --- 카드: 상태칩 맨위, 썸네일 왼쪽/본문 오른쪽, 하단 액션 --- */
 .rl-card{
   display:grid;
-  grid-template-columns:116px 1fr 128px;
-  gap:12px; align-items:center;
-  border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff;
+  grid-template-columns: 116px 1fr;
+  grid-template-rows: auto auto auto auto;
+  grid-template-areas:
+    "thumb status"
+    "thumb title"
+    "thumb info"
+    "thumb actions";
+  gap:10px 12px;
+  align-items:center;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  background:#fff;
   word-break:keep-all;
 }
-
-/* 썸네일 */
-.rl-thumb{
-  width:100%; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6;
+@media (min-width:720px){
+  .rl-card{grid-template-columns:160px 1fr}
 }
 
-/* 본문 */
-.rl-body{
-  min-width:0;
-  display:flex; flex-direction:column; justify-content:center; gap:6px;
-}
-.rl-title{
-  font-weight:700; margin:0;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-.rl-meta{
-  font-size:13px; color:var(--sub);
-  display:flex; gap:10px; align-items:center; min-width:0; flex-wrap:wrap;
-  line-height:1.35;
-}
-.rl-meta span{white-space:nowrap}
-.rl-meta .date{color:var(--pri); font-weight:700}
+.rl-thumb{grid-area:thumb; width:100%; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6}
 
-/* 상태칩 */
-.rl-chip{
-  display:inline-flex; align-items:center; gap:4px;
-  font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line);
-}
+/* 상태칩(맨 위) */
+.rl-status{grid-area:status; align-self:start}
+.rl-chip{display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line)}
 .rl-chip.open{background:#eef7ff; color:#1677ff; border-color:transparent}
 .rl-chip.closed{background:#f7f7f7; color:#777}
 .rl-chip.draft{background:#fff7e6; color:#b35a00; border-color:transparent}
 
-/* 액션: 고정폭 영역 내부에서 한 줄(좁으면 2줄) */
+/* 제목 */
+.rl-title{
+  grid-area:title;
+  font-weight:800; margin:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+}
+
+/* 한 줄 정보: 출연료 · 마감일 */
+.rl-info{
+  grid-area:info;
+  display:flex; gap:10px; justify-content:flex-start; align-items:center;
+  font-size:14px; color:var(--sub); min-width:0;
+}
+.rl-info .date{color:var(--pri); font-weight:700; white-space:nowrap}
+
+/* 하단 액션 (오른쪽 아래 정렬) */
 .rl-actions{
-  display:flex; gap:6px; justify-content:flex-end; align-content:center; flex-wrap:wrap;
+  grid-area:actions;
+  display:flex; gap:8px; justify-content:flex-end; align-items:center; flex-wrap:wrap;
 }
 .rl-actions .ic{
   width:32px; height:32px; display:grid; place-items:center;
-  border:1px solid var(--line); border-radius:8px; background:#fff; color:#333; flex:0 0 auto;
+  border:1px solid var(--line); border-radius:8px; background:#fff; color:#333;
 }
 .rl-actions .ic:active{transform:scale(.96)}
 
-/* 빈 상태/더보기 */
 .more-wrap{display:flex; justify-content:center; margin:12px 0 4px}
 .empty{display:grid; place-items:center; gap:8px; padding:28px 0; color:var(--sub)}
 .empty i{font-size:28px; color:var(--sub)}
-
-/* 큰 화면 여유 */
-@media (min-width:720px){
-  .rl-card{grid-template-columns:160px 1fr 140px}
-}
