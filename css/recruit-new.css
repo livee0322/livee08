@@ -1,86 +1,87 @@
-/* Recruit New 페이지 전용 스타일 (글씨 검정 통일 + UI 개선) */
+/* ===== Recruit New – Mobile-first form layout ===== */
 
-/* 색상 토큰 */
+/* 공통 */
 :root{
-  --bg:#f9f9f9;
-  --surface:#ffffff;
-  --ink:#111111;
-  --line:#e5e7eb;
-  --radius:16px;
+  --bg:#ffffff; --ink:#111; --sub:#6b7280; --pri:#2563eb;
+  --bd:#e5e7eb; --bd-strong:#d1d5db; --radius:12px;
+  --gap:12px; --gap-sm:8px; --field-h:48px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;color:var(--ink);background:var(--bg);-webkit-text-size-adjust:100%}
+img{max-width:100%;height:auto;border:0}
+
+/* 컨테이너 */
+.container{max-width:760px;margin:0 auto;padding:16px}
+.form-card{
+  background:#fff;border:1px solid var(--bd);border-radius:16px;
+  padding:16px; margin:12px 0;
+  /* 카드 그림자 제거 요청 */
+  box-shadow:none;
 }
 
-/* 기본 레이아웃 */
-body{background:var(--bg);color:var(--ink)}
-.container{padding-bottom:88px}
+/* 레이블/헬퍼 */
+label{display:block;font-size:14px;font-weight:600;margin:14px 2px 6px}
+.helper{font-size:12px;color:var(--sub);margin:6px 2px}
 
-/* 카드형 섹션 */
-.section{margin-top:22px}
-.card{
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:18px;
-}
-
-/* 섹션 타이틀 */
-.section-title{margin:0 0 12px;font-size:16px;font-weight:700;color:var(--ink)}
-
-/* 입력 UI */
+/* 인풋 계열 – 공통 */
 .input, select, textarea{
   width:100%;
-  padding:12px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:#fff;
-  font-size:15px;
-  color:var(--ink);
-  outline:none;
+  height:var(--field-h);
+  padding:0 14px;
+  font-size:16px; line-height:1.3; color:var(--ink);
+  border:1px solid var(--bd-strong); border-radius:12px;
+  background:#fff; outline:none;
 }
-.input:focus, select:focus, textarea:focus{border-color:#999}
+textarea{min-height:120px;height:auto;padding:12px 14px;resize:vertical}
+.input::placeholder, textarea::placeholder{color:#9ca3af}
 
-/* 비활성화 */
-.input.disabled{background:#f3f4f6;color:#aaa}
-
-/* 두 칸 그리드 */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:560px){.grid-2{grid-template-columns:1fr}}
-
-/* 체크박스 인라인 */
-.inline{display:flex;align-items:center;gap:8px}
-.inline label{font-weight:600;color:var(--ink)}
-
-/* 설명 텍스트 */
-.helper{margin-top:6px;font-size:13px;color:#555}
-
-/* 필수표시 */
-.req{color:#111;font-weight:700}
-
-/* 대표 이미지 프리뷰 */
-.thumb-wrap{margin:8px 0 10px}
-.thumb-wrap img{
-  width:100%;aspect-ratio:16/9;object-fit:cover;
-  border-radius:12px;border:1px solid var(--line);
+/* 2-열 그리드 (라벨+필드 각각 아니라 필드 쌍을 옆으로) */
+.grid{
+  display:grid; grid-template-columns:1fr; gap:var(--gap);
 }
+@media (min-width:600px){
+  .grid.grid-2{ grid-template-columns:1fr 1fr; }
+}
+
+/* 셀 내부가 넘칠 경우 줄바꿈 / 말줄임 */
+.nowrap{white-space:nowrap}
+.one-line{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* 시간 필드(셀렉트/타임) 높이 보정 */
+input[type="date"], input[type="time"], select{
+  height:var(--field-h);
+}
+
+/* 체크박스 라인 */
+.checkbox{
+  display:flex; align-items:center; gap:8px; margin-top:8px;
+}
+.checkbox input[type="checkbox"]{width:20px;height:20px}
 
 /* 버튼 */
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:12px 14px;
-  border:1px solid var(--line);border-radius:12px;
-  background:#fff;color:var(--ink);
-  font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+  height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--bd);
+  background:#fff; color:var(--ink); font-weight:600; text-decoration:none;
 }
-.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
-.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--pri); color:#fff; border-color:var(--pri)}
+.btn:disabled{opacity:.6; pointer-events:none}
 
-/* 헤더/네비 최소 보강 */
-.app-header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
-.h-wrap{height:56px;display:flex;align-items:center;gap:12px;padding:0 12px}
-.h-icon{font-size:22px;color:var(--ink)}
-.h-logo{font-weight:800;color:var(--ink)}
-.h-spacer{flex:1}
+/* 이미지 업로드 미리보기 */
+.preview{
+  width:100%; aspect-ratio:16/9; border:1px solid var(--bd);
+  border-radius:12px; object-fit:cover; background:#f8fafc;
+}
 
-.bottom-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line)}
-.bn-wrap{display:flex;justify-content:space-around}
-.bn-item{display:flex;flex-direction:column;align-items:center;padding:8px 6px;font-weight:700;color:var(--ink);font-size:13px}
-.bn-item.active{font-weight:900;text-decoration:underline}
+/* 헤더/바텀 그림자 제거 */
+.app-header, .bottom-nav{box-shadow:none;border-bottom:1px solid var(--bd)}
+
+/* iOS/안드 듀얼 탭바가 겹칠 때 여백 */
+.page-bottom-space{height:80px}
+
+/* 강제 overflow 방지 */
+main, .container, .form-card{overflow:visible}
+body{overflow-x:hidden}
