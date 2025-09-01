@@ -11,23 +11,11 @@
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-  <!-- 상단 앱바 -->
-  <header class="appbar" role="banner">
-    <div class="logo" aria-label="Livee 홈">라이비</div>
-    <nav class="role" aria-label="역할 전환">
-      <button class="pill active" type="button" aria-pressed="true">쇼호스트</button>
-      <button class="pill" type="button" aria-pressed="false">브랜드</button>
-    </nav>
-  </header>
+  <!-- 모듈: 상단 앱바 -->
+  <div data-include="partials/appbar.html"></div>
 
-  <!-- 상단 탭 -->
-  <nav class="tabs" role="navigation" aria-label="상단 탭">
-    <a class="tab active" href="#/home">숏클립</a>
-    <a class="tab" href="#/live">쇼핑라이브</a>
-    <a class="tab" href="#/news">뉴스</a>
-    <a class="tab" href="#/event">이벤트</a>
-    <a class="tab" href="#/service">서비스</a>
-  </nav>
+  <!-- 모듈: 상단 탭 -->
+  <div data-include="partials/top-tabs.html"></div>
 
   <!-- 히어로 -->
   <section class="container" aria-label="소개 및 주요 액션">
@@ -45,17 +33,27 @@
   <!-- 메인 -->
   <main id="app" class="container" role="main" aria-live="polite"></main>
 
-  <!-- 하단 탭 -->
-  <footer class="tabbar" role="contentinfo">
-    <a class="tbi active" href="#/home" aria-current="page">홈</a>
-    <a class="tbi" href="recruit-new.html">모집캠페인</a>
-    <a class="tbi" href="#/library">라이브러리</a>
-    <a class="tbi" href="#/portfolios">인플루언서</a>
-    <a class="tbi" href="login.html">마이페이지</a>
-  </footer>
+  <!-- 모듈: 하단 탭 -->
+  <div data-include="partials/bottom-tabs.html"></div>
+
+  <!-- 스크립트: 파셜 로더(간단) -->
+  <script>
+    (async () => {
+      const nodes = document.querySelectorAll('[data-include]');
+      for (const n of nodes) {
+        const url = n.getAttribute('data-include');
+        try {
+          const res = await fetch(url, { cache: 'no-cache' });
+          n.outerHTML = await res.text();
+        } catch {
+          n.remove(); // 로드 실패 시 제거
+        }
+      }
+    })();
+  </script>
 
   <!-- 반드시 config를 먼저 로드 -->
-  <script defer src="js/config.js?v=debug1"></script>
-  <script defer src="js/main.js?v=debug1"></script>
+  <script defer src="js/config.js?v=debug2"></script>
+  <script defer src="js/main.js?v=debug2"></script>
 </body>
 </html>
