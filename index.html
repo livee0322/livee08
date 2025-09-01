@@ -2,49 +2,47 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
   <title>Livee — v2.5 TEST</title>
 
-  <!-- SUIT 폰트 -->
+  <!-- Font -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
 
-  <!-- 스타일 -->
-  <link rel="stylesheet" href="css/ui.css" />
+  <!-- Global styles (light theme, no heavy shadows) -->
+  <link rel="stylesheet" href="css/ui.css?v=2025-09-01" />
   <meta name="theme-color" content="#ffffff" />
 </head>
-<body>
-  <!-- 앱 쉘은 js/ui.js 가 렌더링 -->
-  <div id="app-shell"></div>
 
-  <!-- 페이지 콘텐츠 -->
-  <main id="page" class="container" role="main" aria-live="polite">
-    <!-- 배너 -->
-    <section class="section" aria-label="프로모션">
+<body style="background:#fff;">
+  <noscript>이 페이지를 사용하려면 자바스크립트가 필요합니다.</noscript>
+
+  <!-- ===== App Shell (상단 앱바/상단탭/하단탭은 js/ui.js가 렌더링) ===== -->
+  <div id="app-shell" aria-live="polite"></div>
+
+  <!-- ===== Page ===== -->
+  <main id="page" class="container" role="main" aria-label="홈" style="background:#fff;">
+    <!-- 배너: 좌우 살짝 보이는 3장 캐러셀 -->
+    <section class="section" aria-label="프로모션 배너">
       <div class="banner-wrap">
         <button class="banner-nav prev" aria-label="이전 배너"></button>
-        <div id="banner" class="banner">
-          <!-- js/banner.js 가 카드 3개 렌더 -->
+        <div id="banner" class="banner" style="height:164px">
+          <!-- js/banner.js 가 카드 3개를 렌더링 -->
         </div>
         <button class="banner-nav next" aria-label="다음 배너"></button>
       </div>
     </section>
 
-    <!-- 홈 본문 -->
-    <section id="home" class="section" aria-label="홈 섹션">
-      <!-- js/main.js 가 렌더 -->
-    </section>
+    <!-- 홈 콘텐츠: 오늘의 라이브/추천 공고 등 -->
+    <section id="home" class="section" aria-label="홈 섹션"></section>
   </main>
 
-  <!-- 설정 → 반드시 먼저 -->
-  <script src="js/config.js"></script>
-
-  <!-- 공통 UI/아이콘/탭바 -->
-  <script src="js/ui.js"></script>
-
-  <!-- 배너(롤링) -->
-  <script src="js/banner.js"></script>
-
-  <!-- 홈 데이터 렌더 -->
-  <script src="js/main.js"></script>
+  <!-- ===== Scripts (순서 중요: config → ui → banner → main) ===== -->
+  <script src="js/config.js?v=2025-09-01"></script>
+  <script src="js/ui.js?v=2025-09-01"></script>
+  <script src="js/banner.js?v=2025-09-01"></script>
+  <script src="js/main.js?v=2025-09-01"></script>
 </body>
 </html>
