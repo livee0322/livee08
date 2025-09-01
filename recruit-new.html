@@ -1,129 +1,125 @@
-<!<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Livee - 공고 등록</title>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
- <link rel="stylesheet" href="./css/main.css">
-<link rel="stylesheet" href="./css/recruit-new.css">
-  <script src="./js/config.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>공고 등록 - Livee</title>
+
+  <!-- 공통 스타일이 있으면 유지하고, 없어도 동작합니다 -->
+  <link rel="stylesheet" href="./css/main.css" />
+  <style>
+    :root { --r:12px; --gap:12px; --bd:#e5e5e5; --fg:#111; --muted:#666; --pri:#2563eb; }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Malgun Gothic,sans-serif;color:var(--fg);margin:0;background:#fff}
+    .app-header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #eee}
+    .h-wrap{max-width:760px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:8px}
+    .h-logo{font-weight:700}
+    main{max-width:760px;margin:0 auto;padding:16px}
+    form{display:grid;gap:10px}
+    label{font-size:14px;color:#333}
+    .input,.select,textarea{width:100%;border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:16px}
+    textarea{min-height:120px;resize:vertical}
+    .row{display:flex;gap:var(--gap)}
+    .row > *{flex:1}
+    .helper{font-size:12px;color:var(--muted)}
+    .notice{margin:8px 0;padding:10px 12px;border-radius:10px;border:1px solid #ffd6d6;background:#fff4f4;color:#a32020;display:none}
+    .notice.ok{border-color:#b9efc9;background:#f5fff5;color:#0f6b2b}
+    .media{display:flex;gap:12px;align-items:center}
+    .media img{width:96px;height:96px;border-radius:12px;object-fit:cover;border:1px solid var(--bd);background:#f6f6f6}
+    .btns{display:flex;gap:8px;margin-top:6px}
+    .btn{appearance:none;border:1px solid var(--bd);background:#fff;border-radius:999px;padding:10px 14px;font-weight:600}
+    .btn.pri{border-color:transparent;background:var(--pri);color:#fff}
+    .btn[disabled]{opacity:.6;pointer-events:none}
+  </style>
 </head>
 <body>
-  <!-- 헤더 -->
   <header class="app-header">
     <div class="h-wrap">
-      <a class="h-icon" href="./index.html" aria-label="뒤로가기"><i class="ri-arrow-left-line"></i></a>
+      <a href="./index.html" aria-label="뒤로">←</a>
       <div class="h-logo">공고 등록</div>
-      <div class="h-spacer"></div>
     </div>
   </header>
 
-  <!-- 본문 -->
-  <main class="container" style="max-width:760px">
+  <main>
+    <div id="cfNotice" class="notice" role="status" aria-live="polite"></div>
+
     <form id="recruitForm" novalidate>
-      <!-- 기본 정보 -->
-      <section class="card section">
-        <h2 class="section-title">기본 정보</h2>
+      <label for="title">제목 *</label>
+      <input id="title" class="input" placeholder="예) 9월 신제품 쇼핑라이브 진행" required />
 
-        <label for="title">라이브 제목 <span class="req">*</span></label>
-        <input id="title" class="input" required maxlength="80" placeholder="예) 여고추리반 출시 기념 라이브 방송"/>
+      <label for="desc">내용(브리프) *</label>
+      <textarea id="desc" placeholder="요구역량/브리프/참고링크 등 30자 이상" required></textarea>
 
-        <label for="desc" style="margin-top:12px;">내용(브리프) <span class="req">*</span></label>
-        <textarea id="desc" class="input" rows="6" minlength="30" required placeholder="목적, 요구역량, 진행 톤, 참고 링크 등을 30자 이상 입력"></textarea>
+      <div class="row">
+        <div>
+          <label for="category">카테고리 *</label>
+          <select id="category" class="select" required>
+            <option value="">선택</option>
+            <option>패션/뷰티</option><option>식품</option>
+            <option>생활/리빙</option><option>가전</option><option>기타</option>
+          </select>
+        </div>
+        <div>
+          <label for="location">장소(선택)</label>
+          <input id="location" class="input" placeholder="예) 서울 성수동 스튜디오" />
+        </div>
+      </div>
 
-        <div class="grid-2">
-          <div>
-            <label for="category" style="margin-top:12px;">모집 카테고리 <span class="req">*</span></label>
-            <select id="category" class="input" required>
-              <option value="" selected disabled>선택하세요</option>
-              <option>뷰티/패션</option>
-              <option>테크/가전</option>
-              <option>식품</option>
-              <option>생활/리빙</option>
-              <option>기타</option>
-            </select>
-          </div>
-          <div>
-            <label for="location" style="margin-top:12px;">장소(선택)</label>
-            <input id="location" class="input" placeholder="예) 서울 성수동 스튜디오 A"/>
+      <div class="row">
+        <div>
+          <label for="shootDate">촬영일 *</label>
+          <input id="shootDate" class="input" type="date" required />
+        </div>
+        <div>
+          <label for="deadline">마감일 *</label>
+          <input id="deadline" class="input" type="date" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="startTime">시작 *</label>
+          <input id="startTime" class="input" type="time" required />
+        </div>
+        <div>
+          <label for="endTime">종료 *</label>
+          <input id="endTime" class="input" type="time" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="pay">출연료(원)</label>
+          <input id="pay" class="input" type="number" min="0" inputmode="numeric" placeholder="예) 300000" />
+        </div>
+        <div>
+          <label for="negotiable">협의 가능</label>
+          <div style="display:flex;align-items:center;height:46px">
+            <input id="negotiable" type="checkbox" />
+            <span class="helper" style="margin-left:8px">체크 시 출연료 입력 비활성화</span>
           </div>
         </div>
-      </section>
+      </div>
 
-      <!-- 일정 -->
-      <section class="card section">
-        <h2 class="section-title">일정</h2>
-
-        <div class="grid-2">
-          <div>
-            <label for="shootDate">촬영일 <span class="req">*</span></label>
-            <input id="shootDate" class="input" type="date" required/>
-          </div>
-          <div>
-            <label for="deadline">공고 마감일 <span class="req">*</span></label>
-            <input id="deadline" class="input" type="date" required/>
-          </div>
+      <label>대표 이미지</label>
+      <div class="media">
+        <img id="preview" alt="미리보기">
+        <div>
+          <input id="imageFile" type="file" accept="image/*" />
+          <div class="helper">이미지 선택 시 자동 업로드됩니다.</div>
+          <progress id="uploadProg" value="0" max="100" style="width:220px;display:none"></progress>
         </div>
+      </div>
 
-        <div class="grid-2">
-          <div>
-            <label for="startTime" style="margin-top:12px;">시작 시간 <span class="req">*</span></label>
-            <input id="startTime" class="input" type="time" required/>
-          </div>
-          <div>
-            <label for="endTime" style="margin-top:12px;">종료 시간 <span class="req">*</span></label>
-            <input id="endTime" class="input" type="time" required/>
-          </div>
-        </div>
-        <div class="helper">종료 시간은 시작 시간 이후여야 합니다.</div>
-      </section>
-
-      <!-- 보상 -->
-      <section class="card section">
-        <h2 class="section-title">보상</h2>
-        <div class="grid-2">
-          <div>
-            <label for="pay">출연료(숫자) </label>
-            <input id="pay" class="input" type="number" inputmode="numeric" placeholder="예) 300000"/>
-          </div>
-          <div class="inline">
-            <label for="negotiable">협의 가능</label>
-            <input id="negotiable" type="checkbox" style="margin-left:8px"/>
-          </div>
-        </div>
-        <div class="helper">‘협의 가능’을 체크하면 출연료 입력 없이 등록할 수 있습니다.</div>
-      </section>
-
-      <!-- 대표 이미지 -->
-      <section class="card section">
-        <h2 class="section-title">대표 이미지</h2>
-        <figure class="thumb-wrap">
-          <img id="preview" src="./default.jpg" alt="대표 이미지 미리보기"/>
-        </figure>
-        <input id="imageFile" class="input" type="file" accept="image/*"/>
-        <div class="helper" id="recruitMsg">권장 비율 16:9 · 2MB 이내</div>
-      </section>
-
-      <!-- 제출 -->
-      <div style="display:flex; gap:8px; margin:20px 0 80px">
-        <button type="submit" class="btn pri"><i class="ri-check-line"></i> 공고 등록</button>
+      <div class="btns">
+        <button id="submitBtn" class="btn pri" type="submit">공고 등록</button>
         <a class="btn" href="./index.html">취소</a>
       </div>
     </form>
   </main>
 
-  <!-- 하단 내비 -->
-  <nav class="bottom-nav">
-    <div class="bn-wrap">
-      <a class="bn-item" href="./index.html"><i class="ri-home-5-line"></i>홈</a>
-      <span class="bn-item active"><i class="ri-flag-2-line"></i>캠페인</span>
-      <a class="bn-item" href="./login.html"><i class="ri-user-line"></i>로그인</a>
-      <a class="bn-item" href="#"><i class="ri-team-line"></i>인플루언서</a>
-      <a class="bn-item" href="#"><i class="ri-folder-user-line"></i>포트폴리오</a>
-    </div>
-  </nav>
-
+  <!-- 설정 먼저 -->
+  <script src="./js/config.js"></script>
+  <!-- 페이지 스크립트 -->
   <script src="./js/recruit-new.js"></script>
 </body>
 </html>
