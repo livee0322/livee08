@@ -1,11 +1,13 @@
 /* ===== Recruit List (rl-) ===== */
 
-/* 툴바 */
+/* 툴바 (박스형) */
 .toolbar{
   display:flex; gap:12px; align-items:center; justify-content:space-between;
-  margin:6px 0 12px; flex-wrap:wrap;
+  flex-wrap:wrap; margin:6px 0 12px;
+  padding:10px; background:#fff; border:1px solid var(--line); border-radius:12px;
 }
-.chips{display:flex; gap:8px; overflow:auto; padding-bottom:2px}
+.chips{display:flex; gap:8px; overflow:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
 .chip{
   padding:8px 12px; border-radius:999px; border:1px solid var(--line);
   background:#fff; color:#333; white-space:nowrap;
@@ -14,7 +16,7 @@
 
 .rl-controls{display:flex; gap:8px; align-items:center; width:100%; max-width:420px}
 .input{
-  height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px; flex:1;
+  height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px; flex:1; background:#fff;
 }
 .input:focus{
   outline:none; border-color:var(--pri);
@@ -27,47 +29,32 @@
 /* 리스트 */
 .rl-list{display:flex; flex-direction:column; gap:12px}
 
-/* 카드: 우측 액션 열을 고정폭으로, 본문은 줄어들지 않도록 */
+/* 카드: 우측 액션 열 고정, 본문은 줄어들지 않도록 */
 .rl-card{
   display:grid;
-  grid-template-columns: 116px 1fr 128px; /* ← 마지막 열 고정 */
-  gap:12px;
-  align-items:center;
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:12px;
-  background:#fff;
+  grid-template-columns:116px 1fr 128px;
+  gap:12px; align-items:center;
+  border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff;
   word-break:keep-all;
 }
 
+/* 썸네일 */
 .rl-thumb{
-  width:100%;
-  aspect-ratio:16/9;
-  border-radius:10px;
-  object-fit:cover;
-  background:#f3f4f6;
+  width:100%; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6;
 }
 
 /* 본문 */
 .rl-body{
-  min-width:0;              /* ← 말줄임/줄바꿈 정상화 */
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:2px;
+  min-width:0;
+  display:flex; flex-direction:column; justify-content:center; gap:2px;
 }
 .rl-title{
-  font-weight:700;
-  margin:2px 0 2px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  font-weight:700; margin:2px 0 2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .rl-meta{
   font-size:13px; color:var(--sub);
-  display:flex; flex-wrap:wrap; gap:6px;
-  line-height:1.35;
-  min-width:0;
+  display:flex; flex-wrap:wrap; gap:6px; line-height:1.35; min-width:0;
 }
 .rl-meta span{white-space:nowrap}
 .rl-meta .date{color:var(--pri); font-weight:700}
@@ -75,37 +62,28 @@
 /* 상태칩 */
 .rl-chip{
   display:inline-flex; align-items:center; gap:4px;
-  font-size:12px; padding:2px 8px;
-  border-radius:999px; border:1px solid var(--line);
+  font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line);
 }
 .rl-chip.open{background:#eef7ff; color:#1677ff; border-color:transparent}
 .rl-chip.closed{background:#f7f7f7; color:#777}
 .rl-chip.draft{background:#fff7e6; color:#b35a00; border-color:transparent}
 
-/* 액션: 한 줄에 정돈, 고정공간 안에서만 배치 */
+/* 액션: 고정폭 영역 내부에서 한 줄(좁으면 2줄) */
 .rl-actions{
-  display:flex;
-  gap:6px;
-  justify-content:flex-end;
-  align-content:center;
-  flex-wrap:wrap;            /* 좁으면 2줄로만 감김(겹치지 않음) */
+  display:flex; gap:6px; justify-content:flex-end; align-content:center; flex-wrap:wrap;
 }
 .rl-actions .ic{
-  width:32px; height:32px;   /* 36→32로 살짝 축소 */
-  display:grid; place-items:center;
-  border:1px solid var(--line);
-  border-radius:8px;
-  background:#fff; color:#333;
-  flex:0 0 auto;
+  width:32px; height:32px; display:grid; place-items:center;
+  border:1px solid var(--line); border-radius:8px; background:#fff; color:#333; flex:0 0 auto;
 }
 .rl-actions .ic:active{transform:scale(.96)}
 
-/* 비어있음/더보기 */
+/* 빈 상태/더보기 */
 .more-wrap{display:flex; justify-content:center; margin:12px 0 4px}
 .empty{display:grid; place-items:center; gap:8px; padding:28px 0; color:var(--sub)}
 .empty i{font-size:28px; color:var(--sub)}
 
-/* 큰 화면일 때 썸/액션 좀 더 여유 */
+/* 큰 화면 여유 */
 @media (min-width:720px){
-  .rl-card{grid-template-columns: 160px 1fr 140px}
+  .rl-card{grid-template-columns:160px 1fr 140px}
 }
