@@ -3,57 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee — Wireframe v2.5 (TEST)</title>
+  <title>Livee — v2.5 TEST</title>
 
-  <!-- 폰트 & 스타일 -->
+  <!-- SUIT 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- 스타일 -->
+  <link rel="stylesheet" href="css/ui.css" />
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-  <!-- 모듈: 상단 앱바 -->
-  <div data-include="partials/appbar.html"></div>
+  <!-- 앱 쉘은 js/ui.js 가 렌더링 -->
+  <div id="app-shell"></div>
 
-  <!-- 모듈: 상단 탭 -->
-  <div data-include="partials/top-tabs.html"></div>
-
-  <!-- 히어로 -->
-  <section class="container" aria-label="소개 및 주요 액션">
-    <div class="section hero" role="region">
-      <p class="meta">매칭 전문 플랫폼, 라이비</p>
-      <h1 style="margin:6px 0 10px">브랜드와 쇼호스트를 연결합니다</h1>
-      <div class="toolbar" role="group" aria-label="주요 액션">
-        <a class="pill" href="recruit-new.html">공고 등록하기</a>
-        <a class="pill" href="login.html">로그인</a>
-        <a class="pill" href="#/portfolios">포트폴리오 보기</a>
+  <!-- 페이지 콘텐츠 -->
+  <main id="page" class="container" role="main" aria-live="polite">
+    <!-- 배너 -->
+    <section class="section" aria-label="프로모션">
+      <div class="banner-wrap">
+        <button class="banner-nav prev" aria-label="이전 배너"></button>
+        <div id="banner" class="banner">
+          <!-- js/banner.js 가 카드 3개 렌더 -->
+        </div>
+        <button class="banner-nav next" aria-label="다음 배너"></button>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 메인 -->
-  <main id="app" class="container" role="main" aria-live="polite"></main>
+    <!-- 홈 본문 -->
+    <section id="home" class="section" aria-label="홈 섹션">
+      <!-- js/main.js 가 렌더 -->
+    </section>
+  </main>
 
-  <!-- 모듈: 하단 탭 -->
-  <div data-include="partials/bottom-tabs.html"></div>
+  <!-- 설정 → 반드시 먼저 -->
+  <script src="js/config.js"></script>
 
-  <!-- 스크립트: 파셜 로더(간단) -->
-  <script>
-    (async () => {
-      const nodes = document.querySelectorAll('[data-include]');
-      for (const n of nodes) {
-        const url = n.getAttribute('data-include');
-        try {
-          const res = await fetch(url, { cache: 'no-cache' });
-          n.outerHTML = await res.text();
-        } catch {
-          n.remove(); // 로드 실패 시 제거
-        }
-      }
-    })();
-  </script>
+  <!-- 공통 UI/아이콘/탭바 -->
+  <script src="js/ui.js"></script>
 
-  <!-- 반드시 config를 먼저 로드 -->
-  <script defer src="js/config.js?v=debug2"></script>
-  <script defer src="js/main.js?v=debug2"></script>
+  <!-- 배너(롤링) -->
+  <script src="js/banner.js"></script>
+
+  <!-- 홈 데이터 렌더 -->
+  <script src="js/main.js"></script>
 </body>
 </html>
