@@ -1,44 +1,120 @@
-/* 마이페이지 전용 레이아웃 */
-.mypage { padding: 16px; }
-
-.profile { margin-bottom: 16px; }
-.profile-card {
-  display: flex; gap: 12px; align-items: center;
-  background: #fff; border: 1px solid #eef0f3; border-radius: 12px; padding: 14px;
+/* ========= My Page (scoped) ========= */
+/* main.css 변수와 매칭 (없어도 안전하게 fallback 제공) */
+:root{
+  --pri: var(--pri, #3b82f6);
+  --lav: var(--lav, #8b5cf6);
+  --txt: var(--txt, #111);
+  --muted: var(--muted, #6b7280);
+  --line: var(--line, #e5e7eb);
+  --card: var(--card, #fff);
+  --bg: var(--bg, #fff);
+  --radius: var(--radius, 16px);
+  --tabbar-h: var(--tabbar-h, 72px); /* main.css와 동일한 높이 */
 }
-.profile-card img {
-  width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background:#f2f4f7;
-}
-.profile-info .name { font-weight: 700; font-size: 18px; }
-.profile-info .role { color: #667085; font-size: 13px; margin-top: 2px; }
-.profile-actions { margin-top: 8px; }
-.btn { display:inline-block; padding:8px 12px; border-radius:10px; font-size:14px; line-height:1; }
-.btn.primary { background:#5c7cfa; color:#fff; }
-.btn.outline { border:1px solid #d0d5dd; color:#1f2937; background:#fff; }
 
-/* 섹션 블록 */
-.mp-sections { display: grid; gap: 16px; }
-.mp-block { background:#fff; border:1px solid #eef0f3; border-radius: 12px; }
-.mp-block-head {
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 12px 14px; border-bottom:1px solid #eef0f3;
+/* 컨테이너: 탭바에 가리지 않도록 하단 패딩 확보 */
+.mypage.container{
+  padding: 20px 16px calc(var(--tabbar-h) + 24px);
+  background: var(--bg);
+  color: var(--txt);
 }
-.mp-block-head h3 { font-size:16px; margin:0; }
 
-/* 리스트 */
-.mp-list { list-style:none; margin:0; padding: 6px; }
-.mp-item {
+/* 공통 타이포 */
+.mypage h2{
+  margin: 22px 2px 12px;
+  font-size: 20px;
+  font-weight: 800;
+}
+.mypage .sub{
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 버튼 */
+.mypage .btn{
+  display:inline-flex; align-items:center; gap:8px;
+  height:40px; padding:0 14px;
+  border-radius: 12px; border:1px solid transparent;
+  background: var(--pri); color:#fff; font-weight:700;
+}
+.mypage .btn.outline{
+  background: transparent; color: var(--pri);
+  border-color: var(--pri);
+}
+
+/* ===== 프로필 카드 ===== */
+.mypage .profile-card{
+  display:flex; align-items:center; gap:14px;
+  padding:14px;
+  background: var(--card);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+}
+.mypage .profile-card img{
+  width:64px; height:64px; border-radius: 16px; object-fit: cover;
+  background:#f3f4f6;
+}
+.mypage .profile-info{min-width:0; flex:1;}
+.mypage .profile-info .name{
+  font-size:18px; font-weight:800; line-height:1.2;
+}
+.mypage .profile-info .role{
+  margin-top:4px; font-size:13px; color:var(--muted);
+}
+.mypage .profile-actions{display:flex; gap:8px;}
+
+/* ===== 그리드 카드 (숏컷) ===== */
+.mypage .grid{
+  display:grid; grid-template-columns: repeat(2,minmax(0,1fr));
+  gap:10px; margin-top:12px;
+}
+@media (min-width:720px){
+  .mypage .grid{grid-template-columns: repeat(3,minmax(0,1fr));}
+}
+.mypage .tile{
+  display:flex; gap:10px; align-items:center;
+  padding:12px; border:1px solid var(--line); border-radius: 14px;
+  background: var(--card);
+}
+.mypage .tile i{font-size:20px; color:var(--pri);}
+.mypage .tile .t-title{font-weight:700;}
+.mypage .tile .t-desc{font-size:12px; color:var(--muted);}
+
+/* ===== 메뉴 리스트 ===== */
+.mypage .menu{
+  margin-top:20px;
+  background: var(--card);
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mypage .menu .row{
   display:flex; align-items:center; gap:12px;
-  padding:12px; border-radius:10px; text-decoration:none;
-  color:#111827;
+  padding:14px 14px; border-bottom:1px solid var(--line);
 }
-.mp-item:hover { background:#f8fafc; }
-.mp-item i { font-size:20px; color:#5c6b8b; }
-.mp-item .title { font-weight:600; }
-.mp-item .meta { font-size:12px; color:#667085; }
-.mp-item .arrow { margin-left:auto; color:#c0c4cc; }
+.mypage .menu .row:last-child{border-bottom:none;}
+.mypage .menu .row i{font-size:20px; color:var(--pri); flex:0 0 20px;}
+.mypage .menu .row .label{flex:1; font-weight:600;}
+.mypage .menu .row .desc{font-size:12px; color:var(--muted);}
+.mypage .menu .row .chev{color:#c0c6d3;}
 
-/* 반응형 */
-@media (min-width: 768px){
-  .mypage { max-width: 860px; margin: 0 auto; }
+/* ===== 권한 가드(다이얼로그) ===== */
+.mypage .guard{
+  position:fixed; inset:0; z-index:60; display:none;
+  align-items:center; justify-content:center;
+  background: rgba(0,0,0,.45);
 }
+.mypage .guard.show{display:flex;}
+.mypage .guard .sheet{
+  width:min(92vw,520px);
+  background:#fff; border-radius:20px; padding:18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.18);
+}
+.mypage .guard h3{margin:0 0 6px; font-size:18px; font-weight:800;}
+.mypage .guard p{margin:0 0 14px; color:var(--muted);}
+.mypage .guard .actions{display:flex; gap:8px; justify-content:flex-end;}
+.mypage .guard .actions .btn:last-child{background:var(--pri); color:#fff;}
+.mypage .guard .actions .btn:first-child{background:#fff; color:var(--pri); border-color:var(--pri);}
+
+/* 링크 기본 */
+.mypage a{color:inherit; text-decoration:none;}
