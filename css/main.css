@@ -1,107 +1,90 @@
-/* ========== Livee v2.5 – Main (single file) ========== */
-
-/* Remix Icon (아이콘 폰트) */
-@import url("https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css");
-
-/* -------- tokens -------- */
+/* ===== 공통 리셋/변수 ===== */
 :root{
-  --bg:#ffffff;
-  --text:#111;
-  --muted:#6b7280;
-  --line:#eaecef;
-  --card:#fff;
-
-  /* 포인트 컬러 (파란 + 라벤더) */
-  --accent:#4b74ff;       /* 파란 */
-  --accent-sub:#b79cff;   /* 라벤더 */
-  --pill:#f6f7fb;
-
+  --bg:#fff; --card:#fff; --line:#e9edf2; --text:#121212; --sub:#6b7380;
+  --brand:#2563ff; --brand-sub:#8b5cf6; /* 포인트: 파란 + 라벤더 */
   --radius:16px;
-  --shadow:0 6px 18px rgba(0,0,0,.08);
 }
-
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
-body{font-family:SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif; line-height:1.45}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:SUIT,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.5}
 a{color:inherit;text-decoration:none}
-img{display:block;max-width:100%}
 
-/* -------- containers -------- */
-.container{max-width:1080px;margin:0 auto;padding:0 16px 96px}
-.section{margin:10px 0 28px}
-.section-head{display:flex;align-items:center;gap:10px;margin:0 2px 14px}
-.section-head h2{font-size:22px;margin:0}
-.more{margin-left:auto;font-size:14px;color:var(--muted)}
+/* ===== 앱바 ===== */
+.appbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+.appbar__in{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+.appbar__title{font-weight:800;font-size:22px}
+.appbar__actions{display:flex;gap:10px}
+.ic-btn{width:36px;height:36px;border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;background:#fff}
+/* Remix Icon 기본 크기 */
+.ic-btn i.ri{font-size:20px;line-height:1}
 
-/* -------- appbar -------- */
-#appbar{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid var(--line)}
-.lv-appbar{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
-.lv-title{font-size:22px;font-weight:800;letter-spacing:.2px}
-.lv-actions{display:flex;gap:12px}
-.lv-action{width:28px;height:28px;display:grid;place-items:center;color:#222}
-.lv-action i{font-size:22px;}
+/* ===== 상단 탭 ===== */
+.topTabs{position:sticky;top:60px;z-index:19;background:#fff;border-bottom:1px solid var(--line)}
+.topTabs__in{display:flex;gap:10px;padding:10px 16px;overflow:auto}
+.topTabs__in::-webkit-scrollbar{display:none}
+.tab{padding:8px 14px;border-radius:999px;color:#222;border:none;background:transparent;white-space:nowrap}
+.tab.is-active{color:var(--brand)}
+/* 테두리 없이, 호버 살짝 강조 */
+.tab:hover{background:#f6f8fb}
 
-/* -------- top tabs -------- */
-#top-tabs{position:sticky;top:56px;z-index:29;background:#fff;border-bottom:1px solid var(--line)}
-.lv-topTabs{max-width:1080px;margin:0 auto}
-.lv-topTabs__in{display:flex;gap:8px;overflow:auto;padding:10px 16px}
-.tab{
-  background:#fff;border:1px solid var(--line);
-  color:#222;border-radius:999px;padding:8px 14px;white-space:nowrap;
-}
-.tab.is-active{
-  color:var(--accent);
-  border-color:transparent;
-  box-shadow:inset 0 -3px 0 var(--accent);
-  background:
-    linear-gradient(0deg,#fff,#fff) padding-box,
-    linear-gradient(135deg,var(--accent),var(--accent-sub)) border-box;
-  border:1px solid transparent;
-}
+/* ===== 컨테이너/섹션 ===== */
+.container{padding:16px 16px 96px;max-width:1080px;margin:0 auto}
+.section{margin-bottom:26px}
+.section-head{display:flex;align-items:end;margin:4px 2px 14px}
+.section-head h2{margin:0;font-size:22px}
+.section-head .more{margin-left:auto;color:var(--sub)}
 
-/* -------- banner (좌우 살짝 보이게 + 세로 키움) -------- */
-.banner-wrap{position:relative;margin:10px -8px 18px}
-.banner{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 8px}
+/* ===== 배너 (좌우 살짝 보이게) ===== */
+.banner-wrap{position:relative;margin:4px -12px}        /* 좌우 살짝 넘기기 */
+.banner{display:flex;gap:14px;padding:8px 12px;overflow-x:auto;scroll-snap-type:x mandatory}
 .banner::-webkit-scrollbar{display:none}
-.banner-card{
-  flex:0 0 88%;             /* ← 3번: 가로 조금 더 넓게(양 옆 살짝 보임) */
-  height:220px;             /* ← 3번: 세로 키움 */
-  border-radius:20px; background:#eee; color:#111;
-  padding:22px; scroll-snap-align:center; box-shadow:var(--shadow);
-  display:flex;flex-direction:column;justify-content:flex-end;
+.banner-card{flex:0 0 86%;             /* 85~86%가 보이게 */
+  height:172px;                        /* 세로 키움 */
+  border-radius:20px;padding:22px;
+  color:#111;font-weight:700;display:flex;flex-direction:column;justify-content:flex-end;
 }
-.banner-title{font-size:22px;font-weight:800;margin:0 0 6px}
-.banner-desc{color:#2b2b2b}
+.banner-card p{margin:6px 0 0;font-weight:500}
+.banner-card.orange{background:#ff9a2e}
+.banner-card.sky{background:#5fd4ff}
+.banner-card.mint{background:#4be0b1}
+.banner-card.violet{background:#8b5cf6;color:#fff}
+/* 배너 네비 버튼 기본 포커스/아이콘 제거 */
+.banner-nav{position:absolute;top:calc(50% - 20px);width:40px;height:40px;border:none;background:transparent}
+.banner-nav:focus{outline:none}
+.banner-nav::after{display:none}
+.banner-wrap .prev{left:2px}
+.banner-wrap .next{right:2px}
 
-/* -------- lineup (네이버 느낌 / 여백 강화, 날짜 포인트색) -------- */
-.list-vert{display:grid;gap:12px;margin-top:8px}
-.item{display:grid;grid-template-columns:88px 1fr;gap:12px;align-items:center}
-.item .thumb{width:88px;height:88px;border-radius:18px;object-fit:cover;background:#f1f3f5}
-.item .title{font-weight:800;font-size:18px;line-height:1.35}
-.item .meta{font-size:14px;color:var(--muted);margin-top:4px}
-.accent{color:var(--accent)}         /* ← 4번: 날짜 포인트 */
+/* ===== 오늘의 라이브 라인업 (네이버 느낌) ===== */
+.list-vert{display:flex;flex-direction:column;gap:14px}
+.item{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+.item .thumb{width:96px;height:96px;border-radius:20px;background:#f1f3f6;object-fit:cover}
+.item .title{font-weight:800}
+.item .meta{color:var(--sub)}
+/* 타이틀과 목록 사이 여백 */
+.section--lineup .section-head{margin-bottom:10px}
+/* 날짜 포인트 컬러 */
+.item .meta .when, .meta .date{color:var(--brand)}
 
-/* -------- recruits (오늘공구 느낌 / 85% / 얇은 카드) -------- */
-.hscroll{display:flex;gap:12px;overflow-x:auto;padding:2px 4px}
+/* ===== 추천 공고 (가로 미니 카드, 그림자 제거 + 연한 테두리) ===== */
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 2px 2px;scroll-snap-type:x mandatory}
 .hscroll::-webkit-scrollbar{display:none}
-.card-mini{
-  flex:0 0 85%;                /* ← 5번: 85% 보이게 */
-  display:flex;gap:12px;align-items:center;
-  background:var(--card);border:1px solid var(--line);border-radius:18px;
-  padding:12px 12px; box-shadow:var(--shadow);
+.card-mini{flex:0 0 86%;                    /* 85% 보이게 */
+  background:#fff;border:1px solid var(--line); /* 연한 테두리만 */
+  border-radius:16px;display:grid;grid-template-columns:120px 1fr;gap:12px;
+  padding:12px;scroll-snap-align:start;
 }
-.mini-thumb{width:72px;height:72px;border-radius:14px;object-fit:cover;background:#f1f3f5}
-.mini-body{min-width:0}
-.mini-title{font-weight:700;font-size:16px;line-height:1.35;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mini-meta{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* 출연료 + 마감 한 줄 */
-.mini-meta .accent{margin-left:4px}
+.mini-thumb{width:120px;height:84px;border-radius:12px;object-fit:cover;background:#f3f5f8}
+/* 카드 본문 타이포 & 한줄 요약 */
+.mini-title{font-weight:700;margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mini-meta{color:var(--sub);font-size:13px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 
-/* -------- bottom tabbar (깨짐 방지) -------- */
-#bottom-tabs{position:fixed;left:0;right:0;bottom:0;z-index:31;background:#fff;border-top:1px solid var(--line)}
-.lv-tabbar{max-width:1080px;margin:0 auto}
-.lv-tabbar__in{display:grid;grid-template-columns:repeat(5,1fr);padding:8px 8px}
-.tbi{display:grid;place-items:center;gap:2px;color:#818899}
-.tbi i{font-size:22px}
+/* ===== 하단 탭 ===== */
+:root{--tabbar-h:74px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line)}
+.tabbar__in{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:10px 4px;max-width:1080px;margin:0 auto}
+.tbi{display:flex;flex-direction:column;align-items:center;gap:6px;color:#8a94a6}
+.tbi .ri{font-size:22px;line-height:1}
 .tbi span{font-size:12px}
-.tbi.is-active{color:#111}
+.tbi.is-active{color:var(--brand)}
+/* 페이지 하단여백 */
+.container{padding-bottom:calc(var(--tabbar-h) + 24px)}
