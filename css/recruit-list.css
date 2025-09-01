@@ -29,12 +29,13 @@
 /* 리스트 */
 .rl-list{display:flex; flex-direction:column; gap:12px}
 
-/* 카드 */
+/* 카드: 섹션 레이아웃 (썸네일 | 본문 | 액션) */
 .rl-card{
   display:grid;
-  grid-template-columns:116px 1fr;
-  gap:12px; align-items:flex-start;
+  grid-template-columns:116px 1fr 128px;
+  gap:12px; align-items:center;
   border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff;
+  word-break:keep-all;
 }
 
 /* 썸네일 */
@@ -42,30 +43,35 @@
   width:100%; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6;
 }
 
-/* 본문 */
-.rl-body{
-  min-width:0;
-  display:flex; flex-direction:column; gap:4px;
+/* 본문 (위: 상태칩, 가운데: 제목, 아래: 메타 한 줄, 맨아래: 액션) */
+.rl-body{min-width:0; display:flex; flex-direction:column; gap:6px}
+.rl-state{display:flex}
+.rl-chip{
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line);
 }
-.rl-status{font-size:12px; font-weight:600; color:var(--pri);}
+.rl-chip.open{background:#eef7ff; color:#1677ff; border-color:transparent}
+.rl-chip.closed{background:#f7f7f7; color:#777}
+.rl-chip.draft{background:#fff7e6; color:#b35a00; border-color:transparent}
+
 .rl-title{
-  font-weight:700; font-size:15px;
+  font-weight:700; margin:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-.rl-info{
-  font-size:12px; color:var(--sub);
-  display:flex; justify-content:space-between; gap:8px;
-}
-.rl-info span{white-space:nowrap}
-.rl-info .date{color:var(--pri); font-weight:700}
 
-/* 액션 */
-.rl-actions{
-  display:flex; gap:6px; margin-top:6px;
+/* 메타(마감·출연료 한 줄, 작은 글씨) */
+.rl-meta{
+  display:flex; gap:10px; align-items:center; min-width:0;
+  font-size:13px; color:var(--sub); line-height:1.35;
 }
+.rl-meta span{white-space:nowrap}
+.rl-meta .date{color:var(--pri); font-weight:700}
+
+/* 액션은 카드 우측 고정 + 본문 하단에도 한 줄 배치 */
+.rl-actions{display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap}
 .rl-actions .ic{
-  width:28px; height:28px; display:grid; place-items:center;
-  border:1px solid var(--line); border-radius:6px; background:#fff; color:#333;
+  width:32px; height:32px; display:grid; place-items:center;
+  border:1px solid var(--line); border-radius:8px; background:#fff; color:#333;
 }
 .rl-actions .ic:active{transform:scale(.96)}
 
@@ -75,5 +81,5 @@
 .empty i{font-size:28px; color:var(--sub)}
 
 @media (min-width:720px){
-  .rl-card{grid-template-columns:160px 1fr}
+  .rl-card{grid-template-columns:160px 1fr 140px}
 }
