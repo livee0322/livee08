@@ -1,36 +1,99 @@
-/* ===== Recruit List (rl-) ===== */
-.toolbar{display:flex; gap:12px; align-items:center; justify-content:space-between; margin:6px 0 12px}
-.chips{display:flex; gap:8px; overflow:auto; padding-bottom:2px}
-.chip{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; color:#333; white-space:nowrap}
+/* ===== Recruit List (rl-) — refreshed ===== */
+
+/* 공통 */
+:root{
+  --pri:#3b82f6;          /* 포인트 파랑 */
+  --pri-weak:#e8f1ff;     /* 연한 포인트 배경 */
+  --txt:#111827;
+  --muted:#6b7280;
+  --line:#e5e7eb;
+  --card:#fff;
+  --radius:14px;
+}
+
+/* 상단 툴바 */
+.toolbar{
+  display:flex; gap:12px; align-items:center; justify-content:space-between;
+  margin:8px 0 14px;
+}
+.rl-controls{display:flex; gap:8px; align-items:center; flex:1}
+.rl-controls .input{
+  flex:1 1 auto; min-width:0; height:40px; padding:0 12px;
+  border:1.5px solid var(--line); border-radius:10px; background:#fff;
+  font-size:14px; color:var(--txt); outline:none;
+  transition:border-color .15s ease;
+}
+.rl-controls .input:focus{border-color:var(--pri); box-shadow:0 0 0 2px color-mix(in srgb,var(--pri) 15%, transparent)}
+.rl-controls .select{
+  height:40px; padding:0 10px; border:1.5px solid var(--line);
+  border-radius:10px; background:#fff; color:var(--txt);
+}
+
+/* 필터 칩 */
+.chips{display:flex; gap:8px; overflow:auto; padding:2px 0 6px}
+.chip{
+  padding:8px 12px; border-radius:999px; border:1px solid var(--line);
+  background:#fff; color:#333; white-space:nowrap; font-weight:600;
+}
 .chip.is-active{background:var(--pri-weak); color:var(--pri); border-color:transparent}
 
-.rl-controls{display:flex; gap:8px; align-items:center}
-.input{height:40px; padding:0 12px; border:1px solid var(--line); border-radius:10px}
-.select{height:40px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:#fff}
+/* 리스트 */
+.rl-list{display:flex; flex-direction:column; gap:12px}
 
-/* 카드 리스트 */
-.rl-list{display:flex; flex-direction:column; gap:10px}
-.rl-card{display:grid; grid-template-columns:112px 1fr auto; gap:12px; align-items:center;
-  border:1px solid var(--line); border-radius:14px; padding:10px; background:#fff}
-.rl-thumb{width:112px; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6}
+/* 카드 */
+.rl-card{
+  display:grid; grid-template-columns:112px 1fr auto; gap:12px; align-items:center;
+  border:1px solid var(--line); border-radius:var(--radius); padding:12px; background:var(--card);
+}
+.rl-thumb{
+  width:112px; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6; overflow:hidden;
+}
 .rl-body{min-width:0}
-.rl-title{font-weight:700; margin:2px 0 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.rl-meta{font-size:13px; color:var(--sub); display:flex; gap:8px; flex-wrap:wrap}
-.rl-chip{display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line)}
+.rl-title{
+  font-weight:800; margin:0 0 6px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.rl-meta{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  font-size:13px; color:var(--muted); line-height:1.2;
+  min-height:18px;
+}
+
+/* 상태 칩 */
+.rl-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+}
 .rl-chip.open{background:#eef7ff; color:#1677ff; border-color:transparent}
-.rl-chip.closed{background:#f7f7f7; color:#777; }
+.rl-chip.closed{background:#f7f7f7; color:#777}
 .rl-chip.draft{background:#fff7e6; color:#b35a00; border-color:transparent}
 
-.rl-actions{display:flex; gap:8px}
-.rl-actions .ic{width:36px; height:36px; display:grid; place-items:center;
-  border:1px solid var(--line); border-radius:10px; background:#fff; color:#333}
+/* 액션 */
+.rl-actions{
+  display:flex; gap:8px; align-items:center;
+}
+.rl-actions .ic{
+  width:36px; height:36px; display:grid; place-items:center;
+  border:1px solid var(--line); border-radius:10px; background:#fff; color:#374151;
+  font-size:18px;
+  touch-action:manipulation;
+}
 .rl-actions .ic:active{transform:scale(.98)}
 
-.more-wrap{display:flex; justify-content:center; margin:12px 0 4px}
-.empty{display:grid; place-items:center; gap:8px; padding:28px 0; color:var(--sub)}
-.empty i{font-size:28px; color:var(--sub)}
+/* 더보기/빈 상태 */
+.more-wrap{display:flex; justify-content:center; margin:14px 0 6px}
+.empty{
+  display:grid; place-items:center; gap:8px; padding:32px 0; color:var(--muted);
+}
+.empty i{font-size:28px; color:var(--muted)}
 
+/* 반응형 */
+@media (min-width:480px){
+  .rl-card{grid-template-columns:140px 1fr auto}
+  .rl-thumb{width:140px}
+}
 @media (min-width:720px){
+  .toolbar{margin:12px 0 16px}
   .rl-card{grid-template-columns:160px 1fr auto}
   .rl-thumb{width:160px}
 }
