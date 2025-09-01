@@ -1,81 +1,79 @@
-/* Livee Home - campaigns(recruit) 연동 렌더링
-   - GET {API_BASE}{endpoints.recruits} (기본: type=recruit&status=published)
-   - config.js 의 window.LIVEE_CONFIG 사용
+/* Livee08 Home - recruit 리스트 렌더링 (v2.5)
+   - GET {API_BASE}{endpoints.recruits}
+   - window.LIVEE_CONFIG 사용
 */
 (() => {
   const $ = (sel) => document.querySelector(sel);
 
-  // ==== config ====
+  // ===== config =====
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   let BASE_PATH = CFG.BASE_PATH || '';
   if (BASE_PATH && !BASE_PATH.startsWith('/')) BASE_PATH = `/${BASE_PATH}`;
   if (BASE_PATH === '/') BASE_PATH = '';
-  const EP = (CFG.endpoints || {});
+  const EP = CFG.endpoints || {};
   const EP_RECRUITS = EP.recruits || '/campaigns?type=recruit&status=published&limit=20';
 
-  const DEFAULT_IMG = 'default.jpg';
+  const DEFAULT_IMG = `${BASE_PATH || '.'}/default.jpg`; // 기본 썸네일
 
-  /* ===== 날짜/문자 포맷 ===== */
   const pad2 = (n) => String(n).padStart(2, '0');
+  const n2 = (v) => (isFinite(v) ? Number(v).toLocaleString('ko-KR') : '');
 
   function fmtDayHM(dateISO, timeRange) {
-    // dateISO: ...Z | timeRange: "HH:MM~HH:MM" or "HH:MM"
-    const d = new Date(dateISO || '');
-    if (isNaN(d)) return '';
+    if (!dateISO) return '';
+    const d = new Date(dateISO);
+    if (Number.isNaN(d.getTime())) return '';
     const day = d.getDate();
-    let hm = '';
-    if (timeRange) hm = String(timeRange).split('~')[0]; // 시작시각만
-    return `${day}일 ${hm || ''}`.trim();
+    const hm = (String(timeRange || '').split('~')[0] || '').trim();
+    return `${day}일 ${hm}`.trim();
   }
-
   function fmtDateYYYYMMDD(dateISO) {
     if (!dateISO) return '';
     const d = new Date(dateISO);
-    if (isNaN(d)) return String(dateISO).slice(0, 10);
+    if (Number.isNaN(d.getTime())) return String(dateISO).slice(0, 10);
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
-
-  function metaForLineup(item) {
-    const pay = item.payNegotiable ? '협의 가능'
-               : (item.pay ? `${Number(item.pay).toLocaleString('ko-KR')}원` : '모집중');
-    const when = fmtDayHM(item.shootDate, item.shootTime);
-    return `${pay} · ${when} 예정`;
+  function metaForLineup(it) {
+    const payTxt = it.payNegotiable
+      ? '협의 가능'
+      : (it.pay ? `${n2(it.pay)}원` : '모집중');
+    const when = fmtDayHM(it.shootDate, it.shootTime);
+    return `${payTxt} · ${when} 예정`;
   }
 
-  /* ===== 서버 호출 ===== */
   async function fetchRecruits() {
-    // config의 recruits 엔드포인트 사용
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
+    console.debug('[main] GET', url);
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.ok === false) throw new Error(data.message || `(${res.status})`);
-
+      if (!res.ok || data.ok === false) {
+        console.warn('[main] fetch error:', res.status, data);
+        return [];
+      }
       const list =
         (Array.isArray(data) && data) ||
         data.items || data.data?.items ||
         data.docs  || data.data?.docs  || [];
-
+      // 서버 DTO ↔︎ 프론트 표준화
       const items = list.map((c) => ({
         id: c.id || c._id,
         title: c.title || '',
         thumb: c.thumbnailUrl || c.coverImageUrl || DEFAULT_IMG,
         closeAt: c.closeAt,
-        // recruit block
         shootDate: c.recruit?.shootDate,
         shootTime: c.recruit?.shootTime,
         pay: c.recruit?.pay,
         payNegotiable: !!c.recruit?.payNegotiable,
       }));
+      console.debug('[main] recruits:', items);
       return items;
     } catch (e) {
-      console.warn('fetchRecruits error:', e.message || e);
+      console.warn('[main] network fail:', e);
       return [];
     }
   }
 
-  /* ===== 템플릿 ===== */
   function tplLineup(items) {
     if (!items.length) {
       return `
@@ -92,7 +90,8 @@
       <div class="list-vert">
         ${items.map(it => `
           <article class="item">
-            <img class="thumb" src="${it.thumb || DEFAULT_IMG}" alt="라이브 썸네일" onerror="this.src='${DEFAULT_IMG}'"/>
+            <img class="thumb" src="${it.thumb || DEFAULT_IMG}" alt="라이브 썸네일"
+                 onerror="this.onerror=null;this.src='${DEFAULT_IMG}'"/>
             <div style="min-width:0">
               <div class="title">${it.title}</div>
               <div class="meta one-line">${metaForLineup(it)}</div>
@@ -122,10 +121,13 @@
           <article class="mini-card">
             <div class="mini-body">
               <div class="mini-title">${r.title}</div>
-              <div class="mini-meta">출연료 ${r.payNegotiable ? '협의 가능' : (r.pay ? `${Number(r.pay).toLocaleString('ko-KR')}원` : '미정')}
-                · 마감 ${fmtDateYYYYMMDD(r.closeAt)}</div>
+              <div class="mini-meta">
+                출연료 ${r.payNegotiable ? '협의 가능' : (r.pay ? `${n2(r.pay)}원` : '미정')}
+                · 마감 ${fmtDateYYYYMMDD(r.closeAt)}
+              </div>
             </div>
-            <img class="mini-thumb" src="${r.thumb || DEFAULT_IMG}" alt="공고 썸네일" onerror="this.src='${DEFAULT_IMG}'"/>
+            <img class="mini-thumb" src="${r.thumb || DEFAULT_IMG}" alt="공고 썸네일"
+                 onerror="this.onerror=null;this.src='${DEFAULT_IMG}'"/>
           </article>
         `).join('')}
       </div>
@@ -153,21 +155,18 @@
       </div>`;
   }
 
-  /* ===== 렌더 ===== */
   async function renderHome() {
     const recruits = await fetchRecruits();
 
-    // 오늘의 라인업: 미래 촬영일 기준 상위 2개
+    // 오늘 이후(또는 오늘 나중 시간)인 항목 2개
     const now = new Date();
     const upcoming = recruits
       .filter(r => r.shootDate)
       .map(r => {
-        let start = new Date(r.shootDate);
-        try {
-          const startHM = (r.shootTime || '').split('~')[0] || '00:00';
-          const [hh, mm] = startHM.split(':').map(Number);
-          start.setHours(hh||0, mm||0, 0, 0);
-        } catch {}
+        const start = new Date(r.shootDate);
+        const startHM = (r.shootTime || '').split('~')[0] || '00:00';
+        const [hh, mm] = startHM.split(':').map(Number);
+        start.setHours(hh || 0, mm || 0, 0, 0);
         return { ...r, _start: start };
       })
       .filter(r => r._start > now)
@@ -177,19 +176,16 @@
     const moreHref = BASE_PATH ? `${BASE_PATH}/index.html#recruits` : './index.html#recruits';
 
     $('#app').innerHTML = `
-      <!-- 오늘의 라이브 라인업 -->
       <section class="section">
         <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="${moreHref}">더보기</a></div>
         ${tplLineup(upcoming)}
       </section>
 
-      <!-- 추천 공고 -->
       <section class="section">
         <div class="section-head"><h2>추천 공고</h2><a class="more" href="${moreHref}">더보기</a></div>
         ${tplRecruits(recruits)}
       </section>
 
-      <!-- 추천 인플루언서 -->
       <section class="section">
         <div class="section-head"><h2>추천 인플루언서</h2><a class="more" href="#">더보기</a></div>
         ${tplPortfoliosStatic()}
