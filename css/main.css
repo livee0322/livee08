@@ -1,63 +1,62 @@
 /* ===== Reset & Base ===== */
-* { box-sizing: border-box; }
-html, body { margin:0; padding:0; }
-body { font-family: SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; color:#111; background:#fff; }
-a { color: inherit; text-decoration: none; }
-img { max-width: 100%; display: block; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:SUIT,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif; color:#111; background:#fff}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
 
-/* ===== Layout ===== */
-.container { max-width: 1080px; margin: 0 auto; padding: 0 16px 88px; }
-.section { margin: 24px 0; }
-.section-head { display:flex; align-items:center; gap:10px; }
-.section-head h2 { font-size:18px; font-weight:800; margin:0; }
-.more { margin-left:auto; font-size:14px; color:#1f7aec; }
+/* ===== Appbar ===== */
+.appbar{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid #eee}
+.appbar__in{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.appbar__title{font-size:20px;font-weight:800}
+.appbar__icons{display:flex;gap:8px}
+.ic{width:36px;height:36px;border:1px solid #eee;border-radius:10px;background:#fff}
 
-/* ===== Appbar / Tabs / Tabbar (모듈 주입) ===== */
-.lv-appbar { position:sticky; top:0; z-index:50; background:#fff; border-bottom:1px solid #eee; }
-.lv-appbar__in { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; }
-.lv-appbar__title { font-weight:800; font-size:18px; }
-.lv-appbar__icons { display:flex; gap:6px; }
-.lv-ic { width:36px; height:36px; border:1px solid #e9e9e9; border-radius:12px; background:#fff; display:grid; place-items:center; font-size:18px; }
+/* ===== Top Tabs ===== */
+.topTabs{position:sticky;top:56px;z-index:29;background:#fff;border-bottom:1px solid #eee}
+.topTabs__in{display:flex;gap:8px;overflow:auto;padding:10px 12px}
+.topTab{padding:8px 14px;border:1px solid #e6e6e6;border-radius:999px;color:#222;background:#fff;white-space:nowrap}
+.topTab.is-active{border-color:#111;font-weight:700}
 
-.lv-topTabs { position:sticky; top:56px; z-index:49; background:#fff; border-bottom:1px solid #eee; }
-.lv-topTabs__in { display:flex; gap:8px; padding:10px 16px; overflow:auto; }
-.lv-tab { padding:8px 12px; border-radius:999px; border:1px solid #e6e6e6; white-space:nowrap; color:#333; background:#fff; }
-.lv-tab.is-active { border-color:#111; font-weight:700; }
+/* ===== Sections / Container ===== */
+.container{padding:16px; padding-bottom:88px; max-width:1080px; margin:0 auto}
+.section{margin:18px 0}
+.section-head{display:flex;align-items:center}
+.section-head h2{margin:0;font-size:18px}
+.more{margin-left:auto;color:#3b82f6;font-size:13px}
 
-.lv-tabbar { position:fixed; left:0; right:0; bottom:0; z-index:48; background:#fff; border-top:1px solid #eee; }
-.lv-tabbar__in { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; padding:8px; }
-.lv-tbi { display:grid; place-items:center; gap:4px; padding:6px 0; color:#666; font-size:11px; }
-.lv-tbi.is-active { color:#111; font-weight:700; }
+/* ===== Banner ===== */
+.bannerWrap{position:relative; margin:10px 0 0}
+.banner{display:flex;gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; padding:16px 16px}
+.banner::-webkit-scrollbar{display:none}
+.bannerCard{flex:0 0 78%; max-width:78%; height:180px; border-radius:16px; padding:18px; scroll-snap-align:center; display:flex; flex-direction:column; justify-content:center; box-shadow:0 1px 0 rgba(0,0,0,0.06)}
+.bannerCard h3{margin:0 0 6px 0; font-size:18px}
+.bannerCard p{margin:0; color:#555; font-size:14px}
+.bannerNav{position:absolute; top:50%; transform:translateY(-50%); width:32px;height:32px;border-radius:16px;border:1px solid #eee;background:#fff}
+.bannerNav.prev{left:8px}
+.bannerNav.next{right:8px}
 
-/* ===== Banner (좌우 살짝 보이는 캐러셀) ===== */
-.banner-wrap { position:relative; }
-.banner { display:flex; gap:12px; overflow-x:auto; padding:6px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
-.banner::-webkit-scrollbar { display:none; }
-.banner-card { flex:0 0 calc(100% - 56px); height:140px; border-radius:16px; padding:16px; display:flex; flex-direction:column; justify-content:center; scroll-snap-align:center; }
-.banner-card h3 { margin:0 0 6px; font-size:18px; font-weight:800; }
-.banner-card p { margin:0; color:#333; }
-.banner-nav { position:absolute; top:50%; transform:translateY(-50%); width:36px; height:36px; border:1px solid #e6e6e6; background:#fff; border-radius:10px; display:grid; place-items:center; }
-.banner-nav.prev { left:6px; }
-.banner-nav.next { right:6px; }
+/* ===== Lineup (네이버 스타일) ===== */
+.list-vert{display:grid;gap:12px;margin-top:12px}
+.item{display:grid;grid-template-columns:56px 1fr; gap:12px; padding:8px 4px; border-bottom:1px solid #f2f2f2}
+.item:last-child{border-bottom:none}
+.thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;background:#f5f5f5}
+.title{font-weight:700;font-size:15px}
+.meta{color:#666;font-size:13px;margin-top:2px}
 
-/* ===== 오늘의 라이브 라인업 (네이버 스타일) ===== */
-.lineup { border-top:1px solid #f1f3f5; }
-.line { display:flex; align-items:center; gap:12px; padding:14px 2px; border-bottom:1px solid #f1f3f5; }
-.line .thumb { width:44px; height:44px; border-radius:12px; background:#eee center/cover no-repeat; flex:0 0 44px; }
-.line .title { font-weight:700; }
-.line .time { color:#d8237a; font-weight:800; margin-left:auto; }
+/* ===== Recruits (오늘공구 스타일) ===== */
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding:12px 2px}
+.hscroll::-webkit-scrollbar{display:none}
+.card-mini{flex:0 0 78%; max-width:78%; border:1px solid #eee;border-radius:16px; background:#fff; padding:10px; display:grid; grid-template-columns:92px 1fr; gap:10px}
+.mini-thumb{width:92px;height:92px;border-radius:12px;object-fit:cover;background:#f5f5f5}
+.mini-title{font-weight:700;font-size:15px}
+.mini-meta{color:#666;font-size:13px;margin-top:4px}
 
-/* ===== 추천 공고 (가로 스크롤 카드 / 오늘공구 레이아웃) ===== */
-.recruits-hscroll { display:flex; gap:12px; overflow-x:auto; padding:6px 0 2px; -webkit-overflow-scrolling:touch; }
-.recruits-hscroll::-webkit-scrollbar { display:none; }
-.rc-card { flex:0 0 84%; display:flex; gap:12px; padding:12px; border:1px solid #eee; border-radius:16px; background:#fff; }
-.rc-thumb { width:108px; height:108px; border-radius:14px; background:#eee center/cover no-repeat; flex:0 0 108px; }
-.rc-body { min-width:0; display:flex; flex-direction:column; gap:6px; }
-.rc-title { font-weight:800; }
-.rc-meta { font-size:13px; color:#666; }
+/* ===== Empty ===== */
+.empty{border:1px dashed #e5e7eb; color:#6b7280; border-radius:12px; padding:16px; text-align:center}
 
-/* ===== Responsive ===== */
-@media (min-width:720px){
-  .banner-card { flex-basis: calc(50% - 56px); }
-  .rc-card { flex-basis: 46%; }
-}
+/* ===== Bottom Tabbar ===== */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:31;background:#fff;border-top:1px solid #eee}
+.tabbar .tbi{display:grid;place-items:center;height:56px;color:#6b7280;font-size:12px}
+.tabbar .tbi.is-active{color:#111;font-weight:700}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr)}
