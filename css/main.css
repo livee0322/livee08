@@ -1,113 +1,102 @@
-/* ========== Livee main.css (unified) ========== */
+/* ========== Livee v2.5 — main.css (single source of truth) ========== */
+
+/* --- Design tokens --- */
 :root{
-  --bg:#fff;
-  --card:#fafafa;
-  --line:#e9e9ee;
-  --txt:#121212;
-  --sub:#6f7380;
-  --pri:#5c7cfa;        /* 포인트 파랑 */
-  --pri-bg:#eef1ff;     /* 라벤더 */
-  --radius:16px;
+  --bg:#ffffff;
+  --text:#111;
+  --sub:#6b7280;
+  --line:#e5e7eb;
+  --line-soft:#f1f5f9;
+
+  --primary:#3b82f6;     /* 파랑 */
+  --accent:#8b5cf6;      /* 라벤더 */
+  --pill:#f3f4f6;
+
+  --radius:18px;
+  --radius-sm:14px;
+
+  --tabbar-h:72px;
+  --container-w:1080px;
 }
 
-/* Reset */
+/* --- Reset / base --- */
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--txt)}
-body{font-family:'SUIT',system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;line-height:1.45}
+html,body{height:100%}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
+body{font-family:SUIT,system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans KR','Malgun Gothic',sans-serif; line-height:1.5}
+a{color:inherit;text-decoration:none}
 img{display:block;max-width:100%}
-a{text-decoration:none;color:inherit}
 
-/* Containers */
-.container{padding:0 16px}
-.section{margin:24px 0}
-.section-head{display:flex;align-items:center;gap:10px;margin:0 0 12px}
-.section-head h2{margin:0;font-size:20px}
-.section-head .more{margin-left:auto;font-size:13px;color:var(--sub)}
-
-/* ================== HEADER ================== */
-.lv-appbar{
-  position:sticky;top:0;z-index:50;
-  background:var(--bg);border-bottom:1px solid var(--line)
+/* 유틸 */
+.container{max-width:var(--container-w);margin:0 auto;padding:0 16px 24px;
+/* 하단탭에 안 가리도록 여유 */
+padding-bottom:calc(var(--tabbar-h) + 28px);
 }
-.lv-appbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
-.lv-title{font-weight:800;font-size:20px;letter-spacing:.2px}
-.lv-actions{display:flex;gap:12px}
-.lv-action{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--line)}
-.lv-action i{font-size:20px;color:var(--txt)}
+.section{margin:22px 0}
+.section-head{display:flex;align-items:center;margin:0 2px 12px}
+.section-head h2{margin:0;font-size:22px}
+.more{margin-left:auto;color:var(--sub);font-size:14px}
 
-/* ================== TOP TABS ================== */
-.lv-topTabs{position:sticky;top:56px;z-index:49;background:var(--bg);border-bottom:1px solid var(--line)}
+/* --- Appbar --- */
+.lv-appbar{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.lv-title{font-weight:800;font-size:22px;letter-spacing:.2px}
+.lv-actions{display:flex;gap:10px}
+.lv-action{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:#fff}
+.lv-action i{font-size:19px;color:#374151}
+
+/* --- Top tabs (흰배경 / 활성=파랑+라벤더) --- */
+.lv-topTabs{position:sticky;top:57px;z-index:35;background:#fff;border-bottom:1px solid var(--line)}
 .lv-topTabs__in{display:flex;gap:10px;padding:10px 16px;overflow:auto}
 .lv-topTabs__in::-webkit-scrollbar{display:none}
-.lv-topTabs .tab{
-  padding:8px 14px;border-radius:999px;white-space:nowrap;
-  font-size:15px;color:var(--txt);background:transparent;border:none
-}
-.lv-topTabs .tab.is-active{background:var(--pri-bg);color:var(--pri);font-weight:700}
+.tab{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid transparent;color:#111}
+.tab.is-active{color:var(--primary);border-color:#e0e7ff;background:#eff6ff}
 
-/* ================== BANNER ================== */
+/* --- Banner (좌우 살짝 보이고, 위아래 도트 제거) --- */
 .banner-wrap{position:relative}
-.banner{display:flex;gap:14px;overflow:auto;scroll-snap-type:x mandatory;padding:16px}
+.banner{display:flex;gap:14px;overflow-x:auto;padding:0 16px;scroll-snap-type:x mandatory}
 .banner::-webkit-scrollbar{display:none}
-.banner-card{
-  flex:0 0 88%;               /* 좌우 살짝 보이게 */
-  height:200px;               /* 세로 키움 */
-  border-radius:22px;
-  display:flex;flex-direction:column;justify-content:flex-end;
-  padding:22px;color:#101114;font-weight:800;font-size:22px;
-  scroll-snap-align:center;
-}
-.banner-card p{margin:6px 0 0;font-weight:500;font-size:15px;color:#15202b}
-/* 샘플 배경 (index.html에서 inline style로 덮어써도 됨) */
-.banner-card.is-sample:nth-child(1){background:#7dd3fc}
-.banner-card.is-sample:nth-child(2){background:#a78bfa}
-.banner-card.is-sample:nth-child(3){background:#34d399}
+/* 좌우 살짝 보이게 – 카드 88% 폭 */
+.banner-card{flex:0 0 88%; height:180px; border-radius:26px; padding:24px;
+ color:#111; display:flex; flex-direction:column; justify-content:flex-end; scroll-snap-align:start}
+.banner-title{font-size:22px;font-weight:800;margin:0 0 6px}
+.banner-sub{font-size:15px;color:#111;opacity:.85;margin:0}
+/* 도트 같은 가상요소 무력화 */
+.banner::before,.banner::after{content:none !important}
 
-/* 작은 회색 점(의도치 않은 요소) 제거 가드 */
-.banner-wrap > *:before,
-.banner-wrap > *:after{content:none!important}
+/* --- “오늘의 라이브 라인업” (네이버 느낌) --- */
+.list-vert{display:grid;gap:12px;margin-top:8px}
+.item{display:grid;grid-template-columns:112px 1fr;gap:12px;border:1px solid var(--line);background:#fff;border-radius:var(--radius-sm);padding:10px}
+.thumb{width:100%;aspect-ratio:1/1;border-radius:14px;object-fit:cover;background:#f3f4f6}
+.title{font-weight:700;font-size:16px}
+.meta{font-size:13px;color:var(--sub);margin-top:2px}
+.meta .date{color:var(--primary);font-weight:600}
 
-/* ========== 오늘의 라이브 라인업 (네이버 느낌) ========== */
-.list-vert{display:flex;flex-direction:column;gap:12px}
-.item{
-  display:flex;gap:12px;
-  border:1px solid var(--line);background:var(--card);
-  border-radius:14px;overflow:hidden;padding:10px
-}
-.item .thumb{width:116px;height:78px;object-fit:cover;border-radius:10px}
-.item .title{font-weight:700;margin:2px 0 6px;font-size:15px}
-.item .meta{font-size:13px;color:var(--sub)}
-.item .meta .date{color:var(--pri);font-weight:600}
-
-/* ========== 추천 공고 (가로 카드 Today Deal 느낌) ========== */
-.hscroll{display:flex;gap:12px;overflow:auto;padding:2px 0 4px}
+/* --- 추천 공고 (오늘공구 카드 톤) --- */
+.hscroll{display:flex;overflow-x:auto;gap:12px;padding:2px 2px 2px 2px;scroll-snap-type:x proximity}
 .hscroll::-webkit-scrollbar{display:none}
-.card-mini{
-  flex:0 0 85%; /* 70% → 85%로 확대 */
-  border:1px solid var(--line);background:var(--card);
-  border-radius:16px;display:flex;align-items:center;overflow:hidden
-}
-.mini-thumb{width:94px;height:100%;object-fit:cover}
-.mini-body{padding:10px 12px;min-width:0}
-.mini-title{font-weight:700;font-size:15px;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 카드 폭 85%로 키우고 그림자 제거, 연한 테두리 */
+.card-mini{flex:0 0 85%; display:grid; grid-template-columns:1fr 110px; gap:12px; padding:12px;
+ border:1px solid var(--line); border-radius:18px; background:#fff; scroll-snap-align:center}
+.mini-thumb{width:110px;height:80px;border-radius:14px;object-fit:cover;background:#f3f4f6}
+.mini-body{min-width:0}
+.mini-title{font-weight:700;font-size:16px; margin:4px 0 6px}
 .mini-meta{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-meta .price{font-weight:700;color:#111}
+.mini-meta .close{color:var(--primary);font-weight:600}
 
-/* ========== BOTTOM TABBAR (깨짐 방지) ========== */
-.lv-tabbar{
-  position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);
-  border-top:1px solid var(--line);
-  padding-bottom:env(safe-area-inset-bottom);
-}
-.lv-tabbar__in{
-  display:flex;align-items:center;justify-content:space-around;
-  padding:8px 6px;max-width:960px;margin:0 auto
-}
-.tbi{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--sub)}
-.tbi i{font-size:22px;line-height:1}
-.tbi span{font-size:11px}
-.tbi.is-active{color:var(--pri);font-weight:700}
-main{padding-bottom:76px} /* 하단탭 가림 방지 여백 */
+/* --- Tabbar --- */
+.lv-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid var(--line)}
+.lv-tabbar__in{height:var(--tabbar-h);display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+.tbi{display:grid;place-items:center;gap:4px;color:#6b7280;font-size:12px}
+.tbi i{font-size:22px}
+.tbi.is-active{color:var(--primary)}
+.tbi.is-active i{color:var(--primary)}
 
-/* ========== Utilities ========== */
-.hint{color:var(--sub);font-size:12px}
-.hr{height:1px;background:var(--line);margin:12px 0}
+/* --- Responsive tweaks --- */
+@media (min-width:720px){
+  .banner-card{height:200px}
+  .item{grid-template-columns:136px 1fr}
+  .thumb{aspect-ratio:16/9}
+  .card-mini{grid-template-columns:1fr 128px}
+  .mini-thumb{width:128px;height:88px}
+}
