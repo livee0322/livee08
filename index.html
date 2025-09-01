@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Livee — v2.5 TEST</title>
 
-  <!-- 폰트 -->
+  <!-- 폰트 & 아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
 
   <!-- UI 스타일 -->
-  <link rel="stylesheet" href="css/ui.css" />
+  <link rel="stylesheet" href="css/ui.css?v=20250901-1" />
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
 
-  <!-- ===== 앱 셸(헤더/탭/푸터) : JS 없이도 즉시 보이도록 고정 마크업 ===== -->
-  <!-- 상단 앱바 -->
+  <!-- ===== 상단 앱바 ===== -->
   <header class="lv-appbar" role="banner" aria-label="앱바">
     <div class="lv-appbar__in">
       <div class="lv-appbar__title">라이비</div>
       <nav class="lv-appbar__icons" aria-label="빠른 액션">
-        <button class="lv-ic" aria-label="알림">🔔</button>
-        <button class="lv-ic" aria-label="검색">🔍</button>
-        <button class="lv-ic" aria-label="로그아웃">↩︎</button>
+        <button class="lv-ic" aria-label="알림"><i class="ri-notification-3-line"></i></button>
+        <button class="lv-ic" aria-label="검색"><i class="ri-search-line"></i></button>
+        <button class="lv-ic" aria-label="로그아웃"><i class="ri-logout-box-r-line"></i></button>
       </nav>
     </div>
   </header>
 
-  <!-- 상단 탭 -->
+  <!-- ===== 상단 탭 ===== -->
   <nav class="lv-topTabs" role="navigation" aria-label="상단 탭">
     <div class="lv-topTabs__in">
       <a class="lv-tab is-active" href="#/home">숏클립</a>
@@ -38,42 +38,46 @@
     </div>
   </nav>
 
-  <!-- ===== 페이지 콘텐츠 ===== -->
+  <!-- ===== 본문 ===== -->
   <main id="page" class="container" role="main" aria-live="polite">
-
-    <!-- 배너: 좌/우 약간 보이는 3장 롤링 -->
+    <!-- 배너: 3장 롤링 (좌우 살짝 보이게) -->
     <section class="section" aria-label="프로모션 배너">
       <div class="banner-wrap">
-        <button class="banner-nav prev" aria-label="이전 배너"></button>
-        <div id="banner" class="banner">
-          <!-- js/banner.js가 카드 3개 삽입 -->
-        </div>
-        <button class="banner-nav next" aria-label="다음 배너"></button>
+        <button class="banner-nav prev" aria-label="이전 배너"><i class="ri-arrow-left-s-line"></i></button>
+        <div id="banner" class="banner"><!-- js/banner.js 가 카드 삽입 --></div>
+        <button class="banner-nav next" aria-label="다음 배너"><i class="ri-arrow-right-s-line"></i></button>
       </div>
     </section>
 
-    <!-- 홈 본문 -->
-    <section id="home" class="section" aria-label="홈 섹션">
-      <!-- js/main.js 가 렌더 -->
-    </section>
+    <!-- 홈 본문 (오늘의 라이브 / 추천 공고 등) -->
+    <section id="home" class="section" aria-label="홈 섹션"><!-- js/main.js 가 렌더 --></section>
+
+    <!-- 고정 탭바와 겹치지 않도록 여유공간 -->
+    <div class="lv-tabbar-spacer" aria-hidden="true"></div>
   </main>
 
-  <!-- 하단 탭바 -->
+  <!-- ===== 하단 탭바 ===== -->
   <footer class="lv-tabbar" role="contentinfo" aria-label="하단 탭">
-    <a class="lv-tbi is-active" href="#/home"><span>홈</span></a>
-    <a class="lv-tbi" href="recruit-new.html"><span>모집캠페인</span></a>
-    <a class="lv-tbi" href="#/library"><span>라이브러리</span></a>
-    <a class="lv-tbi" href="#/portfolios"><span>인플루언서</span></a>
-    <a class="lv-tbi" href="login.html"><span>마이페이지</span></a>
+    <a class="lv-tbi is-active" href="#/home">
+      <i class="ri-home-4-line"></i><span>홈</span>
+    </a>
+    <a class="lv-tbi" href="recruit-new.html">
+      <i class="ri-calendar-event-line"></i><span>모집캠페인</span>
+    </a>
+    <a class="lv-tbi" href="#/library">
+      <i class="ri-book-mark-line"></i><span>라이브러리</span>
+    </a>
+    <a class="lv-tbi" href="#/portfolios">
+      <i class="ri-team-line"></i><span>인플루언서</span>
+    </a>
+    <a class="lv-tbi" href="login.html">
+      <i class="ri-user-3-line"></i><span>마이페이지</span>
+    </a>
   </footer>
 
-  <!-- ===== 스크립트 로딩 순서 ===== -->
-  <!-- 설정(필수 먼저) -->
-  <script defer src="js/config.js"></script>
-  <!-- 배너 롤링 -->
-  <script defer src="js/banner.js"></script>
-  <!-- 홈 데이터 렌더 -->
-  <script defer src="js/main.js"></script>
-
+  <!-- ===== 스크립트 (캐시 무력화용 쿼리 추가) ===== -->
+  <script defer src="js/config.js?v=20250901-1"></script>
+  <script defer src="js/banner.js?v=20250901-1"></script>
+  <script defer src="js/main.js?v=20250901-1"></script>
 </body>
 </html>
