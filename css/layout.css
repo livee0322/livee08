@@ -1,45 +1,17 @@
-/* === Header (모듈) === */
-.appbar{
-  position:sticky; top:0; z-index:20;
-  background:var(--paper); border-bottom:1px solid var(--line);
-}
-.appbar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
-.logo{font-weight:900;font-size:18px;letter-spacing:.2px;color:var(--brand)}
-.actions{display:flex;gap:10px}
-.iconbtn{
-  width:36px;height:36px;border-radius:12px;border:1px solid var(--line);
-  background:var(--paper); display:grid;place-items:center; box-shadow:0 1px 0 rgba(0,0,0,.02);
-}
-.iconbtn svg{width:18px;height:18px;stroke:var(--brand)}
+/* 섹션 간격 */
+.section + .section{border-top:1px solid var(--line);}
 
-/* === Top Tabs (모듈) === */
-.tabs{
-  position:sticky; top:56px; z-index:19;
-  background:var(--paper); border-bottom:1px solid var(--line);
-  display:flex; gap:8px; overflow:auto; padding:8px 12px;
-}
-.tabs .tab{
-  padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--paper);
-  color:var(--sub); font-weight:700; white-space:nowrap;
-}
-.tabs .tab.active{color:var(--ink); background:var(--pill)}
+/* “더보기” 링크 호버 */
+.more:active{opacity:.7}
 
-/* === Bottom Tabbar (모듈) === */
-.tabbar{
-  position:sticky; bottom:0; z-index:20;
-  background:var(--paper); border-top:1px solid var(--line);
-  display:grid; grid-template-columns:repeat(5,1fr);
-}
-.tbi{display:grid;place-items:center;height:58px;font-size:12px;color:var(--sub)}
-.tbi.active{color:var(--brand-acc);font-weight:800}
+/* 카드/이미지 공통 둥근모서리 */
+img.round{border-radius:var(--radius)}
 
-/* === Hero Banner (모듈) === */
-.hero{
-  background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg);
-  padding:20px; box-shadow:var(--shadow);
+/* 모바일 탭바가 가리는 요소 없도록 하단 여백 보강 */
+@media (max-width:720px){
+  body{padding-bottom:72px}
 }
-.hero .meta{margin:0 0 4px;color:var(--sub);font-size:13px}
-.hero h1{font-size:26px;line-height:1.2;margin:6px 0 14px;letter-spacing:-.4px}
-.hero .toolbar{display:flex;gap:10px;flex-wrap:wrap}
-.hero .pill{background:var(--paper)}
-.hero .pill:hover{box-shadow:var(--shadow)}
+
+/* 스켈레톤 플레이스홀더 (선택) */
+.skel{background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);background-size:400% 100%;animation:sk 1.4s ease infinite}
+@keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
