@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Livee — 마이페이지</title>
+
+  <!-- SUIT & Remix Icon -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
+
+  <!-- 메인 CSS(단일 관리) -->
+  <link rel="stylesheet" href="css/main.css" />
+  <meta name="theme-color" content="#ffffff" />
+</head>
+<body>
+  <!-- 앱 셸 -->
+  <header id="appbar"></header>
+  <!-- 마이페이지는 상단 탭 생략 가능. 필요하면 아래 주석 해제 -->
+  <!-- <nav id="top-tabs"></nav> -->
+
+  <main class="container" style="padding-bottom: calc(72px + 16px);">
+    <section class="section">
+      <div id="mypage-root" class="mp"></div>
+    </section>
+  </main>
+
+  <footer id="bottom-tabs"></footer>
+
+  <!-- 설정 & UI 모듈 & 마이페이지 렌더 -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/mypage.js"></script>
+</body>
+</html>
