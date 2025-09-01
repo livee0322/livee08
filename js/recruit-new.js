@@ -1,4 +1,9 @@
-/* Livee v2.5 – Recruit Create (for /recruit-test) */
+<!-- recruit-new.js -->
+<script>
+/* Livee v2.5 – Recruit Create (for /recruit-test)
+ * - POST {API_BASE}/recruit-test
+ * - Cloudinary: /uploads/signature → image/upload
+ */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
@@ -12,12 +17,9 @@
         deadline=$id("deadline"), payEl=$id("pay"), negEl=$id("negotiable"),
         fileEl=$id("imageFile"), previewEl=$id("preview"), msgEl=$id("recruitMsg");
 
-  // 업로드 결과 보관 변수(미리보기 src와 분리)
-  let coverImageUrl = '';
-
-  const today = new Date().toISOString().slice(0,10);
-  if (shootDate) shootDate.min = today;
-  if (deadline)  deadline.min  = today;
+  const todayISO = new Date().toISOString().slice(0,10);
+  if (shootDate) shootDate.min = todayISO;
+  if (deadline)  deadline.min  = todayISO;
 
   const headers = (json=true)=> {
     const h = {};
@@ -27,18 +29,15 @@
   };
   const fail = (m)=>alert(m||'요청 오류');
 
+  // --- Cloudinary upload helpers ---
   async function getSignature(){
-    const url = `${API_BASE}/uploads/signature`;
-    console.log('[RECRUIT] getSignature:', url);
-    const r = await fetch(url, { headers: headers(false), cache:'no-store' });
+    const r = await fetch(`${API_BASE}/uploads/signature`, { headers: headers(false) });
     const j = await r.json().catch(()=>({}));
-    console.log('[RECRUIT] signature res:', r.status, j);
     if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j.data || j;
   }
-  function transUrl(u,t){
-    try{const [a,b]=u.split('/upload/'); return `${a}/upload/${t}/${b}`;}catch{ return u;}
-  }
+  const trans = (u,t)=>{ try{const [a,b]=u.split('/upload/'); return `${a}/upload/${t}/${b}`;}catch{ return u;} };
+
   async function uploadToCloudinary(file){
     const { cloudName, apiKey, timestamp, signature } = await getSignature();
     const fd=new FormData();
@@ -47,10 +46,8 @@
     fd.append('timestamp',timestamp);
     fd.append('signature',signature);
     const url=`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-    console.log('[RECRUIT] uploading to:', url, 'size:', file.size);
     const res = await fetch(url,{ method:'POST', body:fd });
-    const j = await res.json().catch(()=>({}));
-    console.log('[RECRUIT] cloudinary res:', res.status, j);
+    const j = await res.json();
     if(!res.ok || !j.secure_url) throw new Error(j.error?.message||`Cloudinary_${res.status}`);
     return j.secure_url;
   }
@@ -61,13 +58,18 @@
     if(f.size>8*1024*1024){ msgEl.textContent='8MB 이하만 업로드'; e.target.value=''; return; }
     try{
       msgEl.textContent='이미지 업로드 중...';
-      coverImageUrl = await uploadToCloudinary(f);       // ← 결과 저장
-      previewEl.src = transUrl(coverImageUrl, (CFG.thumb?.card169)||'c_fill,g_auto,w_640,h_360,f_auto,q_auto');
+      const originUrl = await uploadToCloudinary(f);
+      const card = (CFG.thumb?.card169) || 'c_fill,g_auto,w_640,h_360,f_auto,q_auto';
+      const square = (CFG.thumb?.square) || 'c_fill,g_auto,w_320,h_320,f_auto,q_auto';
+      previewEl.src = trans(originUrl, card);
+      previewEl.dataset.cover = originUrl;
+      previewEl.dataset.thumb = trans(originUrl, square); // ← 썸네일도 함께 저장
       msgEl.textContent='업로드 완료';
     }catch(err){
       msgEl.textContent='업로드 실패: '+err.message;
       previewEl.removeAttribute('src');
-      coverImageUrl = '';
+      delete previewEl.dataset.cover;
+      delete previewEl.dataset.thumb;
     }
   });
 
@@ -111,13 +113,18 @@
       pay = raw;
     }
 
+    // 업로드된 이미지(선택)
+    const cover = previewEl?.dataset?.cover || '';
+    const thumb = previewEl?.dataset?.thumb || '';
+
     const payload = {
       type:'recruit',
       status:'published',
       title,
       category: categoryEl.value,
       closeAt: `${deadline.value}T23:59:59.000Z`,
-      ...(coverImageUrl ? { coverImageUrl } : {}),
+      ...(cover ? { coverImageUrl: cover } : {}),
+      ...(thumb ? { thumbnailUrl: thumb } : {}),
       recruit:{
         recruitType:'product',
         location: (locationEl.value||'').trim(),
@@ -131,7 +138,7 @@
       }
     };
 
-    console.log('[RECRUIT] POST payload:', payload);
+    console.log('[RECRUIT NEW] POST payload:', payload);
 
     try{
       const res = await fetch(`${API_BASE}/recruit-test`,{
@@ -140,8 +147,7 @@
         body: JSON.stringify(payload)
       });
       const data = await res.json().catch(()=>({}));
-      console.log('[RECRUIT] create res:', res.status, data);
-
+      console.log('[RECRUIT NEW] response:', res.status, data);
       if(!res.ok || data.ok===false) throw new Error(data.message||`등록 실패 (${res.status})`);
       alert('공고가 등록되었습니다.');
       location.href = (BASE_PATH ? `${BASE_PATH}/index.html#recruits` : './index.html#recruits');
@@ -150,3 +156,4 @@
     }
   });
 })();
+</script>
