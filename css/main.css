@@ -1,69 +1,113 @@
-:root {
-  --bg: #ffffff;
-  --card: #fafafa;
-  --line: #e5e5e5;
-  --txt: #111111;
-  --sub: #666666;
-  --pri: #5c7cfa; /* 파란 포인트 */
-  --pri-bg: #eef1ff; /* 라벤더 톤 */
-  --radius: 14px;
+/* ========== Livee main.css (unified) ========== */
+:root{
+  --bg:#fff;
+  --card:#fafafa;
+  --line:#e9e9ee;
+  --txt:#121212;
+  --sub:#6f7380;
+  --pri:#5c7cfa;        /* 포인트 파랑 */
+  --pri-bg:#eef1ff;     /* 라벤더 */
+  --radius:16px;
 }
 
 /* Reset */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--txt); }
-body { font-family: 'SUIT', system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; }
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt)}
+body{font-family:'SUIT',system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;line-height:1.45}
+img{display:block;max-width:100%}
+a{text-decoration:none;color:inherit}
 
-/* ===== Appbar ===== */
-.appbar { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--line); }
-.appbar__in { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
-.appbar__title { font-weight: 700; font-size: 18px; }
-.appbar__actions { display: flex; gap: 12px; }
-.ic-btn { background: none; border: none; padding: 6px; font-size: 20px; color: var(--txt); cursor: pointer; }
+/* Containers */
+.container{padding:0 16px}
+.section{margin:24px 0}
+.section-head{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.section-head h2{margin:0;font-size:20px}
+.section-head .more{margin-left:auto;font-size:13px;color:var(--sub)}
 
-/* ===== Top Tabs ===== */
-.topTabs { background: var(--bg); border-bottom: 1px solid var(--line); overflow-x: auto; }
-.topTabs__in { display: flex; gap: 12px; padding: 8px 16px; }
-.tab { padding: 8px 14px; border-radius: 999px; white-space: nowrap; color: var(--txt); font-size: 14px; }
-.tab.is-active { background: var(--pri-bg); color: var(--pri); font-weight: 600; }
+/* ================== HEADER ================== */
+.lv-appbar{
+  position:sticky;top:0;z-index:50;
+  background:var(--bg);border-bottom:1px solid var(--line)
+}
+.lv-appbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.lv-title{font-weight:800;font-size:20px;letter-spacing:.2px}
+.lv-actions{display:flex;gap:12px}
+.lv-action{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--line)}
+.lv-action i{font-size:20px;color:var(--txt)}
 
-/* ===== Banner ===== */
-.banner-wrap { position: relative; }
-.banner { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 16px; }
-.banner::-webkit-scrollbar { display: none; }
-.banner-card { flex: 0 0 85%; height: 180px; border-radius: var(--radius); background: #ddd; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; scroll-snap-align: center; }
-.banner-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; }
-.banner-nav.prev { left: 8px; }
-.banner-nav.next { right: 8px; }
+/* ================== TOP TABS ================== */
+.lv-topTabs{position:sticky;top:56px;z-index:49;background:var(--bg);border-bottom:1px solid var(--line)}
+.lv-topTabs__in{display:flex;gap:10px;padding:10px 16px;overflow:auto}
+.lv-topTabs__in::-webkit-scrollbar{display:none}
+.lv-topTabs .tab{
+  padding:8px 14px;border-radius:999px;white-space:nowrap;
+  font-size:15px;color:var(--txt);background:transparent;border:none
+}
+.lv-topTabs .tab.is-active{background:var(--pri-bg);color:var(--pri);font-weight:700}
 
-/* ===== Sections ===== */
-.section { margin: 24px 0; padding: 0 16px; }
-.section-head { display: flex; align-items: center; margin-bottom: 12px; }
-.section-head h2 { font-size: 18px; margin: 0; }
-.section-head .more { margin-left: auto; font-size: 13px; color: var(--sub); }
+/* ================== BANNER ================== */
+.banner-wrap{position:relative}
+.banner{display:flex;gap:14px;overflow:auto;scroll-snap-type:x mandatory;padding:16px}
+.banner::-webkit-scrollbar{display:none}
+.banner-card{
+  flex:0 0 88%;               /* 좌우 살짝 보이게 */
+  height:200px;               /* 세로 키움 */
+  border-radius:22px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:22px;color:#101114;font-weight:800;font-size:22px;
+  scroll-snap-align:center;
+}
+.banner-card p{margin:6px 0 0;font-weight:500;font-size:15px;color:#15202b}
+/* 샘플 배경 (index.html에서 inline style로 덮어써도 됨) */
+.banner-card.is-sample:nth-child(1){background:#7dd3fc}
+.banner-card.is-sample:nth-child(2){background:#a78bfa}
+.banner-card.is-sample:nth-child(3){background:#34d399}
 
-/* ===== Lineup (오늘의 라이브) ===== */
-.list-vert { display: flex; flex-direction: column; gap: 12px; }
-.item { display: flex; gap: 12px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--card); }
-.item img.thumb { width: 120px; height: 80px; object-fit: cover; flex-shrink: 0; }
-.item .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-.item .meta { font-size: 12px; color: var(--sub); }
-.item .meta span.date { color: var(--pri); font-weight: 500; }
+/* 작은 회색 점(의도치 않은 요소) 제거 가드 */
+.banner-wrap > *:before,
+.banner-wrap > *:after{content:none!important}
 
-/* ===== Recruits (추천공고) ===== */
-.hscroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; }
-.hscroll::-webkit-scrollbar { display: none; }
-.card-mini { flex: 0 0 85%; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); display: flex; overflow: hidden; }
-.card-mini img.mini-thumb { width: 100px; height: 100%; object-fit: cover; flex-shrink: 0; }
-.card-mini .mini-body { padding: 10px; display: flex; flex-direction: column; justify-content: center; }
-.mini-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-.mini-meta { font-size: 12px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ========== 오늘의 라이브 라인업 (네이버 느낌) ========== */
+.list-vert{display:flex;flex-direction:column;gap:12px}
+.item{
+  display:flex;gap:12px;
+  border:1px solid var(--line);background:var(--card);
+  border-radius:14px;overflow:hidden;padding:10px
+}
+.item .thumb{width:116px;height:78px;object-fit:cover;border-radius:10px}
+.item .title{font-weight:700;margin:2px 0 6px;font-size:15px}
+.item .meta{font-size:13px;color:var(--sub)}
+.item .meta .date{color:var(--pri);font-weight:600}
 
-/* ===== Bottom Tabbar ===== */
-.tabbar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--line); }
-.tabbar__in { display: flex; justify-content: space-around; padding: 8px 0; }
-.tbi { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--sub); font-size: 12px; text-decoration: none; }
-.tbi i { font-size: 20px; }
-.tbi.is-active { color: var(--pri); font-weight: 600; }
+/* ========== 추천 공고 (가로 카드 Today Deal 느낌) ========== */
+.hscroll{display:flex;gap:12px;overflow:auto;padding:2px 0 4px}
+.hscroll::-webkit-scrollbar{display:none}
+.card-mini{
+  flex:0 0 85%; /* 70% → 85%로 확대 */
+  border:1px solid var(--line);background:var(--card);
+  border-radius:16px;display:flex;align-items:center;overflow:hidden
+}
+.mini-thumb{width:94px;height:100%;object-fit:cover}
+.mini-body{padding:10px 12px;min-width:0}
+.mini-title{font-weight:700;font-size:15px;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-meta{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-main { padding-bottom: 64px; } /* 하단탭 공간 확보 */
+/* ========== BOTTOM TABBAR (깨짐 방지) ========== */
+.lv-tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);
+  border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.lv-tabbar__in{
+  display:flex;align-items:center;justify-content:space-around;
+  padding:8px 6px;max-width:960px;margin:0 auto
+}
+.tbi{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--sub)}
+.tbi i{font-size:22px;line-height:1}
+.tbi span{font-size:11px}
+.tbi.is-active{color:var(--pri);font-weight:700}
+main{padding-bottom:76px} /* 하단탭 가림 방지 여백 */
+
+/* ========== Utilities ========== */
+.hint{color:var(--sub);font-size:12px}
+.hr{height:1px;background:var(--line);margin:12px 0}
