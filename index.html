@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee — Wireframe v2.5</title>
+  <title>Livee — Wireframe v2.5 (TEST)</title>
 
-  <!-- 한국어 가독성 폰트 -->
+  <!-- 폰트 & 스타일 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-  <!-- 프로젝트 스타일 -->
   <link rel="stylesheet" href="css/styles.css" />
   <meta name="theme-color" content="#ffffff" />
 </head>
@@ -30,7 +29,7 @@
     <a class="tab" href="#/service">서비스</a>
   </nav>
 
-  <!-- 히어로 영역 -->
+  <!-- 히어로 -->
   <section class="container" aria-label="소개 및 주요 액션">
     <div class="section hero" role="region">
       <p class="meta">매칭 전문 플랫폼, 라이비</p>
@@ -43,10 +42,8 @@
     </div>
   </section>
 
-  <!-- 메인 콘텐츠 -->
-  <main id="app" class="container" role="main" aria-live="polite">
-    <!-- js/main.js가 홈 섹션(오늘의 라이브/추천공고/포트폴리오)을 렌더링합니다. -->
-  </main>
+  <!-- 메인 -->
+  <main id="app" class="container" role="main" aria-live="polite"></main>
 
   <!-- 하단 탭 -->
   <footer class="tabbar" role="contentinfo">
@@ -57,7 +54,8 @@
     <a class="tbi" href="login.html">마이페이지</a>
   </footer>
 
-  <!-- 스크립트 -->
-  <script src="js/main.js"></script>
+  <!-- 반드시 config를 먼저 로드 -->
+  <script defer src="js/config.js?v=debug1"></script>
+  <script defer src="js/main.js?v=debug1"></script>
 </body>
 </html>
