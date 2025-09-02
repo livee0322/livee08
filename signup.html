@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>회원가입 - Livee</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/signup.css" />
+</head>
+<body>
+  <header class="lv-appbar">
+    <div class="lv-title">회원가입</div>
+    <div class="lv-actions"></div>
+  </header>
+
+  <main class="container">
+    <div id="sgMsg" class="notice" role="status" aria-live="polite"></div>
+
+    <form id="signupForm" class="sg-form" novalidate>
+      <div class="sg-role">
+        <label class="role-tab"><input type="radio" name="role" value="showhost" checked> 쇼호스트</label>
+        <label class="role-tab"><input type="radio" name="role" value="brand"> 브랜드</label>
+      </div>
+
+      <label>이메일 *</label>
+      <input id="email" class="input" type="email" placeholder="you@example.com" required />
+
+      <label>비밀번호 *</label>
+      <input id="password" class="input" type="password" placeholder="8자 이상" required />
+
+      <label>비밀번호 확인 *</label>
+      <input id="password2" class="input" type="password" required />
+
+      <label>이름 *</label>
+      <input id="name" class="input" placeholder="홍길동" required />
+
+      <label>휴대폰</label>
+      <input id="phone" class="input" placeholder="010-0000-0000" />
+
+      <!-- 쇼호스트 전용 -->
+      <section id="roleShowhost" class="role-box">
+        <h3>쇼호스트 정보</h3>
+        <label>닉네임</label>
+        <input id="shNickname" class="input" placeholder="닉네임" />
+        <div class="grid grid-2">
+          <div>
+            <label>인스타그램</label>
+            <input id="linkInsta" class="input" placeholder="https://instagram.com/..." />
+          </div>
+          <div>
+            <label>유튜브</label>
+            <input id="linkYoutube" class="input" placeholder="https://youtube.com/..." />
+          </div>
+        </div>
+        <label>틱톡</label>
+        <input id="linkTiktok" class="input" placeholder="https://www.tiktok.com/..." />
+        <label>소개</label>
+        <textarea id="bio" class="input" placeholder="한 줄 소개 또는 경력"></textarea>
+      </section>
+
+      <!-- 브랜드 전용 -->
+      <section id="roleBrand" class="role-box" hidden>
+        <h3>브랜드 정보</h3>
+        <label>브랜드명 *</label>
+        <input id="brandName" class="input" placeholder="예) ACME" />
+        <label>회사명</label>
+        <input id="companyName" class="input" placeholder="회사명" />
+        <label>사업자번호</label>
+        <input id="businessNumber" class="input" placeholder="000-00-00000" />
+      </section>
+
+      <section class="agreements">
+        <h3>약관 동의</h3>
+        <label class="check">
+          <input id="agreeTerms" type="checkbox" /> [필수] <a href="terms.html" target="_blank">서비스 이용약관</a> 동의
+        </label>
+        <label class="check">
+          <input id="agreePrivacy" type="checkbox" /> [필수] <a href="privacy.html" target="_blank">개인정보처리방침</a> 동의
+        </label>
+        <label class="check">
+          <input id="agreeAge" type="checkbox" /> [필수] 만 14세 이상입니다
+        </label>
+        <label class="check">
+          <input id="agreeMarketing" type="checkbox" /> [선택] 마케팅 정보 수신 동의(이메일/문자)
+        </label>
+        <label class="check">
+          <input id="agreeThird" type="checkbox" /> [선택] 제3자 제공/국외 이전 동의(서비스 인프라 제공자)
+        </label>
+      </section>
+
+      <div class="btns">
+        <button class="btn pri" type="submit">가입하기</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/signup.js"></script>
+</body>
+</html>
