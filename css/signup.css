@@ -1,0 +1,189 @@
+/* ===========================
+   signup.css (Livee – Signup)
+   페이지 전용 스타일
+   =========================== */
+
+/* 기본 변수 (main.css 없을 때 대비) */
+:root{
+  --pri: #246BFD;
+  --pri-weak: #EAF1FF;
+  --bg: #f7f8fa;
+  --line: #e5e7eb;
+  --text: #111827;
+  --sub: #6b7280;
+  --danger: #e11d48;
+  --radius: 14px;
+}
+
+body[data-page="signup"]{
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "SUIT", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", "맑은 고딕", "Malgun Gothic", sans-serif;
+}
+
+/* 상단 안내 배너(선택) */
+.su-banner{position:sticky;top:0;z-index:5;background:#111827;color:#fff}
+.su-banner-in{max-width:880px;margin:0 auto;padding:10px 16px;font-size:13px;text-align:center}
+
+/* 래퍼 */
+.su-wrap{
+  max-width: 880px;
+  margin: 18px auto 90px;
+  padding: 0 16px;
+}
+
+/* 브랜드 로고 */
+.su-brand{display:flex;justify-content:center;margin:14px 0 18px}
+.su-brand img{height:42px;object-fit:contain}
+
+/* 역할 스위치 */
+.role-switch{
+  display:flex; gap:8px; justify-content:center;
+  margin: 6px 0 16px;
+}
+.pill{
+  padding:8px 14px; border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff; color:#374151; font-weight:600;
+}
+.pill.active{
+  background:var(--pri-weak); color:var(--pri);
+  border-color: transparent;
+}
+
+/* 카드형 섹션 */
+.su-card{
+  background:#fff; border:1px solid var(--line);
+  border-radius: var(--radius); padding:16px;
+}
+
+/* 폼 */
+.su-form{display:grid; gap:12px}
+.su-form .label{font-size:13px;color:var(--sub);margin-bottom:6px;display:block}
+.su-form .help{font-size:12px;color:var(--sub);margin-top:6px}
+.su-form .error{font-size:12px;color:var(--danger)}
+
+/* 인풋/셀렉트/텍스트에어리어 */
+.su-form input[type="text"],
+.su-form input[type="email"],
+.su-form input[type="password"],
+.su-form input[type="tel"],
+.su-form input[type="url"],
+.su-form select,
+.su-form textarea{
+  width:100%;
+  height:44px;
+  padding:0 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+  font-size:15px;
+}
+.su-form textarea{height:120px; padding:10px 12px; resize:vertical;}
+
+/* 포커스 */
+.su-form input:focus,
+.su-form select:focus,
+.su-form textarea:focus{
+  outline:none;
+  border-color:var(--pri);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--pri) 18%, #fff);
+}
+
+/* 2열 그리드 */
+.grid-2{display:grid; gap:10px}
+@media (min-width:720px){
+  .grid-2{grid-template-columns:1fr 1fr}
+}
+
+/* 역할/회사 정보 영역 구분 타이틀 */
+.su-section-title{
+  font-weight:800; font-size:18px; margin:8px 0 10px;
+}
+
+/* 약관 카드 */
+.terms-card{
+  border:1px solid var(--line); border-radius:12px; background:#fff;
+  overflow:hidden;
+}
+.terms-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px; background:#fafafa; border-bottom:1px solid var(--line);
+}
+.terms-body{
+  max-height:160px; overflow:auto; padding:12px 14px; color:#374151; line-height:1.55;
+}
+.terms-body h3{margin:10px 0 6px; font-size:14px}
+.terms-body p{margin:8px 0; font-size:13px}
+
+/* 동의 체크 */
+.agree-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 2px; font-size:14px;
+}
+.agree-row input[type="checkbox"]{width:18px;height:18px}
+
+/* 정책 링크 */
+.policy-links{display:flex; gap:10px; flex-wrap:wrap; font-size:13px}
+.policy-links a{color:var(--pri); text-decoration:underline}
+
+/* 제출 버튼 */
+.su-submit{
+  height:46px; border-radius:12px; border:0; cursor:pointer;
+  background:var(--pri); color:#fff; font-weight:800; font-size:16px;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+}
+.su-submit:disabled{
+  background:#cbd5e1; color:#fff; cursor:not-allowed;
+}
+
+/* 보조 버튼 */
+.su-btn{
+  height:44px; padding:0 14px; border-radius:10px;
+  border:1px solid var(--line); background:#fff; color:#374151;
+}
+
+/* 에러/성공 메시지 */
+.su-msg{display:none;margin:8px 0;padding:10px 12px;border-radius:10px;font-size:14px}
+.su-msg.show{display:block}
+.su-msg.ok{background:#e7f7ee; color:#0f5132; border:1px solid #b7e4c7}
+.su-msg.err{background:#fef2f2; color:#991b1b; border:1px solid #fecaca}
+
+/* 링크 줄 */
+.su-links{margin-top:10px; font-size:14px; text-align:center; color:var(--sub)}
+.su-links a{color:var(--pri); text-decoration:underline}
+
+/* 하단 여백 (모바일 하단탭 겹침 방지) */
+.page-bottom-space{height:72px}
+
+/* ===== 작은 요소들 ===== */
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:2px 8px; border-radius:999px; background:var(--pri-weak); color:var(--pri);
+  font-size:12px; font-weight:700;
+}
+.note{
+  font-size:12px; color:var(--sub); margin-top:6px;
+}
+
+/* 파일 업로드(브랜드 로고 등) */
+.filebox{display:flex; align-items:center; gap:10px}
+.filebox .preview{
+  width:72px; height:72px; border-radius:10px; object-fit:cover;
+  background:#f3f4f6; border:1px solid var(--line);
+}
+
+/* 토스트 (선택) */
+#suToast{
+  position:fixed; left:50%; bottom:90px; transform:translateX(-50%);
+  background:rgba(17,24,39,.92); color:#fff; padding:10px 14px; border-radius:999px;
+  z-index:9999; font-size:13px; transition:.25s; opacity:0; pointer-events:none;
+}
+#suToast.show{opacity:1}
+
+/* --- 하단 네비게이션(프로젝트 공통 스타일 없을 때용) --- */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:10}
+.bn-wrap{display:grid;grid-template-columns:repeat(5,1fr);max-width:960px;margin:0 auto}
+.bn-item{display:grid;place-items:center;padding:10px 0;color:#374151;font-size:12px;text-decoration:none}
+.bn-item i{font-size:20px;margin-bottom:2px}
+.bn-item.active{color:var(--pri)}
