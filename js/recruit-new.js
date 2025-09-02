@@ -72,9 +72,9 @@
     ev.preventDefault();
     if(!TOKEN){ say('로그인이 필요합니다.'); return; }
 
-    const brandName=(brandNameEl.value||'').trim();
-    const title=(titleEl.value||'').trim();
-    const desc=(descEl.value||'').trim();
+    const brandName=(brandNameEl?.value||'').trim();          // ✅ camelCase
+    const title=(titleEl?.value||'').trim();
+    const desc=(descEl?.value||'').trim();
 
     if(!brandName){ say('브랜드명을 입력해주세요.'); return; }
     if(!title || title.length<5){ say('제목은 5자 이상 입력해주세요.'); return; }
@@ -97,11 +97,10 @@
     const coverImageUrl=previewEl?.dataset?.cover||"";
     const thumbnailUrl =previewEl?.dataset?.thumb ||(coverImageUrl?withTransform(coverImageUrl,THUMB.card169):"");
 
-    // brandName을 상/하위 모두 기록
     const payload={
       type:"recruit",
       status:"published",
-      brandName,
+      brandName,                           // ✅ 상위
       title,
       category:categoryEl.value,
       closeAt:`${deadline.value}T23:59:59.000Z`,
@@ -110,7 +109,7 @@
       ...(desc?{descriptionHTML:desc}:{}),
       recruit:{
         recruitType:"product",
-        brandName, // ← 추가
+        brandName,                         // ✅ 하위(recruit.brandName)도 강제 기록
         location:(locationEl.value||"").trim(),
         shootDate:new Date(`${shootDate.value}T00:00:00.000Z`),
         shootTime:`${startTime.value}~${endTime.value}`,
