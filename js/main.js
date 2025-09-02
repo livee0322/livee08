@@ -1,4 +1,7 @@
-/* Home — recruit-test v2.5 (lineup fallback + unified brandName) */
+/* Home — recruit-test v2.5 (hotfix)
+   - 브랜드명: brandName/brandname, recruit.brandName/recruit.brandname, brand.name 등 모든 변형 흡수 + 얕은 딥스캔
+   - 라인업: shootDate 없으면 closeAt→createdAt으로 폴백
+*/
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -25,27 +28,45 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  // 브랜드명 정규화
+  /* ── 브랜드명 추출: 변형 + 얕은 딥스캔(깊이 2) ── */
   const pickBrandName = (c = {}) => {
-    const cand = [
-      c.recruit?.brandName, c.recruit?.brandname,
-      c.brandName, c.brandname,
+    // 1) 우리가 흔히 보던 자리부터
+    const direct = [
+      c.recruit?.brandName,
+      c.recruit?.brandname,     // 소문자 변형
+      c.brandName,
+      c.brandname,              // 소문자 변형
       (typeof c.brand === 'string' ? c.brand : ''),
       c.brand?.brandName, c.brand?.name,
       c.owner?.brandName, c.owner?.name,
       c.createdBy?.brandName, c.createdBy?.name,
       c.user?.brandName, c.user?.companyName
-    ].filter(Boolean).map(s => String(s).trim());
-    const found = cand.find(s => s && s !== '브랜드');
-    return found || '브랜드';
+    ].find(v => typeof v === 'string' && v.trim());
+
+    if (direct && direct.trim() !== '브랜드') return direct.trim();
+
+    // 2) 키 이름에 'brand' 가 들어간 문자열을 얕게 스캔
+    const scan = (obj, depth = 0) => {
+      if (!obj || typeof obj !== 'object' || depth > 2) return '';
+      for (const [k, v] of Object.entries(obj)) {
+        if (typeof v === 'string' && /brand/i.test(k) && v.trim()) return v.trim();
+        if (v && typeof v === 'object') {
+          const t = scan(v, depth + 1);
+          if (t) return t;
+        }
+      }
+      return '';
+    };
+    const found = scan(c);
+    return found && found !== '브랜드' ? found : '브랜드';
   };
 
-  // 시간 파싱: shootDate → closeAt → createdAt
+  /* ── 시간 유틸: shootDate 없으면 closeAt→createdAt ── */
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
     let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
     if (!d || isNaN(d)) return null;
     const hm = (shootTime || '').split('~')[0] || '';
-    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/);
+    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' or '1430'
     const hh = m ? Number(m[1] || 0) : 0;
     const mm = m ? Number(m[2] || 0) : 0;
     d.setHours(hh||0, mm||0, 0, 0);
@@ -54,6 +75,7 @@
   const isSameLocalDay = (a, b=new Date()) =>
     a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
+  /* ── 데이터 가져오기 ── */
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -64,7 +86,7 @@
       const list = (Array.isArray(data)&&data) || data.items || data.data?.items || data.docs || data.data?.docs || [];
       return list.map((c,i)=>({
         id: c.id||c._id||`${i}`,
-        brandName: pickBrandName(c),
+        brandName: pickBrandName(c),                             // ← 여기서 확실히 뽑는다
         title: c.title || c.recruit?.title || '(제목 없음)',
         thumb: c.thumbnailUrl || c.coverImageUrl || '',
         closeAt: c.closeAt,
@@ -86,7 +108,7 @@
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
-  // 템플릿
+  /* ── 템플릿 ── */
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -135,36 +157,43 @@
     }</div>`;
   }
 
+  /* ── 마운트 자동 ── */
   function ensureMount() {
     let root = $('#home') || $('#app') || document.querySelector('main');
-    if (!root) { root = document.createElement('div'); root.id = 'home'; document.body.appendChild(root); }
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'home';
+      document.body.appendChild(root);
+    }
     return root;
   }
 
+  /* ── 렌더링 ── */
   async function render(){
     const root = ensureMount();
     const all = await fetchRecruits();
 
-    // _start 계산: shootDate → closeAt → createdAt
     const withStart = all.map(r => ({
       ...r,
       _start: parseStartDate(r.shootDate, r.shootTime, r.closeAt || r.createdAt)
     })).filter(r => r._start instanceof Date && !isNaN(r._start));
 
-    // 오늘 → 없으면 다가오는 5개
     const now = new Date();
-    let todayList = withStart.filter(r => isSameLocalDay(r._start, now))
-                             .sort((a,b)=> a._start - b._start)
-                             .slice(0,5);
+    let todayList = withStart
+      .filter(r => isSameLocalDay(r._start, now))
+      .sort((a,b)=> a._start - b._start)
+      .slice(0,5);
+
     if (!todayList.length) {
-      todayList = withStart.filter(r => r._start > now)
-                           .sort((a,b)=> a._start - b._start)
-                           .slice(0,5);
+      todayList = withStart
+        .filter(r => r._start > now)
+        .sort((a,b)=> a._start - b._start)
+        .slice(0,5);
     }
 
-    // 최신 공고
-    const latest = [...all].sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0))
-                           .slice(0,10);
+    const latest = [...all]
+      .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+      .slice(0, 10);
 
     root.innerHTML = `
       <div class="section">
