@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>공고 등록 - Livee</title>
 
-  <!-- 공통 스타일(있으면) -->
   <link rel="stylesheet" href="css/main.css" />
-  <!-- 이 페이지 전용 -->
   <link rel="stylesheet" href="css/recruit-new.css" />
 </head>
 <body>
-  <!-- 상단(선택) -->
   <header class="app-header">
     <div class="h-wrap">
       <a href="index.html" aria-label="뒤로" class="back">←</a>
@@ -23,19 +20,15 @@
     <div id="recruitMsg" class="notice" role="status" aria-live="polite"></div>
 
     <form id="recruitForm" novalidate>
-      <!-- 브랜드명 -->
       <label for="brandName">브랜드명 *</label>
       <input id="brandName" class="input" placeholder="예) ACME" required />
 
-      <!-- 제목 -->
       <label for="title">제목 *</label>
       <input id="title" class="input" placeholder="예) 9월 신제품 쇼핑라이브 진행" required />
 
-      <!-- 브리프(선택) -->
       <label for="desc">내용(브리프) <span class="helper">(선택)</span></label>
       <textarea id="desc" placeholder="요구역량/브리프/참고링크 등을 자유롭게 입력"></textarea>
 
-      <!-- 카테고리 / 장소 -->
       <div class="grid grid-2">
         <div>
           <label for="category">카테고리 *</label>
@@ -54,7 +47,6 @@
         </div>
       </div>
 
-      <!-- 날짜 / 마감 -->
       <div class="grid grid-2">
         <div>
           <label for="shootDate">촬영일 *</label>
@@ -66,7 +58,6 @@
         </div>
       </div>
 
-      <!-- 시간 -->
       <div class="grid grid-2">
         <div>
           <label for="startTime">시작 *</label>
@@ -78,7 +69,6 @@
         </div>
       </div>
 
-      <!-- 출연료 -->
       <div class="grid grid-2">
         <div>
           <label for="pay">출연료(원)</label>
@@ -93,7 +83,6 @@
         </div>
       </div>
 
-      <!-- 이미지 업로드 -->
       <label>대표 이미지</label>
       <div class="media">
         <img id="preview" class="preview" alt="미리보기" />
@@ -104,7 +93,6 @@
         </div>
       </div>
 
-      <!-- 액션 -->
       <div class="btns">
         <button id="submitBtn" class="btn pri" type="submit">공고 등록</button>
         <a class="btn" href="index.html">취소</a>
@@ -114,9 +102,7 @@
     <div class="page-bottom-space"></div>
   </main>
 
-  <!-- 설정 먼저 -->
   <script src="js/config.js"></script>
-  <!-- 페이지 스크립트 -->
   <script src="js/recruit-new.js"></script>
 </body>
 </html>
