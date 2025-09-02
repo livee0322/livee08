@@ -1,5 +1,12 @@
 /* ===== Recruit List (rl-) ===== */
 
+/* 변수 매핑: main.css와 호환 */
+:root{
+  --line: var(--border, #E5E7EB);
+  --pri: var(--primary, #3B82F6);
+  --pri-weak: color-mix(in srgb, var(--pri) 18%, #fff);
+}
+
 /* 툴바 (박스형) */
 .toolbar{
   display:flex; gap:12px; align-items:center; justify-content:space-between;
@@ -29,22 +36,22 @@
 /* 리스트 */
 .rl-list{display:flex; flex-direction:column; gap:12px}
 
-/* 카드: 섹션 레이아웃 (썸네일 | 본문 | 액션) */
+/* 카드 레이아웃 */
 .rl-card{
   display:grid;
-  grid-template-columns:116px 1fr 128px;
+  grid-template-columns: 96px 1fr;           /* 모바일: 썸네일 | 본문 */
+  grid-template-areas:
+    "thumb body"
+    "thumb actions";
   gap:12px; align-items:center;
   border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff;
   word-break:keep-all;
 }
+.rl-thumb{ grid-area:thumb; width:100%; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6; }
+.rl-body{  grid-area:body; min-width:0; display:flex; flex-direction:column; gap:6px }
+.rl-actions{ grid-area:actions; display:flex; gap:6px; justify-content:flex-start; flex-wrap:wrap }
 
-/* 썸네일 */
-.rl-thumb{
-  width:100%; aspect-ratio:16/9; border-radius:10px; object-fit:cover; background:#f3f4f6;
-}
-
-/* 본문 (위: 상태칩, 가운데: 제목, 아래: 메타 한 줄, 맨아래: 액션) */
-.rl-body{min-width:0; display:flex; flex-direction:column; gap:6px}
+/* 상태칩/브랜드/제목/메타 */
 .rl-state{display:flex}
 .rl-chip{
   display:inline-flex; align-items:center; gap:4px;
@@ -54,12 +61,11 @@
 .rl-chip.closed{background:#f7f7f7; color:#777}
 .rl-chip.draft{background:#fff7e6; color:#b35a00; border-color:transparent}
 
+.rl-brand{font-size:12px; color:var(--pri); font-weight:600; line-height:1.2}
 .rl-title{
   font-weight:700; margin:0;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-
-/* 메타(마감·출연료 한 줄, 작은 글씨) */
 .rl-meta{
   display:flex; gap:10px; align-items:center; min-width:0;
   font-size:13px; color:var(--sub); line-height:1.35;
@@ -67,8 +73,7 @@
 .rl-meta span{white-space:nowrap}
 .rl-meta .date{color:var(--pri); font-weight:700}
 
-/* 액션은 카드 우측 고정 + 본문 하단에도 한 줄 배치 */
-.rl-actions{display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap}
+/* 액션 아이콘 */
 .rl-actions .ic{
   width:32px; height:32px; display:grid; place-items:center;
   border:1px solid var(--line); border-radius:8px; background:#fff; color:#333;
@@ -80,6 +85,11 @@
 .empty{display:grid; place-items:center; gap:8px; padding:28px 0; color:var(--sub)}
 .empty i{font-size:28px; color:var(--sub)}
 
+/* 데스크탑: 3열(썸네일 | 본문 | 액션 오른쪽 고정) */
 @media (min-width:720px){
-  .rl-card{grid-template-columns:160px 1fr 140px}
+  .rl-card{
+    grid-template-columns: 160px 1fr 140px;
+    grid-template-areas: "thumb body actions";
+  }
+  .rl-actions{justify-content:flex-end; align-self:stretch; align-items:center}
 }
