@@ -1,92 +1,74 @@
-/* ===========================
-   signup.css  (Livee – Signup)
-   =========================== */
-
-/* 기본 변수 */
+/* =============== signup.css v2 =============== */
 :root{
-  --pri:#246BFD;
-  --pri-weak:#EAF1FF;
-  --bg:#f7f8fa;
-  --line:#e5e7eb;
-  --text:#111827;
-  --sub:#6b7280;
-  --danger:#e11d48;
-  --radius:14px;
+  --pri:#246BFD; --pri-weak:#EAF1FF; --bg:#f7f8fa; --line:#e5e7eb;
+  --text:#111827; --sub:#6b7280; --danger:#e11d48; --radius:14px;
   --focus:0 0 0 3px color-mix(in srgb, var(--pri) 18%, #fff);
 }
 
-/* 페이지 기본 */
 body[data-page="signup"]{
-  background:var(--bg);
-  color:var(--text);
+  background:var(--bg); color:var(--text);
   font-family:ui-sans-serif, system-ui, -apple-system, "SUIT", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Noto Sans KR", "맑은 고딕", "Malgun Gothic", sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 
-/* 래퍼 */
 .sg-wrap{max-width:880px;margin:18px auto 90px;padding:0 16px}
-
-/* 제목 */
 .sg-wrap h1{font-size:22px;font-weight:800;margin:6px 0 14px}
 
-/* 역할 스위치 */
-.role-switch{display:flex;gap:8px;align-items:center;margin:6px 0 12px}
-.pill{
-  padding:8px 14px;border-radius:999px;background:#fff;
-  border:1px solid var(--line);color:#374151;font-weight:700
+/* ---------- 역할 토글 (segmented) ---------- */
+.role-toggle{
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:0; padding:4px; border:1px solid var(--line);
+  border-radius:999px; background:#fff; width:100%; max-width:340px;
 }
-.pill.active{background:var(--pri-weak);color:var(--pri);border-color:transparent}
+.role-toggle input{position:absolute; opacity:0; pointer-events:none}
+.role-toggle label{
+  text-align:center; padding:10px 12px; border-radius:999px; font-weight:800;
+  color:#374151; cursor:pointer; user-select:none; transition:.15s;
+}
+.role-toggle input:checked + label{background:var(--pri); color:#fff}
+.role-toggle label:active{transform:scale(.98)}
 
-/* 폼 */
-.sg-form{display:grid;gap:12px}
+/* ---------- 폼 공통 ---------- */
+.sg-form{display:grid; gap:12px}
+.sg-section-title{font-weight:800;font-size:18px;margin:18px 0 8px}
+
 .sg-form label{display:block;font-size:14px;font-weight:700;margin:4px 0 6px}
 .sg-form .helper{font-size:12px;color:var(--sub);margin-top:4px}
 .sg-form .error{font-size:12px;color:var(--danger)}
 
-/* 인풋/셀렉트/텍스트에어리어 */
-.sg-form input[type="text"],
-.sg-form input[type="email"],
-.sg-form input[type="password"],
-.sg-form input[type="tel"],
-.sg-form input[type="url"],
-.sg-form input[type="date"],
-.sg-form input[type="time"],
+.sg-row{display:block} /* 라벨+필드 한 세트 래퍼(선택) */
+
+/* 인풋류: 체크/라디오 제외하고 모두 동일하게 */
+.sg-form input:not([type="checkbox"]):not([type="radio"]),
 .sg-form select,
 .sg-form textarea{
-  width:100%;height:44px;padding:0 12px;background:#fff;
-  border:1px solid var(--line);border-radius:10px;font-size:15px
+  width:100%; height:44px; padding:0 12px; background:#fff;
+  border:1px solid var(--line); border-radius:10px; font-size:15px;
+  appearance:none; -webkit-appearance:none;
 }
-.sg-form textarea{height:120px;padding:10px 12px;resize:vertical}
-.sg-form input:focus,
+.sg-form textarea{height:120px; padding:10px 12px; resize:vertical}
+.sg-form input:focus:not([type="checkbox"]):not([type="radio"]),
 .sg-form select:focus,
 .sg-form textarea:focus{outline:none;border-color:var(--pri);box-shadow:var(--focus)}
 .sg-form ::placeholder{color:#c0c4cc}
 
 /* 두 칸 그리드 */
-.grid-2{display:grid;gap:10px}
+.grid-2{display:grid; gap:10px}
 @media (min-width:720px){.grid-2{grid-template-columns:1fr 1fr}}
 
-/* 섹션 타이틀 */
-.sg-section-title{font-weight:800;font-size:18px;margin:18px 0 8px}
-
-/* 카드(옵션) — 섹션을 박스형으로 둘러싸고 싶으면 사용 */
+/* 카드형 섹션(선택) */
 .sg-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px}
 
-/* 약관 카드 */
+/* 약관 */
 .terms-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
-.terms-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 14px;background:#fafafa;border-bottom:1px solid var(--line)
-}
+.terms-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fafafa;border-bottom:1px solid var(--line)}
 .terms-body{max-height:180px;overflow:auto;padding:12px 14px;color:#374151;line-height:1.55}
 .terms-body h3{margin:10px 0 6px;font-size:14px}
 .terms-body p{margin:8px 0;font-size:13px}
-
-/* 동의 체크 */
 .agree-row{display:flex;align-items:center;gap:10px;padding:8px 2px;font-size:14px}
 .agree-row input[type="checkbox"]{width:18px;height:18px}
 
-/* 제출 버튼 */
+/* 버튼 */
 .sg-submit{
   height:46px;border-radius:12px;border:0;cursor:pointer;
   background:var(--pri);color:#fff;font-weight:800;font-size:16px;
@@ -94,14 +76,10 @@ body[data-page="signup"]{
 }
 .sg-submit:disabled{background:#cbd5e1;color:#fff;cursor:not-allowed}
 
-/* 보조 버튼 */
 .sg-btn{height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#374151}
-
-/* 링크/푸터 여백 */
 .sg-links{margin-top:10px;font-size:14px;text-align:center;color:var(--sub)}
 .sg-links a{color:var(--pri);text-decoration:underline}
 .page-bottom-space{height:72px}
 
-/* 라디오/체크 기본 간격 */
-.sg-form .row-inline{display:flex;gap:14px;align-items:center}
-.sg-form input[type="radio"]{width:18px;height:18px}
+/* 모바일 상단 고정 헤더가 있으면 폼 첫 인풋이 가려지는 문제 예방 */
+.sg-wrap:before{content:"";display:block;height:4px}
