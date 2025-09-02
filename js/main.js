@@ -1,6 +1,6 @@
-/* Home — recruit-test 기반 (v2.5 필드 일치 + 마운트 자동화) */
+/* Home — recruit-test 기반 (v2.5 필드 일치 + 마운트 자동 + 브랜드/제목 배치) */
 (() => {
-  const $ = s => document.querySelector(s);
+  const $ = (s, el = document) => el.querySelector(s);
 
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
@@ -20,17 +20,30 @@
   const fmtDateHM = (dateISO, timeRange) => {
     if (!dateISO) return '';
     const d = new Date(dateISO); if (isNaN(d)) return '';
-    const hm = (timeRange || '').split('~')[0] || '';
-    return `${fmtDate(d.toISOString())}${hm?` ${hm}`:''}`.trim();
+    const hmStart = (timeRange || '').split('~')[0] || '';
+    return `${fmtDate(d.toISOString())}${hmStart ? ` ${hmStart}` : ''}`.trim();
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  const pickBrandName = c =>
-    c.brandName || c.brand?.name || c.owner?.brandName || c.owner?.name ||
-    c.user?.companyName || c.user?.brandName || '브랜드';
+  // ── 브랜드명 추출 (문자열/중첩객체/과거 스키마 모두 커버)
+  const pickBrandName = (c={}) => {
+    const v =
+      c.brandName ||
+      (typeof c.brand === 'string' ? c.brand : '') ||
+      c.brand?.brandName ||
+      c.brand?.name ||
+      c.owner?.brandName ||
+      c.owner?.name ||
+      c.user?.brandName ||
+      c.user?.companyName ||
+      c.recruit?.brandName ||
+      c.recruit?.brand ||
+      '';
+    return (v && String(v).trim()) || '브랜드';
+  };
 
   async function fetchRecruits(){
-    const url = `${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:`/${EP_RECRUITS}`}`;
+    const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
       const res = await fetch(url, { headers:{'Accept':'application/json'} });
       const data = await res.json().catch(()=>({}));
@@ -60,13 +73,15 @@
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
+  // ── 템플릿: 브랜드(파란 작게) → 제목 → 메타
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
         <img class="thumb" src="${thumbOr('', 'lineup-empty')}" alt=""/>
         <div class="item-body">
-          <div class="title"><span class="brand">라이브</span> · 등록된 라이브가 없습니다</div>
-          <div class="meta">새 공고를 등록해보세요</div>
+          <div class="lv-brand">라이브</div>
+          <div class="lv-title">등록된 라이브가 없습니다</div>
+          <div class="lv-when">새 공고를 등록해보세요</div>
         </div></article></div>`;
     }
     return `<div class="list-vert">${
@@ -75,8 +90,9 @@
           <img class="thumb" src="${thumbOr(it.thumb,it.id)}" alt=""
                onerror="this.src='${thumbOr('', 'lineup-fallback')}'"/>
           <div class="item-body">
-            <div class="title"><span class="brand">${it.brandName}</span> · ${it.title}</div>
-            <div class="meta">${metaLineup(it)}</div>
+            <div class="lv-brand">${it.brandName}</div>
+            <div class="lv-title">${it.title}</div>
+            <div class="lv-when">${metaLineup(it)}</div>
           </div>
         </article>`).join('')
     }</div>`;
@@ -87,8 +103,9 @@
       return `<div class="hscroll"><article class="card-mini">
         <img class="mini-thumb" src="${thumbOr('', 'recruits-empty')}" alt=""/>
         <div class="mini-body">
-          <div class="mini-title"><span class="brand">라이브</span> · 추천 공고가 없습니다</div>
-          <div class="mini-meta">최신 공고가 올라오면 여기에 표시됩니다</div>
+          <div class="lv-brand">라이브</div>
+          <div class="lv-title">추천 공고가 없습니다</div>
+          <div class="lv-meta">최신 공고가 올라오면 여기에 표시됩니다</div>
         </div></article></div>`;
     }
     return `<div class="hscroll">${
@@ -97,30 +114,27 @@
           <img class="mini-thumb" src="${thumbOr(r.thumb,r.id)}" alt=""
                onerror="this.src='${thumbOr('', 'recruits-fallback')}'"/>
           <div class="mini-body">
-            <div class="mini-title"><span class="brand">${r.brandName}</span> · ${r.title}</div>
-            <div class="mini-meta">${metaRecruit(r)}</div>
+            <div class="lv-brand">${r.brandName}</div>
+            <div class="lv-title">${r.title}</div>
+            <div class="lv-meta">${metaRecruit(r)}</div>
           </div>
         </article>`).join('')
     }</div>`;
   }
 
+  // ── 마운트 자동
   function ensureMount() {
-    // 1) #home 우선, 2) #app, 3) main, 4) body에 새로 생성
     let root = $('#home') || $('#app') || document.querySelector('main');
     if (!root) {
       root = document.createElement('div');
       root.id = 'home';
-      // 배너 바로 아래에 붙이기 시도
-      const banner = document.querySelector('.notice-banner, .banner, header + *');
-      (banner?.parentNode || document.body).appendChild(root);
+      (document.body).appendChild(root);
     }
     return root;
   }
 
   async function render(){
     const root = ensureMount();
-    // 스켈레톤(간단)
-    root.innerHTML = `<div class="section"><div class="section-head"><h2>오늘의 라이브 라인업</h2></div><div style="height:120px;background:#f4f4f5;border-radius:12px;"></div></div>`;
 
     const recruits = await fetchRecruits();
 
@@ -152,7 +166,6 @@
     `;
   }
 
-  // DOM 준비 후 실행(헤드에서 불러도 안전)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', render, { once:true });
   } else {
