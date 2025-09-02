@@ -1,8 +1,6 @@
-/* Home — recruit-test 기반 (v2.5 확정판)
-   - 오늘의 라이브: 오늘 일정 우선(없으면 가까운 미래 5개)
-   - 추천 공고: 최신순(createdAt desc)
-   - 브랜드명 추출 보강(문자열/중첩/하위 recruit.brandName)
-   - 마운트 자동 (#home 없으면 생성)
+/* /* Home — recruit-test v2.5 (hotfix: lineup fallback + brandname variants)
+   - 라인업: shootDate 없거나 time 비어도 closeAt/createdAt으로 대체
+   - 브랜드명: brandname(소문자), recruit.brandname 등 모든 변형 흡수
 */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -30,28 +28,27 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  // ---- 브랜드명 추출(최대한 넓게, 기본값 '브랜드' 회피) ----
+  /* ── 브랜드명 추출: 모든 변형 흡수 (brandName/brandname, 상/하위) ── */
   const pickBrandName = (c = {}) => {
     const cand = [
       c.recruit?.brandName,
+      c.recruit?.brandname,          // 소문자 변형
       c.brandName,
+      c.brandname,                   // 소문자 변형
       (typeof c.brand === 'string' ? c.brand : ''),
       c.brand?.brandName, c.brand?.name,
       c.owner?.brandName, c.owner?.name,
-      c.createdByName, c.createdBy?.brandName, c.createdBy?.name,
-      c.user?.brandName, c.user?.companyName,
-      c.companyName, c.company?.name,
-      c.org?.name, c.organization?.name
+      c.createdBy?.brandName, c.createdBy?.name,
+      c.user?.brandName, c.user?.companyName
     ].filter(Boolean).map(s => String(s).trim());
     const found = cand.find(s => s && s !== '브랜드');
     return found || '브랜드';
   };
 
-  // ---- 시간 유틸 ----
-  const parseStartDate = (shootDate, shootTime) => {
-    if (!shootDate) return null;
-    const d = new Date(shootDate);
-    if (isNaN(d)) return null;
+  /* ── 시간 유틸: shootDate 없으면 closeAt→createdAt 순으로 대체 ── */
+  const parseStartDate = (shootDate, shootTime, fallbackISO) => {
+    let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
+    if (!d || isNaN(d)) return null;
     const hm = (shootTime || '').split('~')[0] || '';
     const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' 또는 '1430'
     const hh = m ? Number(m[1] || 0) : 0;
@@ -62,7 +59,7 @@
   const isSameLocalDay = (a, b=new Date()) =>
     a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
-  // ---- 데이터 가져오기 ----
+  /* ── 데이터 가져오기 ── */
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -78,7 +75,7 @@
         thumb: c.thumbnailUrl || c.coverImageUrl || '',
         closeAt: c.closeAt,
         createdAt: c.createdAt || c._createdAt || c.meta?.createdAt || null,
-        shootDate: c.recruit?.shootDate,
+        shootDate: c.recruit?.shootDate,             // 있을 수도 없을 수도
         shootTime: c.recruit?.shootTime,
         pay: c.recruit?.pay,
         payNegotiable: !!c.recruit?.payNegotiable
@@ -89,13 +86,13 @@
     }
   }
 
-  const metaLineup  = it => fmtDateHM(it.shootDate, it.shootTime);
+  const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
-  // ---- 템플릿: 브랜드(파란 작게) → 제목 → 메타 ----
+  /* ── 템플릿: 브랜드(파란 작게) → 제목 → 메타 ── */
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -144,7 +141,7 @@
     }</div>`;
   }
 
-  // ---- 마운트 자동 ----
+  /* ── 마운트 자동 ── */
   function ensureMount() {
     let root = $('#home') || $('#app') || document.querySelector('main');
     if (!root) {
@@ -155,26 +152,29 @@
     return root;
   }
 
-  // ---- 렌더링 ----
+  /* ── 렌더링 ── */
   async function render(){
     const root = ensureMount();
     const all = await fetchRecruits();
 
-    // 1) 오늘의 라이브(오늘 날짜인 항목 우선)
+    // 각 항목에 _start 계산: shootDate → closeAt → createdAt
+    const withStart = all.map(r => ({
+      ...r,
+      _start: parseStartDate(r.shootDate, r.shootTime, r.closeAt || r.createdAt)
+    })).filter(r => r._start instanceof Date && !isNaN(r._start));
+
+    // 1) 오늘의 라이브(오늘 먼저, 없으면 가까운 미래)
     const now = new Date();
-    const withStart = all
-      .map(r => ({ ...r, _start: parseStartDate(r.shootDate, r.shootTime) }))
-      .filter(r => r._start instanceof Date && !isNaN(r._start));
+    let todayList = withStart
+      .filter(r => isSameLocalDay(r._start, now))
+      .sort((a,b)=> a._start - b._start)
+      .slice(0,5);
 
-    let todayList = withStart.filter(r => isSameLocalDay(r._start, now))
-                             .sort((a,b)=> a._start - b._start)
-                             .slice(0,5);
-
-    // 오늘이 비면 가까운 미래 5개로 폴백
     if (!todayList.length) {
-      todayList = withStart.filter(r => r._start > now)
-                           .sort((a,b)=> a._start - b._start)
-                           .slice(0,5);
+      todayList = withStart
+        .filter(r => r._start > now)
+        .sort((a,b)=> a._start - b._start)
+        .slice(0,5);
     }
 
     // 2) 추천 공고(최신 생성순)
