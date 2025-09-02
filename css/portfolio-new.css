@@ -1,0 +1,41 @@
+/* ===== Portfolio Create ===== */
+
+.pf-form { display:flex; flex-direction:column; gap:18px; }
+
+.pf-section { padding:14px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.pf-section h3 { margin:0 0 10px; font-size:16px; font-weight:800; }
+
+.label { display:block; font-weight:700; margin:8px 0 6px; }
+.req { color:#d03030; }
+
+.media-grid { grid-template-columns:1fr 1fr; gap:14px; }
+.media-box .uploader { border:1px dashed var(--line-strong,#dcdfe3); border-radius:12px; padding:10px; background:#fafafa; display:flex; gap:10px; align-items:center; }
+.uploader-ctrl small { color:var(--sub); display:block; margin-top:6px; }
+.thumb { width:120px; height:120px; object-fit:cover; border-radius:12px; background:#f3f4f6; }
+.cover { width:180px; aspect-ratio:16/9; object-fit:cover; border-radius:12px; background:#f3f4f6; }
+
+.sub-wrap { margin-top:8px; }
+.subs-grid { display:flex; flex-wrap:wrap; gap:10px; }
+.subs-grid .sub { position:relative; }
+.subs-grid img { width:90px; height:90px; object-fit:cover; border-radius:10px; border:1px solid var(--line); background:#f5f6f7; }
+.subs-grid .rm { position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:999px; background:#000a; color:#fff; display:grid; place-items:center; font-size:13px; }
+
+.links-wrap { display:flex; flex-direction:column; gap:10px; }
+.link-row { display:grid; grid-template-columns:1fr 1.2fr 120px 36px; gap:8px; align-items:center; }
+.link-row .ic { width:32px; height:32px; border:1px solid var(--line); border-radius:8px; display:grid; place-items:center; background:#fff; }
+
+.tag-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.chips { display:flex; gap:8px; flex-wrap:wrap; }
+.chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; }
+.chip .x { width:18px; height:18px; display:grid; place-items:center; border-radius:999px; background:#eee; }
+
+.check { display:flex; align-items:center; gap:8px; color:#333; }
+.mt4 { margin-top:4px; }
+.mt24 { margin-top:24px; }
+
+.btns { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+
+@media (max-width:740px){
+  .media-grid { grid-template-columns:1fr; }
+  .link-row { grid-template-columns:1fr 1fr 1fr 36px; }
+}
