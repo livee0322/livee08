@@ -4,6 +4,7 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
 
   const user = JSON.parse(localStorage.getItem('lv_user') || 'null');
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
   // Toast
   function toast(msg){
@@ -53,7 +54,7 @@
 
   // 정렬 폴백(서버가 정렬 안 해줄 때도 보정)
   function sortItems(items){
-    const byDate = (a,b, key) => (new Date(b[key]||0)) - (new Date(a[key]||0));
+    const byDate = (a,b,key) => (new Date(b[key]||0)) - (new Date(a[key]||0));
     const byCloseAsc = (a,b) => {
       const A = a.closeAt ? new Date(a.closeAt) : null;
       const B = b.closeAt ? new Date(b.closeAt) : null;
@@ -85,7 +86,10 @@
 
     let items=[], nextCursor=null;
     try{
-      const res  = await fetch(url,{headers:{'Accept':'application/json'}});
+      const headers = {'Accept':'application/json'};
+      if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+
+      const res  = await fetch(url,{headers});
       const data = await res.json().catch(()=>({}));
       if(!res.ok || data.ok===false) throw new Error(data.message||`HTTP_${res.status}`);
 
