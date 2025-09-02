@@ -33,7 +33,7 @@
   // ---- 브랜드명 추출(최대한 넓게, 기본값 '브랜드' 회피) ----
   const pickBrandName = (c = {}) => {
     const cand = [
-      c.recruit?.brandName,                    // 저장 시 하위에 들어온 경우
+      c.recruit?.brandName,
       c.brandName,
       (typeof c.brand === 'string' ? c.brand : ''),
       c.brand?.brandName, c.brand?.name,
@@ -53,7 +53,7 @@
     const d = new Date(shootDate);
     if (isNaN(d)) return null;
     const hm = (shootTime || '').split('~')[0] || '';
-    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' 또는 '1430' 모두 허용
+    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' 또는 '1430'
     const hh = m ? Number(m[1] || 0) : 0;
     const mm = m ? Number(m[2] || 0) : 0;
     d.setHours(hh||0, mm||0, 0, 0);
