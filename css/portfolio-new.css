@@ -100,6 +100,54 @@
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:#fff}
 .chip .x{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#eee;line-height:1}
 
+/* === Portfolio page button patch ========================= */
+
+/* 공통 버튼 */
+.pf-form .btn,
+.pf-form a.btn,
+.pf-form button.btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  min-width:96px;
+  height:44px;
+  padding:0 16px;
+
+  border:1px solid var(--line, #e5e7eb);
+  border-radius:12px;
+  background:#fff;
+  color:#111;
+  font-weight:600;
+  text-decoration:none;
+  box-sizing:border-box;
+  cursor:pointer;
+  transition:transform .06s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+}
+
+.pf-form .btn:hover { box-shadow:0 1px 2px rgba(0,0,0,.05); }
+.pf-form .btn:active { transform:translateY(1px); }
+.pf-form .btn:disabled,
+.pf-form .btn[disabled] { opacity:.5; cursor:not-allowed; }
+
+/* 주 버튼 */
+.pf-form .btn.pri {
+  background:var(--pri, #4f46e5);
+  border-color:transparent;
+  color:#fff;
+}
+.pf-form .btn.pri:hover { box-shadow:0 2px 6px rgba(79,70,229,.25); }
+
+/* 버튼 줄 정렬 */
+.pf-form .btns { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+.pf-form .btns .btn { flex:0 0 auto; }
+
+/* 파일 선택 버튼(브라우저 기본 버튼 보정) */
+.pf-form input[type="file"] {
+  font:inherit;          /* iOS/Android 크기 보정 */
+}
+
 /* 버튼 줄 */
 .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 
