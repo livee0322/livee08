@@ -1,120 +1,85 @@
-/* ===== Portfolio Create (Livee) ===== */
+/* ===== Portfolio Create (Livee) — fixed ===== */
 
 /* 폼 레이아웃 */
-.pf-form{
-  display:flex;
-  flex-direction:column;
-  gap:18px;
-}
+.pf-form{display:flex;flex-direction:column;gap:18px}
 
 /* 섹션 카드 */
-.pf-section{
-  padding:14px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:#fff;
-}
-.pf-section h3{
-  margin:0 0 10px;
-  font-size:16px;
-  font-weight:800;
-}
+.pf-section{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.pf-section h3{margin:0 0 10px;font-size:16px;font-weight:800}
 
 /* 공통 라벨 */
 .label{display:block;font-weight:700;margin:8px 0 6px}
 .req{color:#d03030}
 
-/* 입력요소 넘침 방지 */
+/* 입력 넘침 방지 */
 .pf-section *:where(input,select,textarea){width:100%}
-.pf-section .grid > *{min-width:0}
+.pf-section .grid>*{min-width:0}
 
 /* ===== 미디어 업로더 ===== */
-.media-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-
+.media-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .media-box .uploader{
   border:1px dashed var(--line-strong,#dcdfe3);
-  border-radius:12px;
-  padding:10px;
-  background:#fafafa;
-  display:flex;
-  gap:10px;
-  align-items:center;
+  border-radius:12px;padding:10px;background:#fafafa;
+  display:flex;gap:10px;align-items:center
 }
 .uploader-ctrl small{color:var(--sub);display:block;margin-top:6px}
-
-.thumb{
-  width:112px;height:112px;
-  object-fit:cover;border-radius:12px;background:#f3f4f6;
-}
-.cover{
-  width:180px;aspect-ratio:16/9;
-  object-fit:cover;border-radius:12px;background:#f3f4f6;
-}
+.thumb{width:112px;height:112px;object-fit:cover;border-radius:12px;background:#f3f4f6}
+.cover{width:180px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#f3f4f6}
 
 /* 서브 이미지 리스트 */
 .sub-wrap{margin-top:8px}
 .subs-grid{display:flex;flex-wrap:wrap;gap:10px}
 .subs-grid .sub{position:relative}
-.subs-grid img{
-  width:90px;height:90px;object-fit:cover;border-radius:10px;
-  border:1px solid var(--line);background:#f5f6f7;
-}
-.subs-grid .rm{
-  position:absolute;top:-6px;right:-6px;width:22px;height:22px;
-  border-radius:999px;background:#000a;color:#fff;
-  display:grid;place-items:center;font-size:13px;line-height:1;
-}
-
-/* 파일 인풋 기본 버튼 최소 정리(브라우저 기본 사용) */
+.subs-grid img{width:90px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#f5f6f7}
+.subs-grid .rm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:999px;background:#000a;color:#fff;display:grid;place-items:center;font-size:13px;line-height:1}
 .uploader input[type="file"]{max-width:220px}
+
+/* ===== 2열 그리드(이름/나이, 경력/대표링크 등) ===== */
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:740px){.media-grid{grid-template-columns:1fr}}
+@media (max-width:560px){.grid-2{grid-template-columns:1fr}}
+
+/* ===== 체크 라인 (⚙️ 깨짐 fix) ===== */
+.check{
+  display:inline-flex;             /* inline-flex 로 라벨 자체 폭만큼 */
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+  line-height:1.4;
+  white-space:nowrap;              /* '이름 공개' 같은 짧은 문구 줄바꿈 방지 */
+  word-break:keep-all;
+}
+.check input[type="checkbox"]{flex:none;width:18px;height:18px}
+@media (max-width:380px){
+  .check{white-space:normal}       /* 초소형 화면에선 필요시 줄바꿈 허용 */
+}
 
 /* ===== 참여 라이브 링크 ===== */
 .links-wrap{display:flex;flex-direction:column;gap:10px}
 .link-row{
   display:grid;
   grid-template-columns:1fr 1.2fr 120px 36px;
-  gap:8px;align-items:center;
+  gap:8px;align-items:center
 }
+.link-row select,.link-row input{height:40px}
 .link-row .ic{
   width:32px;height:32px;display:grid;place-items:center;
-  border:1px solid var(--line);border-radius:8px;background:#fff;color:#333;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:#333
 }
 .link-row .ic:active{transform:scale(.96)}
-/* 기본 인풋/셀렉트 높이 매칭 */
-.link-row select,
-.link-row input{height:40px}
+@media (max-width:740px){.link-row{grid-template-columns:1fr 1fr 1fr 36px}}
 
 /* ===== 태그 ===== */
 .tag-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff
-}
-.chip .x{
-  width:18px;height:18px;display:grid;place-items:center;
-  border-radius:999px;background:#eee;line-height:1
-}
-
-/* 체크박스 라인 */
-.check{display:flex;align-items:center;gap:8px;color:#333}
-.mt4{margin-top:4px}
-.mt24{margin-top:24px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff}
+.chip .x{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#eee;line-height:1}
 
 /* 버튼 줄 */
 .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 
-/* 반응형 */
-@media (max-width:740px){
-  .media-grid{grid-template-columns:1fr}
-  .link-row{grid-template-columns:1fr 1fr 1fr 36px}
-}
-
-/* 다크 모드 살짝 */
+/* 다크 모드 */
 @media (prefers-color-scheme: dark){
   .pf-section{background:#0f1115;border-color:#222}
   .media-box .uploader{background:#12151b;border-color:#222}
