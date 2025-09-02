@@ -1,7 +1,4 @@
-/* Home — recruit-test v2.5 (hotfix)
-   - 브랜드명: brandName/brandname, recruit.brandName/recruit.brandname, brand.name 등 모든 변형 흡수 + 얕은 딥스캔
-   - 라인업: shootDate 없으면 closeAt→createdAt으로 폴백
-*/
+/* Home — recruit-test v2.5 (brandName 강제 통일 + 라인업 폴백) */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -28,14 +25,11 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  /* ── 브랜드명 추출: 변형 + 얕은 딥스캔(깊이 2) ── */
+  /* ── 브랜드명 추출: 모든 변형 + 얕은 딥스캔 ── */
   const pickBrandName = (c = {}) => {
-    // 1) 우리가 흔히 보던 자리부터
     const direct = [
-      c.recruit?.brandName,
-      c.recruit?.brandname,     // 소문자 변형
-      c.brandName,
-      c.brandname,              // 소문자 변형
+      c.brandName, c.brandname,
+      c.recruit?.brandName, c.recruit?.brandname, c.recruit?.brand,
       (typeof c.brand === 'string' ? c.brand : ''),
       c.brand?.brandName, c.brand?.name,
       c.owner?.brandName, c.owner?.name,
@@ -45,13 +39,12 @@
 
     if (direct && direct.trim() !== '브랜드') return direct.trim();
 
-    // 2) 키 이름에 'brand' 가 들어간 문자열을 얕게 스캔
-    const scan = (obj, depth = 0) => {
+    const scan = (obj, depth=0) => {
       if (!obj || typeof obj !== 'object' || depth > 2) return '';
       for (const [k, v] of Object.entries(obj)) {
         if (typeof v === 'string' && /brand/i.test(k) && v.trim()) return v.trim();
         if (v && typeof v === 'object') {
-          const t = scan(v, depth + 1);
+          const t = scan(v, depth+1);
           if (t) return t;
         }
       }
@@ -61,12 +54,12 @@
     return found && found !== '브랜드' ? found : '브랜드';
   };
 
-  /* ── 시간 유틸: shootDate 없으면 closeAt→createdAt ── */
+  /* ── 시간: shootDate 없으면 closeAt→createdAt 폴백 ── */
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
     let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
     if (!d || isNaN(d)) return null;
     const hm = (shootTime || '').split('~')[0] || '';
-    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' or '1430'
+    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/);
     const hh = m ? Number(m[1] || 0) : 0;
     const mm = m ? Number(m[2] || 0) : 0;
     d.setHours(hh||0, mm||0, 0, 0);
@@ -75,7 +68,7 @@
   const isSameLocalDay = (a, b=new Date()) =>
     a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
-  /* ── 데이터 가져오기 ── */
+  /* ── 데이터 ── */
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -86,7 +79,7 @@
       const list = (Array.isArray(data)&&data) || data.items || data.data?.items || data.docs || data.data?.docs || [];
       return list.map((c,i)=>({
         id: c.id||c._id||`${i}`,
-        brandName: pickBrandName(c),                             // ← 여기서 확실히 뽑는다
+        brandName: pickBrandName(c),                 // ← 여기서 고정
         title: c.title || c.recruit?.title || '(제목 없음)',
         thumb: c.thumbnailUrl || c.coverImageUrl || '',
         closeAt: c.closeAt,
@@ -108,7 +101,6 @@
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
-  /* ── 템플릿 ── */
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -157,7 +149,6 @@
     }</div>`;
   }
 
-  /* ── 마운트 자동 ── */
   function ensureMount() {
     let root = $('#home') || $('#app') || document.querySelector('main');
     if (!root) {
@@ -168,7 +159,6 @@
     return root;
   }
 
-  /* ── 렌더링 ── */
   async function render(){
     const root = ensureMount();
     const all = await fetchRecruits();
