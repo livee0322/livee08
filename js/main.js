@@ -1,4 +1,9 @@
-/* Home — recruit-test 기반 (v2.5 필드 일치 + 마운트 자동 + 브랜드/제목 배치) */
+/* Home — recruit-test 기반 (v2.5 확정판)
+   - 오늘의 라이브: 오늘 일정 우선(없으면 가까운 미래 5개)
+   - 추천 공고: 최신순(createdAt desc)
+   - 브랜드명 추출 보강(문자열/중첩/하위 recruit.brandName)
+   - 마운트 자동 (#home 없으면 생성)
+*/
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -25,23 +30,39 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  // ── 브랜드명 추출 (문자열/중첩객체/과거 스키마 모두 커버)
-  const pickBrandName = (c={}) => {
-    const v =
-      c.brandName ||
-      (typeof c.brand === 'string' ? c.brand : '') ||
-      c.brand?.brandName ||
-      c.brand?.name ||
-      c.owner?.brandName ||
-      c.owner?.name ||
-      c.user?.brandName ||
-      c.user?.companyName ||
-      c.recruit?.brandName ||
-      c.recruit?.brand ||
-      '';
-    return (v && String(v).trim()) || '브랜드';
+  // ---- 브랜드명 추출(최대한 넓게, 기본값 '브랜드' 회피) ----
+  const pickBrandName = (c = {}) => {
+    const cand = [
+      c.recruit?.brandName,                    // 저장 시 하위에 들어온 경우
+      c.brandName,
+      (typeof c.brand === 'string' ? c.brand : ''),
+      c.brand?.brandName, c.brand?.name,
+      c.owner?.brandName, c.owner?.name,
+      c.createdByName, c.createdBy?.brandName, c.createdBy?.name,
+      c.user?.brandName, c.user?.companyName,
+      c.companyName, c.company?.name,
+      c.org?.name, c.organization?.name
+    ].filter(Boolean).map(s => String(s).trim());
+    const found = cand.find(s => s && s !== '브랜드');
+    return found || '브랜드';
   };
 
+  // ---- 시간 유틸 ----
+  const parseStartDate = (shootDate, shootTime) => {
+    if (!shootDate) return null;
+    const d = new Date(shootDate);
+    if (isNaN(d)) return null;
+    const hm = (shootTime || '').split('~')[0] || '';
+    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' 또는 '1430' 모두 허용
+    const hh = m ? Number(m[1] || 0) : 0;
+    const mm = m ? Number(m[2] || 0) : 0;
+    d.setHours(hh||0, mm||0, 0, 0);
+    return d;
+  };
+  const isSameLocalDay = (a, b=new Date()) =>
+    a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+
+  // ---- 데이터 가져오기 ----
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -56,6 +77,7 @@
         title: c.title || c.recruit?.title || '(제목 없음)',
         thumb: c.thumbnailUrl || c.coverImageUrl || '',
         closeAt: c.closeAt,
+        createdAt: c.createdAt || c._createdAt || c.meta?.createdAt || null,
         shootDate: c.recruit?.shootDate,
         shootTime: c.recruit?.shootTime,
         pay: c.recruit?.pay,
@@ -73,7 +95,7 @@
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
-  // ── 템플릿: 브랜드(파란 작게) → 제목 → 메타
+  // ---- 템플릿: 브랜드(파란 작게) → 제목 → 메타 ----
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -122,46 +144,53 @@
     }</div>`;
   }
 
-  // ── 마운트 자동
+  // ---- 마운트 자동 ----
   function ensureMount() {
     let root = $('#home') || $('#app') || document.querySelector('main');
     if (!root) {
       root = document.createElement('div');
       root.id = 'home';
-      (document.body).appendChild(root);
+      document.body.appendChild(root);
     }
     return root;
   }
 
+  // ---- 렌더링 ----
   async function render(){
     const root = ensureMount();
+    const all = await fetchRecruits();
 
-    const recruits = await fetchRecruits();
-
-    // 가까운 5개(미래)
+    // 1) 오늘의 라이브(오늘 날짜인 항목 우선)
     const now = new Date();
-    const upcoming = recruits
-      .filter(r=>r.shootDate)
-      .map(r=>{
-        const start = new Date(r.shootDate);
-        const hm = (r.shootTime||'').split('~')[0]||'00:00';
-        const [h,m] = hm.split(':').map(Number);
-        start.setHours(h||0,m||0,0,0);
-        return {...r,_start:start};
-      })
-      .filter(r=>r._start>now)
-      .sort((a,b)=>a._start-b._start)
-      .slice(0,5);
+    const withStart = all
+      .map(r => ({ ...r, _start: parseStartDate(r.shootDate, r.shootTime) }))
+      .filter(r => r._start instanceof Date && !isNaN(r._start));
+
+    let todayList = withStart.filter(r => isSameLocalDay(r._start, now))
+                             .sort((a,b)=> a._start - b._start)
+                             .slice(0,5);
+
+    // 오늘이 비면 가까운 미래 5개로 폴백
+    if (!todayList.length) {
+      todayList = withStart.filter(r => r._start > now)
+                           .sort((a,b)=> a._start - b._start)
+                           .slice(0,5);
+    }
+
+    // 2) 추천 공고(최신 생성순)
+    const latest = [...all]
+      .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+      .slice(0, 10);
 
     root.innerHTML = `
       <div class="section">
         <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="index.html#recruits">더보기</a></div>
-        ${tplLineup(upcoming)}
+        ${tplLineup(todayList)}
       </div>
 
       <div class="section">
         <div class="section-head"><h2>추천 공고</h2><a class="more" href="index.html#recruits">더보기</a></div>
-        ${tplRecruits(recruits)}
+        ${tplRecruits(latest)}
       </div>
     `;
   }
