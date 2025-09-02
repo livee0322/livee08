@@ -1,13 +1,13 @@
 /* ===== Recruit List (rl-) ===== */
 
-/* 변수 매핑: main.css와 호환 */
+/* main.css와 변수 호환 */
 :root{
   --line: var(--border, #E5E7EB);
   --pri: var(--primary, #3B82F6);
   --pri-weak: color-mix(in srgb, var(--pri) 18%, #fff);
 }
 
-/* 툴바 (박스형) */
+/* 툴바 */
 .toolbar{
   display:flex; gap:12px; align-items:center; justify-content:space-between;
   flex-wrap:wrap; margin:6px 0 12px;
