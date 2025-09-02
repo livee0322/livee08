@@ -7,22 +7,55 @@
 .pf-section{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .pf-section h3{margin:0 0 10px;font-size:16px;font-weight:800}
 
-/* 라벨/필수표시 */
-.label{display:block;font-weight:700;margin:8px 0 6px}
-.req{color:#d03030}
+/* 기본 라벨(좌측 정렬 강제) */
+.pf-form .label{display:block;font-weight:700;margin:8px 0 6px;text-align:left}
+.pf-form .req{color:#d03030}
 
-/* 입력 기본 폭 + 그리드 자식 폭 안정화 */
-.pf-section *:where(input,select,textarea){width:100%}
-.pf-section .grid>*{min-width:0}
+/* 입력/셀렉트/텍스트에어리어 일괄 스타일 (main.css보다 우선되게 더 구체적) */
+.pf-form input[type="text"],
+.pf-form input[type="email"],
+.pf-form input[type="password"],
+.pf-form input[type="number"],
+.pf-form input[type="url"],
+.pf-form input[type="date"],
+.pf-form input[type="time"],
+.pf-form textarea,
+.pf-form select,
+.pf-form .input,
+.pf-form .select{
+  width:100%;
+  box-sizing:border-box;
+  height:44px;
+  padding:10px 12px;
+  border:1px solid var(--line,#e5e7eb);
+  border-radius:12px;
+  background:#fff;
+  color:#111;
+  font:inherit;
+  outline:none;
+}
+.pf-form textarea{min-height:120px;resize:vertical}
+.pf-form input::placeholder,
+.pf-form textarea::placeholder{color:#9aa2b1}
+.pf-form input:focus,
+.pf-form textarea:focus,
+.pf-form select:focus{border-color:var(--pri,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+
+/* 그리드 */
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pf-section .grid>*{min-width:0}          /* 넘침 방지 */
+@media (max-width:740px){.grid-2{grid-template-columns:1fr}}
 
 /* === 미디어 업로더 === */
 .media-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:740px){.media-grid{grid-template-columns:1fr}}
 .media-box .uploader{
   border:1px dashed var(--line-strong,#dcdfe3);
   border-radius:12px;padding:10px;background:#fafafa;
   display:flex;gap:10px;align-items:center
 }
-.uploader-ctrl small{color:var(--sub);display:block;margin-top:6px}
+.uploader-ctrl small{color:var(--sub,#6b7280);display:block;margin-top:6px}
 .thumb{width:112px;height:112px;object-fit:cover;border-radius:12px;background:#f3f4f6}
 .cover{width:180px;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#f3f4f6}
 .uploader input[type="file"]{max-width:220px}
@@ -31,21 +64,21 @@
 .sub-wrap{margin-top:8px}
 .subs-grid{display:flex;flex-wrap:wrap;gap:10px}
 .subs-grid .sub{position:relative}
-.subs-grid img{width:90px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#f5f6f7}
+.subs-grid img{width:90px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e5e7eb);background:#f5f6f7}
 .subs-grid .rm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:999px;background:#000a;color:#fff;display:grid;place-items:center;font-size:13px;line-height:1}
 
-/* 2열 그리드 */
-.grid{display:grid;gap:12px}
-.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-@media (max-width:740px){.media-grid{grid-template-columns:1fr}}
-@media (max-width:560px){.grid-2{grid-template-columns:1fr}}
-
-/* 체크 라인 (줄깨짐 방지) */
-.check{
-  display:inline-flex;align-items:center;gap:8px;
-  margin-top:6px;line-height:1.4;white-space:nowrap;word-break:keep-all
+/* 체크박스(줄깨짐/정렬 고정) */
+.pf-form .check{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:6px;
+  line-height:1.4;
+  white-space:nowrap;         /* "이름 공개" 두 줄 방지 */
+  word-break:keep-all;
+  text-align:left;
 }
-.check input[type="checkbox"]{flex:none;width:18px;height:18px}
+.pf-form .check input[type="checkbox"]{flex:none;width:18px;height:18px}
 
 /* 참여 라이브 링크 */
 .links-wrap{display:flex;flex-direction:column;gap:10px}
@@ -54,23 +87,22 @@
   grid-template-columns:1fr 1.2fr 120px 36px;
   gap:8px;align-items:center
 }
-.link-row select,.link-row input{height:40px}
+.link-row select,.link-row input{height:44px}
 .link-row .ic{
   width:32px;height:32px;display:grid;place-items:center;
-  border:1px solid var(--line);border-radius:8px;background:#fff;color:#333
+  border:1px solid var(--line,#e5e7eb);border-radius:8px;background:#fff;color:#333
 }
-.link-row .ic:active{transform:scale(.96)}
 @media (max-width:740px){.link-row{grid-template-columns:1fr 1fr 1fr 36px}}
 
 /* 태그 */
 .tag-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#fff}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:#fff}
 .chip .x{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#eee;line-height:1}
 
 /* 버튼 줄 */
 .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 
-/* 유틸 간격 */
+/* 여백 유틸 */
 .mt4{margin-top:4px}
 .mt24{margin-top:24px}
