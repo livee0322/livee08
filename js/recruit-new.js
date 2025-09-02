@@ -3,16 +3,14 @@
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
   const BASE_PATH = (CFG.BASE_PATH || "").replace(/\/$/, "");
-  const THUMB = CFG.thumb || {
-    card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
-  };
-  const TOKEN = localStorage.getItem("livee_token") || "";
+  const THUMB = CFG.thumb || { card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto" };
+  const TOKEN = localStorage.getItem("livee_token") || localStorage.getItem("liveeToken") || "";
 
   const $id = s => document.getElementById(s);
   const form        = $id("recruitForm");
   const brandNameEl = $id("brandName");
   const titleEl     = $id("title");
-  const descEl      = $id("desc");           // 선택 입력
+  const descEl      = $id("desc");
   const categoryEl  = $id("category");
   const locationEl  = $id("location");
   const shootDate   = $id("shootDate");
@@ -39,7 +37,7 @@
     const s=new Date(`${shootDate.value}T${startTime.value}`); const e=new Date(`${shootDate.value}T${endTime.value}`); return e>s; };
   const validDeadline=()=>{ if(!deadline?.value||!shootDate?.value) return false; return deadline.value<=shootDate.value; };
 
-  const withTransform = (url, t) => { try{ const [h,tail]=url.split('/upload/'); return `${h}/upload/${t}/${tail}`; }catch{ return url; } };
+  const withTransform = (url, t) => { try{ if(!url.includes('/upload/')) return url; const [h,tail]=url.split('/upload/'); return `${h}/upload/${t}/${tail}`; }catch{ return url; } };
 
   async function getSignature(){
     const r=await fetch(`${API_BASE}/uploads/signature`,{headers:headers(false)});
@@ -76,10 +74,11 @@
 
     const brandName=(brandNameEl.value||'').trim();
     const title=(titleEl.value||'').trim();
-    const desc=(descEl.value||'').trim(); // 선택
+    const desc=(descEl.value||'').trim();
 
     if(!brandName){ say('브랜드명을 입력해주세요.'); return; }
-    if(!title){ say('제목을 입력해주세요.'); return; }
+    if(!title || title.length<5){ say('제목은 5자 이상 입력해주세요.'); return; }
+    if(desc && desc.length>0 && desc.length<30){ say('내용은 30자 이상 입력해주세요.'); return; }
     if(!categoryEl.value){ say('카테고리를 선택해주세요.'); return; }
     if(!shootDate.value){ say('촬영일을 선택해주세요.'); return; }
     if(!deadline.value){ say('마감일을 선택해주세요.'); return; }
@@ -87,8 +86,13 @@
     if(!validTimes()){ say('종료 시간은 시작 시간 이후여야 합니다.'); return; }
     if(!validDeadline()){ say('마감일은 촬영일과 같거나 그 이전이어야 합니다.'); return; }
 
-    let pay=""; if(!negEl.checked){ const raw=String(payEl.value||'').trim(); const n=Number(raw);
-      if(raw && (isNaN(n)||n<0)){ say('출연료는 숫자로 입력해주세요.'); return; } pay=raw; }
+    let pay=""; if(!negEl.checked){
+      const raw=String(payEl.value||'').replace(/,/g,'').trim();
+      const n=Number(raw);
+      if(raw && (isNaN(n)||n<0)){ say('출연료는 숫자로 입력해주세요.'); return; }
+      if(raw && n<50000){ say('출연료는 50,000원 이상이어야 합니다. (협의 가능 선택 시 예외)'); return; }
+      pay=raw;
+    }
 
     const coverImageUrl=previewEl?.dataset?.cover||"";
     const thumbnailUrl =previewEl?.dataset?.thumb ||(coverImageUrl?withTransform(coverImageUrl,THUMB.card169):"");
