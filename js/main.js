@@ -1,7 +1,4 @@
-/* /* Home — recruit-test v2.5 (hotfix: lineup fallback + brandname variants)
-   - 라인업: shootDate 없거나 time 비어도 closeAt/createdAt으로 대체
-   - 브랜드명: brandname(소문자), recruit.brandname 등 모든 변형 흡수
-*/
+/* Home — recruit-test v2.5 (lineup fallback + unified brandName) */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -28,13 +25,11 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  /* ── 브랜드명 추출: 모든 변형 흡수 (brandName/brandname, 상/하위) ── */
+  // 브랜드명 정규화
   const pickBrandName = (c = {}) => {
     const cand = [
-      c.recruit?.brandName,
-      c.recruit?.brandname,          // 소문자 변형
-      c.brandName,
-      c.brandname,                   // 소문자 변형
+      c.recruit?.brandName, c.recruit?.brandname,
+      c.brandName, c.brandname,
       (typeof c.brand === 'string' ? c.brand : ''),
       c.brand?.brandName, c.brand?.name,
       c.owner?.brandName, c.owner?.name,
@@ -45,12 +40,12 @@
     return found || '브랜드';
   };
 
-  /* ── 시간 유틸: shootDate 없으면 closeAt→createdAt 순으로 대체 ── */
+  // 시간 파싱: shootDate → closeAt → createdAt
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
     let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
     if (!d || isNaN(d)) return null;
     const hm = (shootTime || '').split('~')[0] || '';
-    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/); // '14:30' 또는 '1430'
+    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/);
     const hh = m ? Number(m[1] || 0) : 0;
     const mm = m ? Number(m[2] || 0) : 0;
     d.setHours(hh||0, mm||0, 0, 0);
@@ -59,7 +54,6 @@
   const isSameLocalDay = (a, b=new Date()) =>
     a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
-  /* ── 데이터 가져오기 ── */
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -75,7 +69,7 @@
         thumb: c.thumbnailUrl || c.coverImageUrl || '',
         closeAt: c.closeAt,
         createdAt: c.createdAt || c._createdAt || c.meta?.createdAt || null,
-        shootDate: c.recruit?.shootDate,             // 있을 수도 없을 수도
+        shootDate: c.recruit?.shootDate,
         shootTime: c.recruit?.shootTime,
         pay: c.recruit?.pay,
         payNegotiable: !!c.recruit?.payNegotiable
@@ -92,7 +86,7 @@
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
-  /* ── 템플릿: 브랜드(파란 작게) → 제목 → 메타 ── */
+  // 템플릿
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -141,46 +135,36 @@
     }</div>`;
   }
 
-  /* ── 마운트 자동 ── */
   function ensureMount() {
     let root = $('#home') || $('#app') || document.querySelector('main');
-    if (!root) {
-      root = document.createElement('div');
-      root.id = 'home';
-      document.body.appendChild(root);
-    }
+    if (!root) { root = document.createElement('div'); root.id = 'home'; document.body.appendChild(root); }
     return root;
   }
 
-  /* ── 렌더링 ── */
   async function render(){
     const root = ensureMount();
     const all = await fetchRecruits();
 
-    // 각 항목에 _start 계산: shootDate → closeAt → createdAt
+    // _start 계산: shootDate → closeAt → createdAt
     const withStart = all.map(r => ({
       ...r,
       _start: parseStartDate(r.shootDate, r.shootTime, r.closeAt || r.createdAt)
     })).filter(r => r._start instanceof Date && !isNaN(r._start));
 
-    // 1) 오늘의 라이브(오늘 먼저, 없으면 가까운 미래)
+    // 오늘 → 없으면 다가오는 5개
     const now = new Date();
-    let todayList = withStart
-      .filter(r => isSameLocalDay(r._start, now))
-      .sort((a,b)=> a._start - b._start)
-      .slice(0,5);
-
+    let todayList = withStart.filter(r => isSameLocalDay(r._start, now))
+                             .sort((a,b)=> a._start - b._start)
+                             .slice(0,5);
     if (!todayList.length) {
-      todayList = withStart
-        .filter(r => r._start > now)
-        .sort((a,b)=> a._start - b._start)
-        .slice(0,5);
+      todayList = withStart.filter(r => r._start > now)
+                           .sort((a,b)=> a._start - b._start)
+                           .slice(0,5);
     }
 
-    // 2) 추천 공고(최신 생성순)
-    const latest = [...all]
-      .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
-      .slice(0, 10);
+    // 최신 공고
+    const latest = [...all].sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0))
+                           .slice(0,10);
 
     root.innerHTML = `
       <div class="section">
