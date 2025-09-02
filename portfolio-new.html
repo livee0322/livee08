@@ -84,4 +84,74 @@
           </div>
           <div>
             <label class="label">나이</label>
-            <input id="age" class="input" type="number
+            <input id="age" class="input" type="number" min="14" max="99" placeholder="예) 27" />
+            <label class="check mt4"><input id="agePublic" type="checkbox" /> 나이 공개</label>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div>
+            <label class="label">경력(년수)</label>
+            <input id="careerYears" class="input" type="number" min="0" max="50" placeholder="예) 3" />
+          </div>
+          <div>
+            <label class="label">대표 링크(하나만)</label>
+            <input id="primaryLink" class="input" type="url" placeholder="https://instagram.com/..." />
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 참여 라이브 링크 ===== -->
+      <section class="pf-section">
+        <h3>참여 라이브</h3>
+        <div id="linksWrap" class="links-wrap"></div>
+        <button type="button" id="addLinkBtn" class="btn">+ 라이브 링크 추가</button>
+      </section>
+
+      <!-- ===== 소개 & 태그 ===== -->
+      <section class="pf-section">
+        <h3>소개 & 태그</h3>
+
+        <label class="label">상세 소개 <span class="req">*</span></label>
+        <textarea id="bio" class="input" rows="6" placeholder="50자 이상 입력해주세요"></textarea>
+
+        <label class="label">스킬/태그 (최대 8개)</label>
+        <div class="tag-row">
+          <div id="tagList" class="chips"></div>
+          <input id="tagInput" class="input" placeholder="태그 입력 후 엔터" />
+        </div>
+      </section>
+
+      <!-- ===== 공개 설정 ===== -->
+      <section class="pf-section">
+        <h3>공개 설정</h3>
+
+        <div class="grid grid-2">
+          <div>
+            <label class="label">공개 범위</label>
+            <select id="visibility" class="select">
+              <option value="public">전체공개</option>
+              <option value="unlisted">링크공개</option>
+              <option value="private">비공개</option>
+            </select>
+          </div>
+          <div class="mt24">
+            <label class="check"><input id="openToOffers" type="checkbox" checked /> 제안 받기</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 액션 ===== -->
+      <div class="btns">
+        <button class="btn" id="saveDraftBtn" type="button">임시저장</button>
+        <button class="btn pri" id="publishBtn" type="button">발행하기</button>
+        <a class="btn" href="mypage.html">취소</a>
+      </div>
+    </form>
+  </main>
+
+  <!-- 스크립트 -->
+  <script src="js/config.js"></script>
+  <script src="js/portfolio-new.js"></script>
+</body>
+</html>
