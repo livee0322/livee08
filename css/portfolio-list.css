@@ -1,0 +1,35 @@
+/* ===== Portfolio List ===== */
+
+.pl-controls{display:flex; gap:8px; align-items:center; margin-left:auto}
+.input{height:40px; padding:0 12px; border:1px solid var(--border,#E5E7EB); border-radius:10px; background:#fff}
+.select{height:40px; padding:0 10px; border:1px solid var(--border,#E5E7EB); border-radius:10px; background:#fff}
+
+.pl-grid{
+  display:grid; gap:14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width:760px){
+  .pl-grid{ grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width:980px){
+  .pl-grid{ grid-template-columns: repeat(4, 1fr); }
+}
+
+.pl-card{
+  border:1px solid var(--border,#E5E7EB); border-radius:14px; background:#fff; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.pl-thumb{
+  width:100%; aspect-ratio:1/1; object-fit:cover; background:#f3f4f6;
+}
+.pl-body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:6px; min-height:112px}
+.pl-nick{font-weight:800; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.pl-head{color:var(--sub,#6B7280); font-size:13px; line-height:1.35; max-height:2.7em; overflow:hidden}
+.pl-tags{display:flex; gap:6px; flex-wrap:wrap}
+.pl-tag{font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--border,#E5E7EB); background:#fff}
+.pl-meta{display:flex; gap:8px; align-items:center; font-size:12px; color:var(--sub,#6B7280)}
+.badge{padding:2px 8px; border-radius:999px; font-size:12px; background:#eef7ff; color:#1677ff}
+.card-link{display:block}
+.empty{display:grid; place-items:center; gap:8px; padding:28px 0; color:var(--sub,#6B7280)}
+.btn{display:inline-flex; align-items:center; gap:6px; height:36px; padding:0 12px; border:1px solid var(--border,#E5E7EB); border-radius:10px; background:#fff}
+.btn.pri{background:var(--primary,#3B82F6); color:#fff; border-color:transparent}
