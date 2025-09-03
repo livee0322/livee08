@@ -45,7 +45,7 @@
           <a class="tbi is-active" href="index.html"><i class="ri-home-line"></i><span>홈</span></a>
           <a class="tbi" href="recruit-new.html"><i class="ri-archive-drawer-line"></i><span>모집캠페인</span></a>
           <a class="tbi" href="#/library"><i class="ri-bookmark-2-line"></i><span>라이브러리</span></a>
-          <a class="tbi" href="#/portfolios"><i class="ri-user-3-line"></i><span>인플루언서</span></a>
+          <a class="tbi" href="portfolio-list.html"><i class="ri-user-3-line"></i><span>인플루언서</span></a>
           <a class="tbi" href="${myHref}"><i class="ri-user-settings-line"></i><span>마이페이지</span></a>
         </div>
       </div>`;
