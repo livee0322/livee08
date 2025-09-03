@@ -1,29 +1,37 @@
-/* Portfolio Create – Livee v2.6 (Cloudinary + /portfolio-test) */
+/* Portfolio Create – Livee v2.6.1 (Cloudinary + /portfolio-test) */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const ENDPOINT = (CFG.endpoints && CFG.endpoints.portfolioBase) || '/portfolio-test';
 
-  const THUMB = (CFG.thumb || {
-    square:  "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
-    cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto"
-  });
+  const THUMB = CFG.thumb || {
+    square: "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
+    cover169: "c_fill,g_auto,w_1280,h_720,f_auto,q_auto"
+  };
 
   const TOKEN =
     localStorage.getItem('livee_token') ||
     localStorage.getItem('liveeToken')  || '';
 
-  // ---------- el refs ----------
+  // JWT 에서 사용자 ID 추출 (sub | userId | id | _id | uid)
+  const USER_ID = (() => {
+    try{
+      const parts = (TOKEN || '').split('.');
+      if(parts.length < 2) return '';
+      const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+      return payload.sub || payload.userId || payload.id || payload._id || payload.uid || '';
+    }catch{ return ''; }
+  })();
+
+  // ---------- els ----------
   const $id = s => document.getElementById(s);
   const form = $id('pfForm');
   const msg  = $id('pfMsg');
 
-  // media inputs / previews
-  const mainFile = $id('mainFile'), mainPrev = $id('mainPrev');
+  const mainFile = $id('mainFile'),  mainPrev  = $id('mainPrev');
   const coverFile = $id('coverFile'), coverPrev = $id('coverPrev');
   const subsFile  = $id('subsFile'),  subsGrid  = $id('subsGrid');
 
-  // text inputs
   const nickname = $id('nickname'), headline = $id('headline'), bio = $id('bio');
   const realName = $id('realName'), realNamePublic = $id('realNamePublic');
   const age = $id('age'), agePublic = $id('agePublic');
@@ -37,18 +45,18 @@
   const state = {
     mainThumbnailUrl: "",
     coverImageUrl: "",
-    subThumbnails: [],    // string[]
-    tags: []              // string[]
+    subThumbnails: [],
+    tags: []
   };
 
   // ---------- utils ----------
   const say = (t, ok=false) => {
     if(!msg) return;
-    msg.textContent=t;
+    msg.textContent = t;
     msg.classList.add('show');
     msg.classList.toggle('ok', ok);
   };
-  const headers = (json=true)=>{
+  const headers = (json=true) => {
     const h={};
     if(json) h['Content-Type']='application/json';
     if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`;
@@ -61,8 +69,6 @@
       return `${h}/upload/${t}/${tail}`;
     }catch{ return url; }
   };
-
-  // 빈 값/잘못된 값 제거
   const compact = (obj) => {
     const out = Array.isArray(obj) ? [] : {};
     if (Array.isArray(obj)) {
@@ -130,7 +136,7 @@
     try{
       say('배경 이미지 업로드 중…');
       const url=await uploadImage(f);
-      state.coverImageUrl = withTransform(url, THUMB.cover169 || THUMB.card169);
+      state.coverImageUrl = withTransform(url, THUMB.cover169);
       coverPrev.src = state.coverImageUrl;
       say('업로드 완료', true);
     }catch(err){ say('업로드 실패: '+err.message); }
@@ -215,10 +221,8 @@
       if(!state.mainThumbnailUrl){ say('메인 썸네일을 업로드해주세요'); return false; }
       if(!nickname.value.trim()){ say('닉네임을 입력해주세요'); return false; }
       if(!headline.value.trim()){ say('한 줄 소개를 입력해주세요'); return false; }
-      // 상세 소개는 길이 제한 없음 (요청 반영)
       if(!bio.value.trim()){ say('상세 소개를 입력해주세요'); return false; }
     }
-    // URL 형식 검증(있을 때만)
     const urlOk = (u)=>!u || /^https:\/\//.test(u.trim());
     if(!urlOk(primaryLink.value)){ say('대표 링크는 https:// 로 시작해야 합니다'); return false; }
     const rows = Array.from(linksWrap.querySelectorAll('.link-row'));
@@ -230,13 +234,12 @@
   }
 
   // ---------- payload ----------
-  function toISODateOrEmpty(s){
+  const toISODateOrEmpty = (s) => {
     const v = (s||'').trim();
     if(!v) return '';
-    // yyyy-mm-dd -> yyyy-mm-ddT00:00:00.000Z
     const d = new Date(`${v}T00:00:00.000Z`);
     return isNaN(d) ? '' : d.toISOString();
-  }
+  };
 
   function collectPayload(status){
     const links = Array.from(linksWrap.querySelectorAll('.link-row')).map(row=>{
@@ -246,20 +249,26 @@
       return { title:t, url:u, date: toISODateOrEmpty(d) || undefined };
     }).filter(x=>x.title || x.url);
 
-    const cy = careerYears.value.trim();
-    const ageVal = age.value.trim();
+    const cy = (careerYears.value||'').trim();
+    const ageVal = (age.value||'').trim();
 
-    const payloadRaw = {
+    // ★ 필수 필드: name, user
+    const displayName = nickname.value.trim() || realName.value.trim() || 'Untitled';
+
+    const raw = {
       type: 'portfolio',
       status,
+      user: USER_ID || undefined,           // required by backend
+      name: displayName,                    // required by backend
+
       visibility: visibility.value || 'public',
       mainThumbnailUrl: state.mainThumbnailUrl,
       coverImageUrl: state.coverImageUrl,
       subThumbnails: state.subThumbnails,
 
-      nickname: nickname.value.trim(),
-      headline: headline.value.trim(),
-      bio: bio.value.trim(),
+      nickname: nickname.value.trim() || undefined,
+      headline: headline.value.trim() || undefined,
+      bio: bio.value.trim() || undefined,
 
       realName: realName.value.trim() || undefined,
       realNamePublic: !!realNamePublic.checked,
@@ -273,13 +282,14 @@
       openToOffers: !!openToOffers.checked
     };
 
-    // 잘못된 숫자/빈값 제거
-    return compact(payloadRaw);
+    return compact(raw);
   }
 
   // ---------- submit ----------
   async function submit(status){
     if(!TOKEN){ say('로그인이 필요합니다'); return; }
+    if(!USER_ID){ say('로그인 정보가 만료되었습니다. 다시 로그인해주세요.'); return; }
+
     const isPublish = status==='published';
     if(!validate(isPublish)) return;
 
@@ -298,10 +308,9 @@
     }
   }
 
-  // ---------- buttons ----------
   $id('saveDraftBtn')?.addEventListener('click', ()=> submit('draft'));
   $id('publishBtn')?.addEventListener('click', ()=> submit('published'));
 
-  // 초기 한 줄 링크 필드 1개 제공
+  // 초기 링크 필드 1개
   addLinkRow();
 })();
