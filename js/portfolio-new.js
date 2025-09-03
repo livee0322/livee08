@@ -1,37 +1,25 @@
-/* Portfolio Create – Livee v2.6.1 (Cloudinary + /portfolio-test) */
+<script>
+/* Portfolio Create – Livee v2.6 (Cloudinary + /portfolio-test) */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const ENDPOINT = (CFG.endpoints && CFG.endpoints.portfolioBase) || '/portfolio-test';
-
   const THUMB = CFG.thumb || {
     square: "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
     cover169: "c_fill,g_auto,w_1280,h_720,f_auto,q_auto"
   };
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
-  const TOKEN =
-    localStorage.getItem('livee_token') ||
-    localStorage.getItem('liveeToken')  || '';
-
-  // JWT 에서 사용자 ID 추출 (sub | userId | id | _id | uid)
-  const USER_ID = (() => {
-    try{
-      const parts = (TOKEN || '').split('.');
-      if(parts.length < 2) return '';
-      const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-      return payload.sub || payload.userId || payload.id || payload._id || payload.uid || '';
-    }catch{ return ''; }
-  })();
-
-  // ---------- els ----------
-  const $id = s => document.getElementById(s);
+  // els
+  const $id = (s)=>document.getElementById(s);
   const form = $id('pfForm');
   const msg  = $id('pfMsg');
 
-  const mainFile = $id('mainFile'),  mainPrev  = $id('mainPrev');
+  // media inputs / previews
+  const mainFile = $id('mainFile'), mainPrev = $id('mainPrev');
   const coverFile = $id('coverFile'), coverPrev = $id('coverPrev');
   const subsFile  = $id('subsFile'),  subsGrid  = $id('subsGrid');
 
+  // text inputs
   const nickname = $id('nickname'), headline = $id('headline'), bio = $id('bio');
   const realName = $id('realName'), realNamePublic = $id('realNamePublic');
   const age = $id('age'), agePublic = $id('agePublic');
@@ -41,58 +29,21 @@
   const linksWrap = $id('linksWrap'), addLinkBtn = $id('addLinkBtn');
   const tagInput = $id('tagInput'), tagList = $id('tagList');
 
-  // ---------- state ----------
-  const state = {
+  // state
+  let state = {
     mainThumbnailUrl: "",
     coverImageUrl: "",
-    subThumbnails: [],
+    subThumbnails: [],   // urls
+    liveLinks: [],       // {title,url,date}
     tags: []
   };
 
-  // ---------- utils ----------
-  const say = (t, ok=false) => {
-    if(!msg) return;
-    msg.textContent = t;
-    msg.classList.add('show');
-    msg.classList.toggle('ok', ok);
-  };
-  const headers = (json=true) => {
-    const h={};
-    if(json) h['Content-Type']='application/json';
-    if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`;
-    return h;
-  };
-  const withTransform = (url, t) => {
-    try{
-      if(!url || !url.includes('/upload/')) return url || '';
-      const [h,tail]=url.split('/upload/');
-      return `${h}/upload/${t}/${tail}`;
-    }catch{ return url; }
-  };
-  const compact = (obj) => {
-    const out = Array.isArray(obj) ? [] : {};
-    if (Array.isArray(obj)) {
-      for (const v of obj) {
-        if (v === undefined || v === null || v === "" || Number.isNaN(v)) continue;
-        if (typeof v === 'object') {
-          const c = compact(v);
-          if (Array.isArray(c) ? c.length : Object.keys(c).length) out.push(c);
-        } else out.push(v);
-      }
-    } else {
-      for (const [k,v] of Object.entries(obj)) {
-        if (v === undefined || v === null || v === "" || Number.isNaN(v)) continue;
-        if (typeof v === 'object') {
-          const c = compact(v);
-          const keep = Array.isArray(c) ? c.length : Object.keys(c).length;
-          if (keep) out[k]=c;
-        } else out[k]=v;
-      }
-    }
-    return out;
-  };
+  // utils
+  const say = (t, ok=false) => { msg.textContent=t; msg.classList.add('show'); msg.classList.toggle('ok', ok); };
+  const headers = (json=true)=>{ const h={}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
+  const withTransform = (url, t) => { try{ if(!url.includes('/upload/')) return url; const [h,tail]=url.split('/upload/'); return `${h}/upload/${t}/${tail}`; }catch{ return url; } };
 
-  // ---------- Cloudinary ----------
+  // cloudinary
   async function getSignature(){
     const r = await fetch(`${API_BASE}/uploads/signature`, { headers: headers(false) });
     const j = await r.json().catch(()=>({}));
@@ -112,12 +63,12 @@
     return j.secure_url;
   }
   function isImgOk(f){
-    if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); return false; }
+    if(!/^image\//.test(f.type)) { say('이미지 파일만 업로드 가능'); return false; }
     if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; }
     return true;
   }
 
-  // ---------- media handlers ----------
+  // main / cover upload
   mainFile?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)) { e.target.value=''; return; }
@@ -129,7 +80,6 @@
       say('업로드 완료', true);
     }catch(err){ say('업로드 실패: '+err.message); }
   });
-
   coverFile?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)) { e.target.value=''; return; }
@@ -142,6 +92,7 @@
     }catch(err){ say('업로드 실패: '+err.message); }
   });
 
+  // sub thumbnails (max 5)
   subsFile?.addEventListener('change', async e=>{
     const files = Array.from(e.target.files||[]);
     if(!files.length) return;
@@ -167,14 +118,14 @@
       </div>
     `).join('');
   }
-  subsGrid?.addEventListener('click', e=>{
+  subsGrid.addEventListener('click', e=>{
     const btn=e.target.closest('.rm'); if(!btn) return;
     const i=Number(btn.dataset.i);
     state.subThumbnails.splice(i,1);
     drawSubs();
   });
 
-  // ---------- live links ----------
+  // live links
   function addLinkRow(v={title:'',url:'',date:''}){
     const row = document.createElement('div');
     row.className='link-row';
@@ -189,10 +140,10 @@
   addLinkBtn?.addEventListener('click', ()=> addLinkRow());
   linksWrap?.addEventListener('click', e=>{
     const b=e.target.closest('.ic'); if(!b) return;
-    const row=b.closest('.link-row'); row?.remove();
+    b.closest('.link-row')?.remove();
   });
 
-  // ---------- tags ----------
+  // tags
   function drawTags(){
     tagList.innerHTML = state.tags.map((t,i)=>`
       <span class="chip">${t}<button type="button" class="x" data-i="${i}">×</button></span>
@@ -215,90 +166,68 @@
     }
   });
 
-  // ---------- validation ----------
+  // validation
   function validate(isPublish){
     if(isPublish){
       if(!state.mainThumbnailUrl){ say('메인 썸네일을 업로드해주세요'); return false; }
       if(!nickname.value.trim()){ say('닉네임을 입력해주세요'); return false; }
       if(!headline.value.trim()){ say('한 줄 소개를 입력해주세요'); return false; }
-      if(!bio.value.trim()){ say('상세 소개를 입력해주세요'); return false; }
+      if(!bio.value.trim()){ say('상세 소개를 입력해주세요'); return false; } // 길이 제한 제거
     }
-    const urlOk = (u)=>!u || /^https:\/\//.test(u.trim());
-    if(!urlOk(primaryLink.value)){ say('대표 링크는 https:// 로 시작해야 합니다'); return false; }
+    if(primaryLink.value && !/^https:\/\//.test(primaryLink.value.trim())){
+      say('대표 링크는 https:// 로 시작해야 합니다'); return false;
+    }
     const rows = Array.from(linksWrap.querySelectorAll('.link-row'));
     for(const row of rows){
-      const u = row.querySelector('.l-url').value.trim();
-      if(u && !urlOk(u)){ say('라이브 URL은 https:// 로 시작해야 합니다'); return false; }
+      const url = row.querySelector('.l-url').value.trim();
+      if(url && !/^https:\/\//.test(url)){ say('라이브 URL은 https:// 로 시작해야 합니다'); return false; }
     }
     return true;
   }
 
-  // ---------- payload ----------
-  const toISODateOrEmpty = (s) => {
-    const v = (s||'').trim();
-    if(!v) return '';
-    const d = new Date(`${v}T00:00:00.000Z`);
-    return isNaN(d) ? '' : d.toISOString();
-  };
-
   function collectPayload(status){
-    const links = Array.from(linksWrap.querySelectorAll('.link-row')).map(row=>{
-      const t = row.querySelector('.l-title').value.trim();
-      const u = row.querySelector('.l-url').value.trim();
-      const d = row.querySelector('.l-date').value;
-      return { title:t, url:u, date: toISODateOrEmpty(d) || undefined };
-    }).filter(x=>x.title || x.url);
+    const links = Array.from(linksWrap.querySelectorAll('.link-row')).map(row=>({
+      title: row.querySelector('.l-title').value.trim(),
+      url:   row.querySelector('.l-url').value.trim(),
+      date:  row.querySelector('.l-date').value || undefined
+    })).filter(x=>x.title || x.url);
 
-    const cy = (careerYears.value||'').trim();
-    const ageVal = (age.value||'').trim();
-
-    // ★ 필수 필드: name, user
-    const displayName = nickname.value.trim() || realName.value.trim() || 'Untitled';
-
-    const raw = {
+    return {
       type: 'portfolio',
       status,
-      user: USER_ID || undefined,           // required by backend
-      name: displayName,                    // required by backend
-
-      visibility: visibility.value || 'public',
-      mainThumbnailUrl: state.mainThumbnailUrl,
-      coverImageUrl: state.coverImageUrl,
+      visibility: visibility.value,
+      // === 스키마 호환 ===
+      name: nickname.value.trim(),                 // <— NEW: 서버 스키마 name 채움
+      // ==================
+      mainThumbnailUrl: state.mainThumbnailUrl || '',
       subThumbnails: state.subThumbnails,
-
-      nickname: nickname.value.trim() || undefined,
-      headline: headline.value.trim() || undefined,
-      bio: bio.value.trim() || undefined,
-
-      realName: realName.value.trim() || undefined,
+      coverImageUrl: state.coverImageUrl || '',
+      realName: realName.value.trim() || '',
       realNamePublic: !!realNamePublic.checked,
-      age: ageVal ? Number(ageVal) : undefined,
+      nickname: nickname.value.trim(),
+      headline: headline.value.trim(),
+      careerYears: careerYears.value ? Number(careerYears.value) : undefined,
+      age: age.value ? Number(age.value) : undefined,
       agePublic: !!agePublic.checked,
-      careerYears: cy ? Number(cy) : undefined,
-
-      primaryLink: primaryLink.value.trim() || undefined,
+      primaryLink: primaryLink.value.trim() || '',
       liveLinks: links,
+      bio: bio.value.trim(),
       tags: state.tags,
       openToOffers: !!openToOffers.checked
     };
-
-    return compact(raw);
   }
 
-  // ---------- submit ----------
   async function submit(status){
     if(!TOKEN){ say('로그인이 필요합니다'); return; }
-    if(!USER_ID){ say('로그인 정보가 만료되었습니다. 다시 로그인해주세요.'); return; }
-
     const isPublish = status==='published';
     if(!validate(isPublish)) return;
-
     const payload = collectPayload(status);
 
     try{
       say(isPublish ? '발행 중…' : '임시저장 중…');
-      const url = `${API_BASE}${ENDPOINT.startsWith('/')?ENDPOINT:`/${ENDPOINT}`}`;
-      const res = await fetch(url, { method:'POST', headers: headers(true), body: JSON.stringify(payload) });
+      const res = await fetch(`${API_BASE}/portfolio-test`, {
+        method:'POST', headers: headers(true), body: JSON.stringify(payload)
+      });
       const data = await res.json().catch(()=>({}));
       if(!res.ok || data.ok===false) throw new Error(data.message || `HTTP_${res.status}`);
       say(isPublish ? '발행되었습니다' : '임시저장 완료', true);
@@ -310,7 +239,6 @@
 
   $id('saveDraftBtn')?.addEventListener('click', ()=> submit('draft'));
   $id('publishBtn')?.addEventListener('click', ()=> submit('published'));
-
-  // 초기 링크 필드 1개
-  addLinkRow();
+  addLinkRow(); // 초기 1개
 })();
+</script>
