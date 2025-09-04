@@ -1,4 +1,4 @@
-/* ===== Portfolio Create (Livee) — Facebook-like ===== */
+/* ===== Portfolio Create (Livee) — Facebook-like, polished ===== */
 
 /* 폼 공통 */
 .pf-form{display:flex;flex-direction:column;gap:18px}
@@ -16,7 +16,7 @@
 .pf-form .input,
 .pf-form .select{
   width:100%;box-sizing:border-box;height:44px;padding:10px 12px;
-  border:1px solid var(--line,#e5e7eb);border-radius:12px;background:#fff;color:#111;font:inherit;outline:none;
+  border:1px solid var(--line,#e5e7eb);border-radius:12px;background:#fff;color:#111;font:inherit;outline:none
 }
 .pf-form textarea{min-height:120px;resize:vertical}
 .pf-form input::placeholder,.pf-form textarea::placeholder{color:#9aa2b1}
@@ -24,32 +24,26 @@
   border-color:var(--pri,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)
 }
 
-.grid{display:grid;gap:12px}
-.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.pf-section .grid>*{min-width:0}
-@media (max-width:740px){.grid-2{grid-template-columns:1fr}}
-
 /* 버튼 */
 .pf-form .btn,.pf-form a.btn,.pf-form button.btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   min-width:96px;height:44px;padding:0 16px;border:1px solid var(--line,#e5e7eb);
   border-radius:12px;background:#fff;color:#111;font-weight:600;text-decoration:none;box-sizing:border-box;cursor:pointer;
-  transition:transform .06s,box-shadow .12s,background .12s,border-color .12s;
+  transition:transform .06s,box-shadow .12s,background .12s,border-color .12s
 }
 .pf-form .btn:hover{box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .pf-form .btn:active{transform:translateY(1px)}
 .pf-form .btn.pri{background:var(--pri,#4f46e5);border-color:transparent;color:#fff}
 .pf-form .btn.pri:hover{box-shadow:0 2px 6px rgba(79,70,229,.25)}
 .pf-form .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.pf-form .btn[disabled]{opacity:.5;cursor:not-allowed}
 
-/* 시각적으로 숨기되 라벨 클릭은 동작 (모바일 호환) */
-.file-ghost{
-  position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none
-}
+/* 보이지 않는 파일 인풋 */
+.file-ghost{position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none}
 
 /* ====================== FB-like Hero ====================== */
 .pf-hero{
-  position:relative;height:260px;border-radius:18px;overflow:hidden;
+  position:relative;height:190px;border-radius:18px;overflow:hidden;
   background:#e9eef6;box-shadow:0 8px 20px rgba(0,0,0,.06)
 }
 .pf-coverBtn{position:absolute;inset:0;display:block;border:0;background:transparent;cursor:pointer}
@@ -62,11 +56,9 @@
 }
 
 /* 프로필 줄 (아바타 + 이름) */
-.pf-profileRow{
-  position:relative;display:flex;align-items:flex-end;gap:16px;margin-top:-58px;padding:0 12px 10px
-}
+.pf-profileRow{display:flex;align-items:flex-end;gap:16px;margin-top:-34px;padding:0 12px 6px}
 .pf-avatarWrap{
-  width:120px;height:120px;border-radius:50%;border:4px solid #fff;background:#eee;overflow:hidden;
+  width:110px;height:110px;border-radius:50%;border:4px solid #fff;background:#eee;overflow:hidden;
   box-shadow:0 6px 18px rgba(0,0,0,.15)
 }
 .pf-avatarBtn{position:relative;width:100%;height:100%;border:0;background:transparent;cursor:pointer;padding:0}
@@ -77,32 +69,49 @@
   position:absolute;right:8px;bottom:8px;width:36px;height:36px;border-radius:50%;
   background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-size:18px
 }
-.pf-nameBlock{display:flex;flex-direction:column;gap:4px;padding-bottom:8px}
-.pf-displayName{font-size:24px;font-weight:800}
+.pf-nameBlock{display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
+.pf-displayName{font-size:22px;font-weight:800}
 .pf-headlinePreview{color:#6b7280}
 
 @media (max-width:480px){
-  .pf-avatarWrap{width:104px;height:104px}
-  .pf-displayName{font-size:22px}
+  .pf-avatarWrap{width:100px;height:100px}
+  .pf-displayName{font-size:20px}
 }
 
-/* 서브 이미지 그리드/추가 버튼 */
-.subs-grid{display:flex;flex-wrap:wrap;gap:10px}
+/* =================== Sub thumbnails grid =================== */
+.subs-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+  gap:12px
+}
 .subs-grid .sub{position:relative}
-.subs-grid img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e5e7eb);background:#f5f6f7}
-.subs-grid .rm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#000a;color:#fff;display:grid;place-items:center;font-size:13px;line-height:1}
-
+.subs-grid img{
+  width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line,#e5e7eb);background:#f5f6f7
+}
+.subs-grid .rm{
+  position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;
+  background:#000a;color:#fff;display:grid;place-items:center;font-size:14px;line-height:1
+}
 .pf-addThumb{
-  margin-top:10px;width:120px;aspect-ratio:1/1;border-radius:12px;border:2px dashed var(--line,#e5e7eb);
+  height:110px;border-radius:12px;border:2px dashed var(--line,#e5e7eb);
   background:#fff;color:#6b7280;display:grid;place-items:center;font-size:26px;cursor:pointer
 }
 .pf-addThumb:hover{border-color:var(--pri,#4f46e5);color:var(--pri,#4f46e5)}
 
-/* 태그/체크박스 */
+/* =================== Links (참여 라이브) =================== */
+.links-wrap{display:flex;flex-direction:column;gap:12px}
+.link-card{border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:10px;background:#fafafa}
+.link-card .row{display:grid;grid-template-columns:1fr;gap:8px}
+.link-card .row2{display:grid;grid-template-columns:1.4fr 140px 44px;gap:8px}
+.link-card .row2 .ic{
+  width:44px;height:44px;display:grid;place-items:center;
+  border:1px solid var(--line,#e5e7eb);border-radius:8px;background:#fff;color:#333;cursor:pointer
+}
+@media (max-width:420px){
+  .link-card .row2{grid-template-columns:1fr 120px 44px}
+}
+
+/* 태그 */
 .tag-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:#fff}
 .chip .x{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#eee;line-height:1}
-
-.pf-form .check{display:inline-flex;align-items:center;gap:8px;margin-top:6px;white-space:nowrap}
-.pf-form .check input[type="checkbox"]{width:18px;height:18px}
