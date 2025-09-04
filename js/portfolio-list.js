@@ -1,4 +1,4 @@
-/* Portfolio List – robust thumb fix (v2.6) */
+/* Portfolio List – robust thumb fix v2.7 */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
@@ -7,44 +7,43 @@
 
   const $ = (s) => document.querySelector(s);
 
-  // placeholder (있으면 BASE_PATH의 default.jpg 사용)
+  // 기본 썸네일(사이트에 default.jpg를 두었거나 BASE_PATH가 있으면 그 경로를 사용)
   const FALLBACK = CFG.placeholderThumb
     || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
-  // 응답에서 쓸 수 있는 이미지 하나를 고른다
+  // 서버 응답에서 "쓸 수 있는" 이미지 하나 고르기 (필드명 다양성 대응)
   const pickImage = (p) =>
-    p.mainThumbnailUrl
-    || p.thumbnailUrl
-    || (Array.isArray(p.subThumbnails) && p.subThumbnails[0])
-    || p.coverImageUrl
-    || p.imageUrl
-    || '';
+    p.mainThumbnailUrl ||
+    p.thumbnailUrl ||
+    p.thumbnail ||
+    (Array.isArray(p.images) && p.images[0]) ||
+    (Array.isArray(p.subThumbnails) && p.subThumbnails[0]) ||
+    p.coverImageUrl ||
+    p.coverUrl ||
+    p.imageUrl ||
+    (p.media && p.media[0]) ||
+    '';
 
-  // Cloudinary 판단
+  // Cloudinary 여부/변환 판단
   const isCloudinary = (u) => /https?:\/\/res\.cloudinary\.com\/.+\/image\/upload\//.test(u);
-
-  // 이미 변환이 있는지 체크( upload/ 뒤 첫 세그먼트가 c_…/w_… 등일 경우 )
   const hasTransform = (u) => {
     if (!isCloudinary(u)) return false;
     const tail = u.split('/upload/')[1] || '';
     const first = tail.split('/')[0] || '';
-    return /^([a-z]+_[^/]+,?)+$/.test(first);
+    return /^([a-z]+_[^/]+,?)+$/.test(first); // c_fill,w_..,h_.. 같은 변환이 이미 앞에 있는지
   };
 
   const PRESET = (CFG.thumb && CFG.thumb.square) || 'c_fill,g_auto,w_320,h_320,f_auto,q_auto';
   const cldSquare = (u) => {
     if (!isCloudinary(u)) return u;
     try {
-      if (hasTransform(u)) return u; // 이미 변환이 있으면 그대로 사용
+      if (hasTransform(u)) return u;              // 이미 변환이 있으면 그대로
       const [head, tail] = u.split('/upload/');
-      return `${head}/upload/${PRESET}/${tail}`;
+      return `${head}/upload/${PRESET}/${tail}`;  // 변환 주입
     } catch { return u; }
   };
 
-  const thumbSrc = (u, seed='pf') => {
-    const src = u ? cldSquare(u) : '';
-    return src || `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/640`;
-  };
+  const thumbSrc = (u) => (u ? cldSquare(u) : FALLBACK);
 
   async function fetchList(q = '', sort = 'latest') {
     const base = LIST_PATH.startsWith('http')
@@ -92,9 +91,9 @@
     grid.innerHTML = list.map(it => `
       <a class="pl-card card-link" href="portfolio-view.html?id=${encodeURIComponent(it.id)}">
         <img class="pl-thumb"
-             src="${thumbSrc(it.img, it.id)}"
+             src="${thumbSrc(it.img)}"
              alt=""
-             onerror="this.onerror=null;this.src='${thumbSrc('', it.id)}';"/>
+             onerror="this.onerror=null;this.src='${FALLBACK}';"/>
         <div class="pl-body">
           <div class="pl-nick">${it.nickname}</div>
           <div class="pl-head">${it.headline || ''}</div>
