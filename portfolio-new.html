@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>포트폴리오 등록 - Livee</title>
 
-  <!-- 공통 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
   <link rel="stylesheet" href="css/main.css" />
-  <!-- Remix Icon -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" />
-  <!-- 페이지 전용 -->
   <link rel="stylesheet" href="css/portfolio-new.css" />
 </head>
 <body>
@@ -20,7 +17,7 @@
   </header>
 
   <main class="container">
-    <!-- HERO (커버) -->
+    <!-- 커버 -->
     <section class="pf-hero">
       <button type="button" class="pf-coverBtn is-empty" id="coverTrigger" aria-label="배경 사진 변경">
         <img id="coverPrev" alt="">
@@ -28,7 +25,7 @@
       </button>
     </section>
 
-    <!-- 프로필 줄 (아바타 + 이름/한줄소개) -->
+    <!-- 아바타 + 이름 -->
     <section class="pf-profileRow">
       <div class="pf-avatarWrap">
         <button type="button" class="pf-avatarBtn is-empty" id="mainTrigger" aria-label="메인 썸네일 변경">
@@ -42,13 +39,9 @@
       </div>
     </section>
 
-    <!-- 보이지 않는 파일 인풋(모바일 라벨/JS 클릭 모두 지원) -->
-    <input id="mainFile"  type="file" accept="image/*"
-      class="file-ghost"
-      style="position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;" />
-    <input id="coverFile" type="file" accept="image/*"
-      class="file-ghost"
-      style="position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;" />
+    <!-- 숨은 파일 인풋 -->
+    <input id="mainFile"  type="file" accept="image/*" class="file-ghost" />
+    <input id="coverFile" type="file" accept="image/*" class="file-ghost" />
 
     <div id="pfMsg" class="notice" role="status" aria-live="polite"></div>
 
@@ -56,14 +49,13 @@
       <!-- 서브 썸네일 -->
       <section class="pf-section">
         <h3>서브 썸네일(선택, 최대 5)</h3>
-        <div id="subsGrid" class="subs-grid"></div>
-
-        <button type="button" class="pf-addThumb" id="subsTrigger" aria-label="서브 이미지 추가">
-          <i class="ri-image-add-line"></i>
-        </button>
-        <input id="subsFile" type="file" accept="image/*" multiple
-          class="file-ghost"
-          style="position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none;" />
+        <div id="subsGrid" class="subs-grid">
+          <!-- 썸네일들이 여기에 -->
+          <button type="button" class="pf-addThumb" id="subsTrigger" aria-label="서브 이미지 추가">
+            <i class="ri-image-add-line"></i>
+          </button>
+        </div>
+        <input id="subsFile" type="file" accept="image/*" multiple class="file-ghost" />
       </section>
 
       <!-- 기본 정보 -->
@@ -111,7 +103,6 @@
       <!-- 소개 & 태그 -->
       <section class="pf-section">
         <h3>소개 & 태그</h3>
-
         <label class="label">상세 소개 <span class="req">*</span></label>
         <textarea id="bio" class="input" rows="6" placeholder="50자 이상 입력해주세요"></textarea>
 
@@ -125,7 +116,6 @@
       <!-- 공개 설정 -->
       <section class="pf-section">
         <h3>공개 설정</h3>
-
         <div class="grid grid-2">
           <div>
             <label class="label">공개 범위</label>
