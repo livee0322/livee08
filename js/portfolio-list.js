@@ -1,4 +1,4 @@
-/* Portfolio List – robust thumb fix v2.7 */
+/* Portfolio List – v2.7 (fields aligned with option-B backend) */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
@@ -7,42 +7,35 @@
 
   const $ = (s) => document.querySelector(s);
 
-  // 기본 썸네일(사이트에 default.jpg를 두었거나 BASE_PATH가 있으면 그 경로를 사용)
-  const FALLBACK = CFG.placeholderThumb
-    || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
+  // fallback thumb
+  const FALLBACK =
+    CFG.placeholderThumb ||
+    (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
-  // 서버 응답에서 "쓸 수 있는" 이미지 하나 고르기 (필드명 다양성 대응)
+  // pick first usable image (matches our model fields)
   const pickImage = (p) =>
     p.mainThumbnailUrl ||
-    p.thumbnailUrl ||
-    p.thumbnail ||
-    (Array.isArray(p.images) && p.images[0]) ||
     (Array.isArray(p.subThumbnails) && p.subThumbnails[0]) ||
     p.coverImageUrl ||
-    p.coverUrl ||
-    p.imageUrl ||
-    (p.media && p.media[0]) ||
     '';
 
-  // Cloudinary 여부/변환 판단
+  // cloudinary helpers
   const isCloudinary = (u) => /https?:\/\/res\.cloudinary\.com\/.+\/image\/upload\//.test(u);
   const hasTransform = (u) => {
     if (!isCloudinary(u)) return false;
     const tail = u.split('/upload/')[1] || '';
     const first = tail.split('/')[0] || '';
-    return /^([a-z]+_[^/]+,?)+$/.test(first); // c_fill,w_..,h_.. 같은 변환이 이미 앞에 있는지
+    return /^([a-z]+_[^/]+,?)+$/.test(first);
   };
-
   const PRESET = (CFG.thumb && CFG.thumb.square) || 'c_fill,g_auto,w_320,h_320,f_auto,q_auto';
   const cldSquare = (u) => {
     if (!isCloudinary(u)) return u;
     try {
-      if (hasTransform(u)) return u;              // 이미 변환이 있으면 그대로
+      if (hasTransform(u)) return u;
       const [head, tail] = u.split('/upload/');
-      return `${head}/upload/${PRESET}/${tail}`;  // 변환 주입
+      return `${head}/upload/${PRESET}/${tail}`;
     } catch { return u; }
   };
-
   const thumbSrc = (u) => (u ? cldSquare(u) : FALLBACK);
 
   async function fetchList(q = '', sort = 'latest') {
@@ -67,11 +60,11 @@
 
       return list.map((p, i) => ({
         id: p.id || p._id || `${i}`,
-        nickname: p.nickname || p.name || '무명',
+        nickname: p.nickname || '무명',
         headline: p.headline || '',
         tags: Array.isArray(p.tags) ? p.tags.slice(0, 5) : [],
         img: pickImage(p),
-        openToOffers: !!p.openToOffers,
+        openToOffers: !!p.openToOffers
       }));
     } catch (e) {
       console.warn('[portfolio-list] fetch error:', e);
