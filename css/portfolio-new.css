@@ -1,6 +1,6 @@
 /* ===== Portfolio Create (Livee) — Facebook-like, polished ===== */
 
-/* 폼 공통 */
+/* 폼 기본 */
 .pf-form{display:flex;flex-direction:column;gap:18px}
 .pf-section{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .pf-section h3{margin:0 0 10px;font-size:16px;font-weight:800}
@@ -38,7 +38,7 @@
 .pf-form .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 .pf-form .btn[disabled]{opacity:.5;cursor:not-allowed}
 
-/* 보이지 않는 파일 인풋 */
+/* 숨김 파일 인풋 */
 .file-ghost{position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none}
 
 /* ====================== FB-like Hero ====================== */
