@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>포트폴리오 등록 - Livee</title>
 
-  <!-- 폰트/공통 -->
+  <!-- 공통 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
   <link rel="stylesheet" href="css/main.css" />
-  <!-- Remix Icon (갤러리 아이콘) -->
+  <!-- Remix Icon -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" />
-  <!-- 이 페이지 전용 -->
+  <!-- 페이지 전용 -->
   <link rel="stylesheet" href="css/portfolio-new.css" />
 </head>
 <body>
@@ -20,34 +20,36 @@
   </header>
 
   <main class="container">
-
-    <!-- ===== HERO: 페이스북 스타일 ===== -->
+    <!-- HERO (커버) -->
     <section class="pf-hero">
-      <!-- 배경(커버) -->
       <button type="button" class="pf-coverBtn is-empty" id="coverTrigger" aria-label="배경 사진 변경">
         <img id="coverPrev" alt="">
         <span class="pf-overlay"><i class="ri-image-add-line"></i></span>
       </button>
-      <!-- 아바타 -->
+    </section>
+
+    <!-- 프로필 바 (아바타 + 이름/한줄소개) -->
+    <section class="pf-profileRow">
       <div class="pf-avatarWrap">
         <button type="button" class="pf-avatarBtn is-empty" id="mainTrigger" aria-label="메인 썸네일 변경">
           <img id="mainPrev" alt="">
           <span class="pf-overlay"><i class="ri-image-add-line"></i></span>
         </button>
       </div>
-      <!-- 이름 -->
-      <div class="pf-name" id="namePreview">닉네임</div>
+      <div class="pf-nameBlock">
+        <div class="pf-displayName" id="namePreview">닉네임</div>
+        <div class="pf-headlinePreview" id="headlinePreview"></div>
+      </div>
     </section>
 
-    <!-- 파일 인풋(숨김, JS가 클릭 트리거) -->
-    <input id="mainFile"  type="file" accept="image/*" hidden />
-    <input id="coverFile" type="file" accept="image/*" hidden />
+    <!-- 보이는 위치에서 숨긴 파일 인풋(모바일 호환: hidden X) -->
+    <input id="mainFile"  type="file" accept="image/*" class="file-ghost" />
+    <input id="coverFile" type="file" accept="image/*" class="file-ghost" />
 
     <div id="pfMsg" class="notice" role="status" aria-live="polite"></div>
 
     <form id="pfForm" class="pf-form" novalidate>
-
-      <!-- ===== 서브 썸네일 ===== -->
+      <!-- 서브 썸네일 -->
       <section class="pf-section">
         <h3>서브 썸네일(선택, 최대 5)</h3>
         <div id="subsGrid" class="subs-grid"></div>
@@ -55,12 +57,10 @@
         <button type="button" class="pf-addThumb" id="subsTrigger" aria-label="서브 이미지 추가">
           <i class="ri-image-add-line"></i>
         </button>
-        <div class="subs-ctrl" style="display:none">
-          <input id="subsFile" type="file" accept="image/*" multiple />
-        </div>
+        <input id="subsFile" type="file" accept="image/*" multiple class="file-ghost" />
       </section>
 
-      <!-- ===== 기본 정보 ===== -->
+      <!-- 기본 정보 -->
       <section class="pf-section">
         <h3>기본 정보</h3>
 
@@ -95,14 +95,14 @@
         </div>
       </section>
 
-      <!-- ===== 참여 라이브 ===== -->
+      <!-- 참여 라이브 -->
       <section class="pf-section">
         <h3>참여 라이브</h3>
         <div id="linksWrap" class="links-wrap"></div>
         <button type="button" id="addLinkBtn" class="btn">+ 라이브 링크 추가</button>
       </section>
 
-      <!-- ===== 소개 & 태그 ===== -->
+      <!-- 소개 & 태그 -->
       <section class="pf-section">
         <h3>소개 & 태그</h3>
 
@@ -116,9 +116,10 @@
         </div>
       </section>
 
-      <!-- ===== 공개 설정 ===== -->
+      <!-- 공개 설정 -->
       <section class="pf-section">
         <h3>공개 설정</h3>
+
         <div class="grid grid-2">
           <div>
             <label class="label">공개 범위</label>
