@@ -13,35 +13,30 @@
 
 .empty{display:grid;place-items:center;gap:10px;padding:28px 0;color:var(--sub,#6B7280)}
 
-/* grid */
 .mp-grid{display:grid;gap:16px;grid-template-columns:1fr}
 @media (min-width:760px){.mp-grid{grid-template-columns:repeat(2,1fr)}}
 @media (min-width:1120px){.mp-grid{grid-template-columns:repeat(3,1fr)}}
 
-/* card */
 .mp-card{
   position:relative;display:flex;flex-direction:column;background:#fff;
   border:1px solid var(--line,#E5E7EB);border-radius:18px;overflow:hidden;
   box-shadow:0 1px 3px rgba(0,0,0,.03)
 }
 
-/* cover + avatar (등록 페이지 미리보기 느낌) */
 .mp-coverWrap{position:relative;display:block}
 .mp-cover{
-  width:100%;aspect-ratio:16/9;object-fit:cover;background:linear-gradient(180deg,#eef3f8,#e9eef5);
-  display:block
+  width:100%;aspect-ratio:16/9;object-fit:cover;
+  background:linear-gradient(180deg,#eef3f8,#e9eef5);
 }
 .mp-avatar{
   position:absolute;left:16px;bottom:-44px;width:92px;height:92px;border-radius:999px;object-fit:cover;
   background:#f1f3f6;border:4px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.12)
 }
 
-/* body */
 .mp-body{padding:56px 16px 12px;display:flex;flex-direction:column;gap:6px}
 .mp-name{font-weight:900;font-size:18px;letter-spacing:-.01em}
-.mp-desc{color:var(--sub,#6B7280);font-size:14px;line-height:1.35;min-height:1.35em;}
+.mp-desc{color:var(--sub,#6B7280);font-size:14px;line-height:1.35;min-height:1.35em}
 
-/* actions */
 .mp-actions{
   display:flex;gap:8px;justify-content:flex-end;align-items:center;
   padding:10px 12px 14px;border-top:1px solid var(--line,#E5E7EB)
