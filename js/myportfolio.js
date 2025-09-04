@@ -1,4 +1,7 @@
-/* My Portfolio – v1.0 (preview-style cards + actions) */
+/* My Portfolio – v1.1
+   - 빈문구 항상 보이던 문제 해결 (토글 강화)
+   - 상단 우측 '+ 등록'만 유지
+*/
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
@@ -6,7 +9,6 @@
     square:  'c_fill,g_auto,w_600,h_600,f_auto,q_auto',
     cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto'
   };
-
   const TOKEN =
     localStorage.getItem('livee_token') ||
     localStorage.getItem('liveeToken') || '';
@@ -29,33 +31,30 @@
       if (isCloudinary(url)) {
         const i=url.indexOf('/upload/');
         const first = url.slice(i+8).split('/')[0]||'';
-        // 이미 변환이 있으면 그대로
-        if (/^([a-z]+_[^/]+,?)+$/.test(first)) return url;
+        if (/^([a-z]+_[^/]+,?)+$/.test(first)) return url; // 이미 변환 존재
         return url.slice(0,i+8) + t + '/' + url.slice(i+8);
       }
       return url;
     }catch{ return url; }
   };
-
   const FALLBACK =
     CFG.placeholderThumb ||
     (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
-  const coverSrc = (p) => p.coverImageUrl ? inject(p.coverImageUrl, THUMB.cover169) : FALLBACK;
-  const avatarSrc = (p) => p.mainThumbnailUrl ? inject(p.mainThumbnailUrl, THUMB.square) : FALLBACK;
+  const coverSrc  = (p)=> p.coverImageUrl  ? inject(p.coverImageUrl,  THUMB.cover169) : FALLBACK;
+  const avatarSrc = (p)=> p.mainThumbnailUrl? inject(p.mainThumbnailUrl,THUMB.square)  : FALLBACK;
 
   // ---- API ----
   async function fetchMine(){
-    const url = `${API_BASE}${CFG.endpoints?.portfolios || '/portfolio-test'}?mine=1&limit=50`;
-    const res = await fetch(url, { headers: headers(false) });
-    const j   = await res.json().catch(()=>({}));
+    const base = CFG.endpoints?.portfolios || '/portfolio-test';
+    const url  = `${API_BASE}${base}?mine=1&limit=50`;
+    const res  = await fetch(url, { headers: headers(false) });
+    const j    = await res.json().catch(()=>({}));
     if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
-
-    const items =
+    const arr =
       (Array.isArray(j) && j) ||
       j.items || j.data?.items || j.docs || j.data?.docs || [];
-
-    return items.map((p,i)=>({
+    return arr.map((p,i)=>({
       id: p.id || p._id || `${i}`,
       nickname: p.nickname || '무명',
       headline: p.headline || '',
@@ -66,8 +65,7 @@
 
   async function removeItem(id){
     if (!TOKEN){ alert('로그인 후 이용해주세요.'); return false; }
-    const ok = confirm('정말 삭제할까요? 되돌릴 수 없습니다.');
-    if (!ok) return false;
+    if (!confirm('정말 삭제할까요? 되돌릴 수 없습니다.')) return false;
     const res = await fetch(`${API_BASE}/portfolio-test/${encodeURIComponent(id)}`, {
       method:'DELETE', headers: headers(false)
     });
@@ -77,11 +75,20 @@
   }
 
   // ---- render ----
+  function toggleEmpty(show){
+    if (!empty) return;
+    empty.hidden = !show;
+  }
+
   function render(list){
     if (!grid) return;
-    if (!list.length){ grid.innerHTML=''; if (empty) empty.hidden=false; return; }
-    if (empty) empty.hidden = true;
-
+    if (!Array.isArray(list)) list = [];
+    if (!list.length){
+      grid.innerHTML = '';
+      toggleEmpty(true);
+      return;
+    }
+    toggleEmpty(false);
     grid.innerHTML = list.map(it => `
       <article class="mp-card" data-id="${it.id}">
         <a class="mp-coverWrap" href="portfolio-view.html?id=${encodeURIComponent(it.id)}" aria-label="포트폴리오 보기">
@@ -101,22 +108,20 @@
     `).join('');
   }
 
-  // 위임: 삭제
+  // 삭제 위임
   document.addEventListener('click', async (e)=>{
     const btn = e.target.closest('[data-act="del"]');
     if (!btn) return;
     const card = btn.closest('.mp-card');
-    const id = card?.dataset.id;
+    const id   = card?.dataset.id;
     try{
       btn.disabled = true;
-      const ok = await removeItem(id);
-      if (ok){
+      if (await removeItem(id)){
         card.style.transition='opacity .18s ease, transform .18s ease';
-        card.style.opacity='0';
-        card.style.transform='scale(.98)';
+        card.style.opacity='0'; card.style.transform='scale(.98)';
         setTimeout(()=> {
           card.remove();
-          if (!grid.children.length && empty) empty.hidden=false;
+          if (!grid.children.length) toggleEmpty(true);
         }, 180);
       }
     }catch(err){
@@ -134,7 +139,7 @@
       render(list);
     }catch(e){
       console.warn('[myportfolio] load error', e);
-      if (empty) empty.hidden=false;
+      render([]); // 에러 시에도 일단 빈상태 표시
     }
   });
 })();
