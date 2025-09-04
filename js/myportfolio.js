@@ -100,9 +100,10 @@
           <div class="mp-desc">${it.headline}</div>
         </div>
         <div class="mp-actions">
-          <a class="btn" href="portfolio-view.html?id=${encodeURIComponent(it.id)}"><i class="ri-external-link-line"></i> 보기</a>
-          <a class="btn" href="portfolio-edit.html?id=${encodeURIComponent(it.id)}"><i class="ri-edit-line"></i> 수정</a>
-          <button class="btn danger" data-act="del"><i class="ri-delete-bin-line"></i> 삭제</button>
+   
+<a class="btn" href="portfolio-view.html?id=${encodeURIComponent(it.id)}"><i class="ri-external-link-line"></i> 보기</a>
+<a class="btn" href="portfolio-new.html?id=${encodeURIComponent(it.id)}"><i class="ri-edit-line"></i> 수정</a>  // ← 여기!
+<button class="btn danger" data-act="del"><i class="ri-delete-bin-line"></i> 삭제</button>
         </div>
       </article>
     `).join('');
