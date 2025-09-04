@@ -282,3 +282,40 @@
   $id('publishBtn')?.addEventListener('click', ()=> submit('published'));
   addLinkRow();
 })();
+
+/* ===== FB-style UI bridge: 버튼→파일선택 & 이름 프리뷰 & empty 상태 ===== */
+(() => {
+  const $id = (s)=>document.getElementById(s);
+
+  const mainTrigger  = $id('mainTrigger');
+  const coverTrigger = $id('coverTrigger');
+  const subsTrigger  = $id('subsTrigger');
+
+  const mainFile = $id('mainFile');
+  const coverFile= $id('coverFile');
+  const subsFile = $id('subsFile');
+
+  const mainPrev = $id('mainPrev');
+  const coverPrev= $id('coverPrev');
+
+  // 버튼 클릭 → 파일 인풋 열기
+  mainTrigger ?.addEventListener('click', ()=> mainFile ?.click());
+  coverTrigger?.addEventListener('click', ()=> coverFile?.click());
+  subsTrigger ?.addEventListener('click', ()=> subsFile ?.click());
+
+  // 닉네임 → 히어로 이름 동기화
+  const nick = $id('nickname');
+  const namePreview = $id('namePreview');
+  const syncName = ()=> { if(namePreview) namePreview.textContent = (nick?.value?.trim() || '닉네임'); };
+  nick?.addEventListener('input', syncName); syncName();
+
+  // empty 상태 토글 (이미지 없을 때 아이콘만 보이게)
+  function toggleEmpty(btn, img){
+    if(!btn || !img) return;
+    btn.classList.toggle('is-empty', !img.getAttribute('src'));
+  }
+  toggleEmpty(mainTrigger, mainPrev);
+  toggleEmpty(coverTrigger, coverPrev);
+  mainPrev ?.addEventListener('load', ()=> toggleEmpty(mainTrigger, mainPrev));
+  coverPrev?.addEventListener('load', ()=> toggleEmpty(coverTrigger, coverPrev));
+})();
