@@ -18,6 +18,7 @@
   <header class="lv-appbar">
     <div class="lv-title">내 포트폴리오</div>
     <div class="lv-actions">
+      <!-- ✅ 우상단 버튼만 유지 -->
       <a class="btn pri" href="portfolio-new.html"><i class="ri-add-line"></i> 등록</a>
     </div>
   </header>
@@ -29,29 +30,16 @@
       <a class="btn" href="portfolio-list.html"><i class="ri-team-line"></i> 전체 보기</a>
     </div>
 
+    <!-- ✅ 빈 상태: 메시지 텍스트만. (추가 버튼 없음) -->
     <div id="mpEmpty" class="empty" hidden>
       아직 등록된 포트폴리오가 없어요.
-      <a class="btn pri" href="portfolio-new.html"><i class="ri-add-line"></i> 지금 등록</a>
     </div>
 
+    <!-- 목록 -->
     <section id="mpGrid" class="mp-grid"></section>
   </main>
 
   <script src="js/config.js"></script>
   <script src="js/myportfolio.js"></script>
-</body>
-</html>        <h3>등록된 포트폴리오가 없어요</h3>
-        <p>작업물, 레퍼런스 영상을 모아 포트폴리오를 만들어보세요.</p>
-        <a id="pfCreateEmpty" class="btn primary"><i class="ri-add-line"></i> 포트폴리오 등록</a>
-      </div>
-    </section>
-  </main>
-
-  <footer id="bottom-tabs"></footer>
-
-  <!-- 스크립트 -->
-  <script src="js/config.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/portfolio.js"></script>
 </body>
 </html>
