@@ -1,4 +1,4 @@
-/* Portfolio Create – v2.8 (FB-style hero + mobile-safe file triggers) */
+/* Portfolio Create – v2.9 (FB UI + mobile-safe pickers + client compress) */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
@@ -14,21 +14,18 @@
   const $id = (s)=>document.getElementById(s);
   const msg = $id('pfMsg');
 
-  // hero & triggers
+  // triggers / inputs / previews
   const mainTrigger  = $id('mainTrigger');
   const coverTrigger = $id('coverTrigger');
   const subsTrigger  = $id('subsTrigger');
 
-  // file inputs (모바일 호환: hidden 아님, .file-ghost)
   const mainFile = $id('mainFile');
   const coverFile= $id('coverFile');
   const subsFile = $id('subsFile');
 
-  // previews
   const mainPrev = $id('mainPrev');
   const coverPrev= $id('coverPrev');
 
-  // fields
   const nickname = $id('nickname'), headline = $id('headline'), bio = $id('bio');
   const realName = $id('realName'), realNamePublic = $id('realNamePublic');
   const age = $id('age'), agePublic = $id('agePublic');
@@ -71,6 +68,19 @@
     btn.classList.toggle('is-empty', !img.getAttribute('src'));
   };
 
+  // compress (<=1600px, quality .85) — 실패 시 원본 반환
+  async function compressImage(file, max=1600, mime='image/jpeg', quality=0.85){
+    try{
+      const bmp = await createImageBitmap(file);
+      const scale = Math.min(1, max/Math.max(bmp.width, bmp.height));
+      const w = Math.round(bmp.width*scale), h = Math.round(bmp.height*scale);
+      const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(bmp,0,0,w,h);
+      const blob = await new Promise(res=>canvas.toBlob(res, mime, quality));
+      return blob || file;
+    }catch{ return file; }
+  }
+
   // cloudinary signed upload
   async function getSignature(){
     const r = await fetch(`${API_BASE}/uploads/signature`, { headers: headers(false) });
@@ -78,7 +88,7 @@
     if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j.data || j;
   }
-  async function uploadImage(file){
+  async function uploadToCloudinary(file){
     const { cloudName, apiKey, timestamp, signature } = await getSignature();
     const fd = new FormData();
     fd.append('file', file);
@@ -92,22 +102,23 @@
   }
   const isImgOk = (f)=>{
     if(!/^image\//.test(f.type)) { say('이미지 파일만 업로드 가능'); return false; }
-    if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; }
+    if(f.size>12*1024*1024){ say('이미지는 12MB 이하'); return false; } // 여유 조금
     return true;
   };
 
-  // ===== triggers -> file pickers (모바일 호환)
+  // name/headline live preview
+  const syncName = ()=> { if(namePreview) namePreview.textContent = (nickname?.value?.trim() || '닉네임'); };
+  const syncHead = ()=> { if(headlinePreview) headlinePreview.textContent = (headline?.value?.trim() || ''); };
+  nickname?.addEventListener('input', syncName);
+  headline?.addEventListener('input', syncHead);
+  syncName(); syncHead();
+
+  // triggers
   mainTrigger ?.addEventListener('click', ()=> mainFile ?.click());
   coverTrigger?.addEventListener('click', ()=> coverFile?.click());
   subsTrigger ?.addEventListener('click', ()=> subsFile ?.click());
 
-  // ===== local text preview
-  const syncName = ()=> { if(namePreview) namePreview.textContent = (nickname?.value?.trim() || '닉네임'); };
-  const syncHead = ()=> { if(headlinePreview) headlinePreview.textContent = (headline?.value?.trim() || ''); };
-  nickname?.addEventListener('input', syncName); headline?.addEventListener('input', syncHead);
-  syncName(); syncHead();
-
-  // ===== main upload
+  // main upload
   mainFile?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)) { e.target.value=''; return; }
@@ -115,18 +126,21 @@
     mainPrev.src = local; toggleEmpty(mainTrigger, mainPrev);
     try{
       say('메인 이미지 업로드 중…');
-      const url=await uploadImage(f);
+      const small = await compressImage(f);
+      const url = await uploadToCloudinary(small);
       state.mainThumbnailUrl = withTransform(url, THUMB.square);
       mainPrev.src = state.mainThumbnailUrl;
-      URL.revokeObjectURL(local);
       say('업로드 완료', true);
     }catch(err){
       console.error('[main upload error]', err);
       say('업로드 실패: '+err.message);
-    }finally{ toggleEmpty(mainTrigger, mainPrev); }
+    }finally{
+      URL.revokeObjectURL(local);
+      toggleEmpty(mainTrigger, mainPrev);
+    }
   });
 
-  // ===== cover upload
+  // cover upload
   coverFile?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)) { e.target.value=''; return; }
@@ -134,18 +148,21 @@
     coverPrev.src = local; toggleEmpty(coverTrigger, coverPrev);
     try{
       say('배경 이미지 업로드 중…');
-      const url=await uploadImage(f);
+      const small = await compressImage(f, 1920);
+      const url = await uploadToCloudinary(small);
       state.coverImageUrl = withTransform(url, THUMB.cover169);
       coverPrev.src = state.coverImageUrl;
-      URL.revokeObjectURL(local);
       say('업로드 완료', true);
     }catch(err){
       console.error('[cover upload error]', err);
       say('업로드 실패: '+err.message);
-    }finally{ toggleEmpty(coverTrigger, coverPrev); }
+    }finally{
+      URL.revokeObjectURL(local);
+      toggleEmpty(coverTrigger, coverPrev);
+    }
   });
 
-  // ===== sub images
+  // sub images
   function drawSubs(){
     if(!subsGrid) return;
     subsGrid.innerHTML = state.subThumbnails.map((u,i)=>`
@@ -168,31 +185,33 @@
     const chosen = files.slice(0, remain);
     for(const f of chosen){
       if(!isImgOk(f)) continue;
-      // temp tile
+      const local = URL.createObjectURL(f);
+      // 임시 타일
       const tmp = document.createElement('div');
       tmp.className='sub';
-      const local = URL.createObjectURL(f);
       tmp.innerHTML = `<img src="${local}" alt="uploading"/>`;
       subsGrid?.appendChild(tmp);
 
       try{
         say('서브 이미지 업로드 중…');
-        const url=await uploadImage(f);
+        const small = await compressImage(f);
+        const url = await uploadToCloudinary(small);
         const finalUrl = withTransform(url, THUMB.square);
         state.subThumbnails.push(finalUrl);
         drawSubs();
-        URL.revokeObjectURL(local);
         say('업로드 완료', true);
       }catch(err){
         console.error('[sub upload error]', err);
         say('업로드 실패: '+err.message);
         tmp.remove();
+      }finally{
+        URL.revokeObjectURL(local);
       }
     }
     e.target.value='';
   });
 
-  // ===== links & tags
+  // links & tags
   function addLinkRow(v={title:'',url:'',date:''}){
     const row = document.createElement('div');
     row.className='link-row';
@@ -228,12 +247,11 @@
       if(state.tags.length>=8){ say('태그는 최대 8개'); return; }
       if(state.tags.includes(raw)) { tagInput.value=''; return; }
       state.tags.push(raw);
-      tagInput.value='';
-      drawTags();
+      tagInput.value=''; drawTags();
     }
   });
 
-  // ===== validate & submit
+  // validate & submit (옵션 B 백엔드)
   function validate(isPublish){
     if(isPublish){
       if(!state.mainThumbnailUrl){ say('메인 썸네일을 업로드해주세요'); return false; }
@@ -301,10 +319,7 @@
   $id('saveDraftBtn')?.addEventListener('click', ()=> submit('draft'));
   $id('publishBtn')?.addEventListener('click', ()=> submit('published'));
 
-  // 초기 empty 표시 동기화
+  // 초기 상태 표시
   toggleEmpty(mainTrigger, mainPrev);
   toggleEmpty(coverTrigger, coverPrev);
-
-  // 기본 한 줄 소개 미리보기
-  syncHead();
 })();
