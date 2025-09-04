@@ -11,7 +11,7 @@
 .pf-form .label{display:block;font-weight:700;margin:8px 0 6px;text-align:left}
 .pf-form .req{color:#d03030}
 
-/* 입력/셀렉트/텍스트에어리어 일괄 스타일 (main.css보다 우선되게 더 구체적) */
+/* 입력/셀렉트/텍스트에어리어 */
 .pf-form input[type="text"],
 .pf-form input[type="email"],
 .pf-form input[type="password"],
@@ -44,10 +44,10 @@
 /* 그리드 */
 .grid{display:grid;gap:12px}
 .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.pf-section .grid>*{min-width:0}          /* 넘침 방지 */
+.pf-section .grid>*{min-width:0}
 @media (max-width:740px){.grid-2{grid-template-columns:1fr}}
 
-/* === 미디어 업로더 === */
+/* === 미디어(서브) 업로더 === */
 .media-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media (max-width:740px){.media-grid{grid-template-columns:1fr}}
 .media-box .uploader{
@@ -67,14 +67,14 @@
 .subs-grid img{width:90px;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e5e7eb);background:#f5f6f7}
 .subs-grid .rm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:999px;background:#000a;color:#fff;display:grid;place-items:center;font-size:13px;line-height:1}
 
-/* 체크박스(줄깨짐/정렬 고정) */
+/* 체크박스 */
 .pf-form .check{
   display:inline-flex;
   align-items:center;
   gap:8px;
   margin-top:6px;
   line-height:1.4;
-  white-space:nowrap;         /* "이름 공개" 두 줄 방지 */
+  white-space:nowrap;
   word-break:keep-all;
   text-align:left;
 }
@@ -100,8 +100,6 @@
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:#fff}
 .chip .x{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#eee;line-height:1}
 
-/* === Portfolio page button patch ========================= */
-
 /* 공통 버튼 */
 .pf-form .btn,
 .pf-form a.btn,
@@ -110,11 +108,9 @@
   align-items:center;
   justify-content:center;
   gap:8px;
-
   min-width:96px;
   height:44px;
   padding:0 16px;
-
   border:1px solid var(--line, #e5e7eb);
   border-radius:12px;
   background:#fff;
@@ -125,7 +121,6 @@
   cursor:pointer;
   transition:transform .06s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
 }
-
 .pf-form .btn:hover { box-shadow:0 1px 2px rgba(0,0,0,.05); }
 .pf-form .btn:active { transform:translateY(1px); }
 .pf-form .btn:disabled,
@@ -139,18 +134,76 @@
 }
 .pf-form .btn.pri:hover { box-shadow:0 2px 6px rgba(79,70,229,.25); }
 
-/* 버튼 줄 정렬 */
-.pf-form .btns { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
-.pf-form .btns .btn { flex:0 0 auto; }
-
-/* 파일 선택 버튼(브라우저 기본 버튼 보정) */
-.pf-form input[type="file"] {
-  font:inherit;          /* iOS/Android 크기 보정 */
-}
-
 /* 버튼 줄 */
+.pf-form .btns,
 .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-
-/* 여백 유틸 */
+.pf-form input[type="file"]{font:inherit}
 .mt4{margin-top:4px}
 .mt24{margin-top:24px}
+
+/* ===================================================== */
+/* =========== Facebook-like HERO (배경+아바타) ========= */
+/* ===================================================== */
+.pf-hero{
+  position:relative;
+  height:240px;
+  border-radius:18px;
+  overflow:hidden;
+  background:linear-gradient(180deg,#cfd9df,#e2ebf0);
+  box-shadow:0 8px 20px rgba(0,0,0,.06);
+  margin-bottom:58px; /* 아바타가 겹치므로 아래 여백 */
+}
+
+/* 커버 버튼 */
+.pf-coverBtn{
+  position:absolute; inset:0;
+  display:block; width:100%; height:100%;
+  border:0; padding:0; background:transparent; cursor:pointer;
+}
+.pf-coverBtn img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-coverBtn.is-empty img{opacity:0}
+.pf-coverBtn.is-empty::before{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(135deg,#dbeafe,#e5e7eb);
+}
+.pf-coverBtn .pf-overlay{
+  position:absolute; right:16px; bottom:16px;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(0,0,0,.45); color:#fff;
+  display:grid;place-items:center;font-size:22px;
+}
+
+/* 아바타 */
+.pf-avatarWrap{
+  position:absolute; left:24px; bottom:-56px;
+  width:120px;height:120px;border-radius:50%;
+  border:4px solid #fff; background:#eee; overflow:hidden;
+  box-shadow:0 6px 18px rgba(0,0,0,.15);
+}
+.pf-avatarBtn{position:relative;width:100%;height:100%;border:0;padding:0;background:transparent;cursor:pointer}
+.pf-avatarBtn img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-avatarBtn.is-empty img{opacity:0}
+.pf-avatarBtn.is-empty{background:#f3f4f6}
+.pf-avatarBtn .pf-overlay{
+  position:absolute; right:8px; bottom:8px;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(0,0,0,.55);color:#fff;
+  display:grid;place-items:center;font-size:18px;
+}
+
+/* 이름 오버레이 */
+.pf-name{
+  position:absolute; left:164px; bottom:18px;
+  font-size:22px; font-weight:800; color:#fff;
+  text-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+
+/* 서브 추가 타일 */
+.pf-addThumb{
+  margin-top:10px;
+  width:100%;max-width:120px;aspect-ratio:1/1;
+  border-radius:12px; border:2px dashed var(--line,#e5e7eb);
+  background:#fff; color:#6b7280; display:grid; place-items:center;
+  font-size:26px; cursor:pointer;
+}
+.pf-addThumb:hover{border-color:var(--pri,#4f46e5);color:var(--pri,#4f46e5)}
