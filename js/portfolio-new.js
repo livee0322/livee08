@@ -1,10 +1,15 @@
-/* Portfolio Create – v2.8
-   - robust picker binding (main/cover)
-   - nickname live preview
-   - safe publish while uploads pending
-   - works with option-B backend (createdBy only)
+/* Portfolio Create – v2.9 (edit-only, robust previews)
+   - Runs only when #pfForm exists (edit/create page)
+   - Works with <img> or background-image previews
+   - Binds pickers reliably (main/cover/subs)
+   - Live nickname preview
+   - Protects submit while uploads pending
+   - Backend: option-B (createdBy only on server)
 */
 (() => {
+  const form = document.getElementById('pfForm');
+  if (!form) return; // ✅ 편집 화면에서만 동작
+
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const THUMB = CFG.thumb || {
@@ -15,9 +20,9 @@
     localStorage.getItem('livee_token') ||
     localStorage.getItem('liveeToken') || '';
 
-  /* ---------- helpers ---------- */
+  /* ---------- util ---------- */
   const $id = (s)=>document.getElementById(s);
-  const qs  = (s)=>document.querySelector(s);
+  const qs  = (s,root=document)=>root.querySelector(s);
   const say = (t, ok=false) => {
     const box = $id('pfMsg'); if (!box) return;
     box.textContent = t;
@@ -61,29 +66,36 @@
     if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; }
     return true;
   };
+  const safeBind = (el, fn)=>{
+    if(!el) return;
+    el.addEventListener('click', (e)=>{ e.preventDefault(); fn(); }, { passive:false });
+  };
 
-  /* ---------- DOM refs (다양한 id/selector 지원) ---------- */
-  // 파일 input (필수: id 유지 권장)
-  const mainFile  = $id('mainFile')  || qs('[data-file="main"]');
-  const coverFile = $id('coverFile') || qs('[data-file="cover"]');
-  const subsFile  = $id('subsFile')  || qs('[data-file="subs"]');
+  /* ---------- inputs ---------- */
+  const mainFile  = $id('mainFile')  || qs('[data-file="main"]', form);
+  const coverFile = $id('coverFile') || qs('[data-file="cover"]', form);
+  const subsFile  = $id('subsFile')  || qs('[data-file="subs"]',  form);
 
-  // 이미지 프리뷰
-  const mainPrev  = $id('mainPrev')  || qs('[data-prev="main"]');
-  const coverPrev = $id('coverPrev') || qs('[data-prev="cover"]');
-  const subsGrid  = $id('subsGrid')  || qs('[data-grid="subs"]');
+  // 프리뷰 후보들 (img 우선, 없으면 bg 요소 사용)
+  const mainImgEl  = $id('mainPrev')  || qs('[data-prev="main"]', form)  || qs('.fb-avatar img', form);
+  const coverImgEl = $id('coverPrev') || qs('[data-prev="cover"]', form) || qs('.fb-cover img', form);
+  const mainBgEl   = qs('[data-bg="main"]',  form) || qs('.fb-avatar', form);
+  const coverBgEl  = qs('[data-bg="cover"]', form) || qs('.fb-cover',  form);
 
-  // 클릭 버튼(여러 이름 대응)
+  // 클릭 트리거들
   const mainPickers  = [
     $id('mainPick'), $id('avatarPick'), $id('pfMainPick'),
-    qs('[data-pick="main"]'), qs('.fb-avatar .pick')
+    qs('[data-pick="main"]', form), mainImgEl, mainBgEl
   ].filter(Boolean);
   const coverPickers = [
     $id('coverPick'), $id('pfCoverPick'), $id('coverBtn'),
-    qs('[data-pick="cover"]'), qs('.fb-cover .pick')
+    qs('[data-pick="cover"]', form), coverImgEl, coverBgEl
+  ].filter(Boolean);
+  const subsPickers  = [
+    $id('subsPick'), qs('[data-pick="subs"]', form), qs('.subs-drop', form)
   ].filter(Boolean);
 
-  // 텍스트 입력들
+  // 텍스트 & 기타
   const nickname     = $id('nickname');
   const headline     = $id('headline');
   const bio          = $id('bio');
@@ -99,11 +111,9 @@
   const addLinkBtn   = $id('addLinkBtn');
   const tagInput     = $id('tagInput');
   const tagList      = $id('tagList');
+  const subsGrid     = $id('subsGrid') || qs('[data-grid="subs"]', form) || qs('.subs-grid', form);
 
-  // 닉네임 미리보기(여러 후보)
-  const namePreview =
-    $id('namePreview') || $id('pfNamePreview') ||
-    qs('.fb-name') || qs('[data-preview="name"]');
+  const namePreview  = $id('namePreview') || $id('pfNamePreview') || qs('.fb-name', form) || qs('[data-preview="name"]', form);
 
   /* ---------- state ---------- */
   const state = {
@@ -111,53 +121,61 @@
     coverImageUrl: '',
     subThumbnails: [],
     tags: [],
-    pendingUploads: 0,   // 업로드 중인 개수 (>0 이면 발행 잠금)
+    pending: 0
   };
+  const bump = (n)=>{ state.pending = Math.max(0, state.pending + n); };
 
-  const bump = (n)=>{ state.pendingUploads = Math.max(0, state.pendingUploads + n); };
+  /* ---------- preview setter (img or bg both) ---------- */
+  function setPreview(kind, url){
+    if(!url) return;
+    const isMain = kind==='main';
+    const imgEl = isMain ? mainImgEl  : coverImgEl;
+    const bgEl  = isMain ? mainBgEl   : coverBgEl;
 
-  /* ---------- bind pickers (메인/커버 어디를 눌러도 파일선택) ---------- */
-  function safeBind(el, fn){
-    if(!el) return;
-    // 모바일 브라우저에서 passive 기본일 수도 있으므로 명시
-    el.addEventListener('click', (e)=>{ e.preventDefault(); fn(); }, { passive:false });
+    if (imgEl) {
+      imgEl.src = url;
+      imgEl.removeAttribute?.('hidden');
+      imgEl.style.display = '';
+    }
+    if (bgEl) {
+      bgEl.style.backgroundImage = `url("${url}")`;
+      bgEl.classList?.add('has-image');
+    }
   }
-  // 버튼들
+
+  /* ---------- picker bindings ---------- */
   mainPickers.forEach(el => safeBind(el, ()=> mainFile?.click()));
   coverPickers.forEach(el => safeBind(el, ()=> coverFile?.click()));
-  // 이미지 자체 클릭도 선택 열기
-  safeBind(mainPrev,  ()=> mainFile?.click());
-  safeBind(coverPrev, ()=> coverFile?.click());
+  subsPickers.forEach(el => safeBind(el,  ()=> subsFile?.click()));
 
   /* ---------- nickname live preview ---------- */
   function syncName(){
     if(!namePreview || !nickname) return;
-    const v = nickname.value.trim();
-    namePreview.textContent = v || '닉네임';
+    namePreview.textContent = nickname.value.trim() || '닉네임';
   }
   nickname?.addEventListener('input', syncName);
-  syncName(); // 초기 1회
+  syncName();
 
   /* ---------- uploads ---------- */
   mainFile?.addEventListener('change', async (e)=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)){ e.target.value=''; return; }
-    // 로컬 미리보기 즉시
     const local = URL.createObjectURL(f);
-    if(mainPrev) mainPrev.src = local;
+    setPreview('main', local); // 즉시 로컬 미리보기
     bump(+1);
     try{
       say('메인 이미지 업로드 중…');
       const url = await uploadImage(f);
       state.mainThumbnailUrl = withTransform(url, THUMB.square);
-      if(mainPrev) mainPrev.src = state.mainThumbnailUrl;
-      URL.revokeObjectURL(local);
+      setPreview('main', state.mainThumbnailUrl);
       say('업로드 완료', true);
     }catch(err){
-      console.error('[main upload error]', err);
+      console.error('[main upload]', err);
       say('업로드 실패: '+err.message);
     }finally{
+      URL.revokeObjectURL(local);
       bump(-1);
+      e.target.value=''; // 같은 파일 재선택 허용(모바일)
     }
   });
 
@@ -165,20 +183,21 @@
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)){ e.target.value=''; return; }
     const local = URL.createObjectURL(f);
-    if(coverPrev) coverPrev.src = local;
+    setPreview('cover', local);
     bump(+1);
     try{
       say('배경 이미지 업로드 중…');
       const url = await uploadImage(f);
       state.coverImageUrl = withTransform(url, THUMB.cover169);
-      if(coverPrev) coverPrev.src = state.coverImageUrl;
-      URL.revokeObjectURL(local);
+      setPreview('cover', state.coverImageUrl);
       say('업로드 완료', true);
     }catch(err){
-      console.error('[cover upload error]', err);
+      console.error('[cover upload]', err);
       say('업로드 실패: '+err.message);
     }finally{
+      URL.revokeObjectURL(local);
       bump(-1);
+      e.target.value='';
     }
   });
 
@@ -204,7 +223,8 @@
     const chosen = files.slice(0, remain);
     for(const f of chosen){
       if(!isImgOk(f)) continue;
-      // 임시 DOM
+
+      // 임시 썸네일
       const tmp = document.createElement('div');
       tmp.className = 'sub';
       const local = URL.createObjectURL(f);
@@ -218,20 +238,20 @@
         const finalUrl = withTransform(url, THUMB.square);
         state.subThumbnails.push(finalUrl);
         drawSubs();
-        URL.revokeObjectURL(local);
         say('업로드 완료', true);
       }catch(err){
-        console.error('[sub upload error]', err);
+        console.error('[sub upload]', err);
         say('업로드 실패: '+err.message);
         tmp.remove();
       }finally{
+        URL.revokeObjectURL(local);
         bump(-1);
       }
     }
-    e.target.value = '';
+    e.target.value='';
   });
 
-  /* ---------- live links & tags (세로폼) ---------- */
+  /* ---------- live links (세로 폼) & tags ---------- */
   function addLinkRow(v={title:'',url:'',date:''}){
     const row = document.createElement('div');
     row.className='link-row v';
@@ -270,20 +290,14 @@
       if(!raw) return;
       if(tagState.length>=8){ say('태그는 최대 8개'); return; }
       if(tagState.includes(raw)){ tagInput.value=''; return; }
-      tagState.push(raw);
-      tagInput.value='';
-      drawTags();
+      tagState.push(raw); tagInput.value=''; drawTags();
     }
   });
-  addLinkRow();
-  drawTags();
+  addLinkRow(); drawTags();
 
   /* ---------- validate & submit ---------- */
   function validate(isPublish){
-    if(state.pendingUploads>0){
-      say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); 
-      return false;
-    }
+    if(state.pending>0){ say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
     if(isPublish){
       if(!state.mainThumbnailUrl){ say('메인 썸네일을 업로드해주세요'); return false; }
       if(!nickname?.value.trim()){ say('닉네임을 입력해주세요'); return false; }
@@ -334,8 +348,8 @@
     if(!TOKEN){ say('로그인이 필요합니다'); return; }
     const isPublish = status==='published';
     if(!validate(isPublish)) return;
-
     const payload = collectPayload(status);
+
     try{
       say(isPublish ? '발행 중…' : '임시저장 중…');
       const res = await fetch(`${API_BASE}/portfolio-test`, {
