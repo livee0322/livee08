@@ -1,7 +1,6 @@
-/* Home — v2.6.2
-   - recruit-test + portfolio-test
-   - 추천 포트폴리오: 썸네일/닉네임/경력/한줄소개 구성
-   - fallback 이미지는 사이트 루트의 /default.jpg 사용
+/* Home — v2.6.4
+   - portfolio-test: 필드 스캐너로 썸네일/닉네임/경력/한줄소개 안정화
+   - fallback 이미지는 항상 사이트 루트의 /default.jpg
 */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -12,25 +11,26 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=50';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=24';
 
-  // --- 이미지 경로/플레이스홀더 ---
+  // ── 이미지 유틸 & 플레이스홀더(루트 고정) ──
   const ROOT = (CFG.BASE_PATH || '').replace(/\/$/, '');
-  const PLACEHOLDER = `${ROOT}/default.jpg`; // ← 루트의 default.jpg 고정
+  const PLACEHOLDER = `${ROOT}/default.jpg`;
   const THUMB = CFG.thumb || {
     card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
     square:  "c_fill,g_auto,w_320,h_320,f_auto,q_auto",
   };
   const injectCloud = (url, t) => {
     try{
-      if (!url || !/\/upload\//.test(url)) return url || PLACEHOLDER;
+      if (!url) return PLACEHOLDER;
+      if (!/\/upload\//.test(url)) return url;               // 클라우디너리 아니면 그대로
       const i = url.indexOf('/upload/');
       const next = url.slice(i+8).split('/')[0] || '';
-      if (/^([a-z]+_[^/]+,?)+$/.test(next)) return url; // 이미 파라미터 있음
+      if (/^([a-z]+_[^/]+,?)+$/.test(next)) return url;      // 이미 변환 있음
       return url.slice(0,i+8) + t + '/' + url.slice(i+8);
     }catch{ return PLACEHOLDER; }
   };
   const thumbOr = (src) => src || PLACEHOLDER;
 
-  // --- 공통 포맷터 ---
+  // ── 공통 포맷터 ──
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
     if (!iso) return '';
@@ -46,7 +46,7 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  // 브랜드명(Recruit)
+  // ── Recruit: 브랜드명 ──
   const pickBrandName = (c = {}) => {
     const direct = [
       c.brandName, c.brandname,
@@ -74,7 +74,7 @@
     return found && found !== '브랜드' ? found : '브랜드';
   };
 
-  // 닉네임(Portfolio)
+  // ── Portfolio: 닉네임/소개/경력/썸네일 스캐너 ──
   const pickNickname = (p = {}) => {
     const direct = [
       p.nickname, p.displayName, p.name,
@@ -83,7 +83,39 @@
     return (direct || '쇼호스트').trim();
   };
 
-  // 라인업 시간 계산
+  const pickHeadline = (p = {}) => {
+    // 한 줄 소개 후보들 → 없으면 bio/description 요약
+    const direct = [
+      p.headline, p.oneLine, p.oneliner, p.tagline, p.summary, p.title
+    ].find(v => typeof v === 'string' && v.trim());
+    if (direct) return direct.trim();
+
+    const long = [p.bio, p.description, p.about].find(v => typeof v === 'string' && v.trim());
+    if (long) {
+      const s = long.replace(/\s+/g,' ').trim();
+      return s.length > 60 ? s.slice(0,60) + '…' : s;
+    }
+    return ''; // 비우면 UI에서 '소개가 없습니다' 출력
+  };
+
+  const pickCareerYears = (p = {}) => {
+    const raw = p.careerYears ?? p.career?.years ?? p.years;
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : undefined;
+  };
+
+  const pickThumb = (p = {}) => {
+    const cand = [
+      p.mainThumbnailUrl, p.mainThumbnail,
+      p.coverImageUrl, p.coverImage,
+      Array.isArray(p.subThumbnails) ? p.subThumbnails[0] : '',
+      Array.isArray(p.subImages)     ? p.subImages[0]     : ''
+    ].find(v => typeof v === 'string' && v.trim());
+    if (!cand) return PLACEHOLDER;
+    return injectCloud(cand, THUMB.card169);
+  };
+
+  // ── 라인업 시간 ──
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
     let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
     if (!d || isNaN(d)) return null;
@@ -104,7 +136,7 @@
     return data;
   }
 
-  // 데이터 로드
+  // ── 데이터 로드 ──
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -136,13 +168,9 @@
       return list.map((p,i)=>({
         id: p.id || p._id || `${i}`,
         name: pickNickname(p),
-        headline: p.headline || '',
-        careerYears: Number.isFinite(+p.careerYears) ? +p.careerYears : (p.careerYears ? Number(p.careerYears) : undefined),
-        // 썸네일: mainThumbnailUrl 우선 → coverImageUrl → PLACEHOLDER
-        thumb: injectCloud(
-          p.mainThumbnailUrl || p.coverImageUrl || '',
-          THUMB.card169
-        ),
+        headline: pickHeadline(p),
+        careerYears: pickCareerYears(p),
+        thumb: pickThumb(p),
         createdAt: p.createdAt || p._createdAt || null
       }));
     }catch(e){
@@ -151,14 +179,13 @@
     }
   }
 
-  // 메타 라벨
+  // ── 메타 & 템플릿 ──
   const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
 
-  // 템플릿들
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -207,7 +234,7 @@
     }</div>`;
   }
 
-  // ★ 포트폴리오 카드: 닉네임 / (경력 n년) / 한 줄 소개
+  // ★ 포트폴리오 카드: 썸네일/닉네임/(경력)/한줄소개
   function tplPortfolios(items){
     if(!items.length){
       return `<div class="hscroll"><article class="card-mini">
@@ -224,9 +251,9 @@
           <img class="mini-thumb" src="${thumbOr(p.thumb)}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
           <div class="mini-body">
-            <div class="lv-brand">${p.name}</div>
+            <div class="lv-brand">${p.name}${Number.isFinite(p.careerYears) ? ` · 경력 ${p.careerYears}년` : ''}</div>
             <div class="lv-title">${p.headline || '소개가 없습니다'}</div>
-            <div class="lv-meta">${Number.isFinite(p.careerYears) ? `경력 ${p.careerYears}년` : ''}</div>
+            <div class="lv-meta"></div>
           </div>
         </article>`).join('')
     }</div>`;
