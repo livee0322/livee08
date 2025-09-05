@@ -4,86 +4,104 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>포트폴리오 등록</title>
+
+  <!-- 폰트/아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+
+  <!-- 전역/페이지 CSS -->
+  <link rel="stylesheet" href="css/main.css?v=20250905">
+  <link rel="stylesheet" href="css/portfolio-new.css?v=20250905">
 </head>
 <body>
   <header class="lv-appbar"><div class="lv-title">포트폴리오 등록</div></header>
 
   <main class="container">
-    <div id="pfMsg" class="toast" style="margin:8px 0;"></div>
+    <div id="pfMsg" class="notice" style="margin:8px 0;"></div>
 
-    <form id="pfForm">
+    <form id="pfForm" class="pf-form">
       <!-- 미리보기 -->
-      <section class="section" style="display:flex;align-items:center;gap:12px;">
-        <button type="button" id="mainTrigger" class="lv-action" aria-label="메인 썸네일 추가"><i class="ri-image-add-line"></i></button>
-        <img id="mainPrev" alt="" style="width:72px;height:72px;border-radius:12px;object-fit:cover;display:none;">
-        <button type="button" id="coverTrigger" class="lv-action" aria-label="배경 이미지 추가"><i class="ri-landscape-line"></i></button>
-        <img id="coverPrev" alt="" style="width:120px;height:68px;border-radius:10px;object-fit:cover;display:none;">
-        <input id="mainFile" type="file" accept="image/*" hidden>
-        <input id="coverFile" type="file" accept="image/*" hidden>
+      <section class="pf-section">
+        <h3>미리보기</h3>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button type="button" id="mainTrigger" class="btn"><i class="ri-image-add-line"></i> 메인 썸네일</button>
+          <img id="mainPrev" alt="" style="width:72px;height:72px;border-radius:12px;object-fit:cover;display:none;">
+          <button type="button" id="coverTrigger" class="btn"><i class="ri-landscape-line"></i> 배경 이미지</button>
+          <img id="coverPrev" alt="" style="width:120px;height:68px;border-radius:10px;object-fit:cover;display:none;">
+        </div>
+        <input id="mainFile" type="file" accept="image/*" class="file-ghost">
+        <input id="coverFile" type="file" accept="image/*" class="file-ghost">
       </section>
 
-      <section class="section">
+      <section class="pf-section">
         <h3>서브 썸네일(선택, 최대 5)</h3>
-        <div id="subsGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-        <button type="button" id="subsTrigger" class="lv-action" aria-label="서브 이미지 추가"><i class="ri-image-add-line"></i></button>
-        <input id="subsFile" type="file" accept="image/*" multiple hidden>
+        <div id="subsGrid" class="subs-grid"></div>
+        <button type="button" id="subsTrigger" class="pf-addThumb" aria-label="서브 이미지 추가">
+          <i class="ri-image-add-line"></i>
+        </button>
+        <input id="subsFile" type="file" accept="image/*" multiple class="file-ghost">
       </section>
 
-      <section class="section">
+      <section class="pf-section">
         <h3>기본 정보</h3>
-        <label>닉네임 *</label>
+        <label class="label">닉네임 <span class="req">*</span></label>
         <input id="nickname" class="input" placeholder="예: 라이브크리에이터" required>
-        <label>한 줄 소개 *</label>
+
+        <label class="label">한 줄 소개 <span class="req">*</span></label>
         <input id="headline" class="input" placeholder="예: 뷰티/일상 라이브 진행자" required>
-        <label>상세 소개 (자유)</label>
+
+        <label class="label">상세 소개 (자유)</label>
         <textarea id="bio" class="input" rows="6" placeholder="자유롭게 소개를 작성하세요."></textarea>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
           <div>
-            <label>경력(년)</label>
+            <label class="label">경력(년)</label>
             <input id="careerYears" class="input" type="number" min="0" max="50" placeholder="0">
           </div>
           <div>
-            <label>나이</label>
+            <label class="label">나이</label>
             <input id="age" class="input" type="number" min="14" max="99" placeholder="24">
           </div>
         </div>
 
-        <label>대표 링크</label>
+        <label class="label">대표 링크</label>
         <input id="primaryLink" class="input" type="url" placeholder="https://...">
-        <label>공개 범위</label>
+
+        <label class="label">공개 범위</label>
         <select id="visibility" class="input">
           <option value="public">전체공개</option>
           <option value="unlisted">링크공개</option>
           <option value="private">비공개</option>
         </select>
-        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+
+        <label class="label" style="display:flex;align-items:center;gap:6px;margin-top:6px;">
           <input type="checkbox" id="openToOffers" checked> 제안 받기
         </label>
       </section>
 
-      <section class="section">
+      <section class="pf-section">
         <h3>최근 라이브 링크</h3>
-        <div id="linksWrap"></div>
-        <button type="button" id="addLinkBtn" class="lv-action"><i class="ri-add-line"></i></button>
+        <div id="linksWrap" class="links-wrap"></div>
+        <button type="button" id="addLinkBtn" class="btn"><i class="ri-add-line"></i> 추가</button>
       </section>
 
-      <section class="section">
+      <section class="pf-section">
         <h3>태그</h3>
-        <input id="tagInput" class="input" placeholder="엔터로 추가">
-        <div id="tagList" style="margin-top:6px;"></div>
+        <div class="tag-row">
+          <input id="tagInput" class="input" placeholder="엔터로 추가">
+          <div id="tagList" class="chips"></div>
+        </div>
       </section>
 
-      <div class="section" style="display:flex;gap:8px;">
-        <button type="button" id="saveDraftBtn" class="lv-action">임시저장</button>
-        <button type="button" id="publishBtn" class="lv-action">발행</button>
+      <div class="pf-section btns">
+        <button type="button" id="saveDraftBtn" class="btn">임시저장</button>
+        <button type="button" id="publishBtn" class="btn pri">발행</button>
       </div>
     </form>
   </main>
 
   <script src="js/config.js"></script>
-  <script src="js/portfolio-new.js?v=FINAL_20250905"></script>
+  <!-- 최신 스크립트(레거시 name 절대 전송 안 함) -->
+  <script src="js/portfolio-new.js?v=FINAL_20250905c"></script>
 </body>
 </html>
