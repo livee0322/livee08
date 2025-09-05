@@ -1,6 +1,6 @@
-/* Home — v2.6.4
-   - portfolio-test: 필드 스캐너로 썸네일/닉네임/경력/한줄소개 안정화
-   - fallback 이미지는 항상 사이트 루트의 /default.jpg
+/* Home — v2.7.0
+   - 추천 포트폴리오: 2열 그리드 카드(썸네일 · 이름/경력(파란) · 한줄소개)
+   - 썸네일 실패 시 루트 /default.jpg 보장
 */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -11,7 +11,6 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=50';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=24';
 
-  // ── 이미지 유틸 & 플레이스홀더(루트 고정) ──
   const ROOT = (CFG.BASE_PATH || '').replace(/\/$/, '');
   const PLACEHOLDER = `${ROOT}/default.jpg`;
   const THUMB = CFG.thumb || {
@@ -21,16 +20,14 @@
   const injectCloud = (url, t) => {
     try{
       if (!url) return PLACEHOLDER;
-      if (!/\/upload\//.test(url)) return url;               // 클라우디너리 아니면 그대로
+      if (!/\/upload\//.test(url)) return url;
       const i = url.indexOf('/upload/');
       const next = url.slice(i+8).split('/')[0] || '';
-      if (/^([a-z]+_[^/]+,?)+$/.test(next)) return url;      // 이미 변환 있음
+      if (/^([a-z]+_[^/]+,?)+$/.test(next)) return url;
       return url.slice(0,i+8) + t + '/' + url.slice(i+8);
     }catch{ return PLACEHOLDER; }
   };
-  const thumbOr = (src) => src || PLACEHOLDER;
 
-  // ── 공통 포맷터 ──
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
     if (!iso) return '';
@@ -46,7 +43,6 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  // ── Recruit: 브랜드명 ──
   const pickBrandName = (c = {}) => {
     const direct = [
       c.brandName, c.brandname,
@@ -58,23 +54,10 @@
       c.user?.brandName, c.user?.companyName
     ].find(v => typeof v === 'string' && v.trim());
     if (direct && direct.trim() !== '브랜드') return direct.trim();
-
-    const scan = (obj, depth=0) => {
-      if (!obj || typeof obj !== 'object' || depth > 2) return '';
-      for (const [k, v] of Object.entries(obj)) {
-        if (typeof v === 'string' && /brand/i.test(k) && v.trim()) return v.trim();
-        if (v && typeof v === 'object') {
-          const t = scan(v, depth+1);
-          if (t) return t;
-        }
-      }
-      return '';
-    };
-    const found = scan(c);
-    return found && found !== '브랜드' ? found : '브랜드';
+    return '브랜드';
   };
 
-  // ── Portfolio: 닉네임/소개/경력/썸네일 스캐너 ──
+  // ---- Portfolio 필드 스캐너 ----
   const pickNickname = (p = {}) => {
     const direct = [
       p.nickname, p.displayName, p.name,
@@ -82,28 +65,23 @@
     ].find(v => typeof v === 'string' && v.trim());
     return (direct || '쇼호스트').trim();
   };
-
   const pickHeadline = (p = {}) => {
-    // 한 줄 소개 후보들 → 없으면 bio/description 요약
     const direct = [
       p.headline, p.oneLine, p.oneliner, p.tagline, p.summary, p.title
     ].find(v => typeof v === 'string' && v.trim());
     if (direct) return direct.trim();
-
     const long = [p.bio, p.description, p.about].find(v => typeof v === 'string' && v.trim());
     if (long) {
       const s = long.replace(/\s+/g,' ').trim();
       return s.length > 60 ? s.slice(0,60) + '…' : s;
     }
-    return ''; // 비우면 UI에서 '소개가 없습니다' 출력
+    return ''; // 비워 두면 문구 없이 표시
   };
-
   const pickCareerYears = (p = {}) => {
     const raw = p.careerYears ?? p.career?.years ?? p.years;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? n : undefined;
   };
-
   const pickThumb = (p = {}) => {
     const cand = [
       p.mainThumbnailUrl, p.mainThumbnail,
@@ -115,7 +93,6 @@
     return injectCloud(cand, THUMB.card169);
   };
 
-  // ── 라인업 시간 ──
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
     let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
     if (!d || isNaN(d)) return null;
@@ -136,7 +113,6 @@
     return data;
   }
 
-  // ── 데이터 로드 ──
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -179,7 +155,7 @@
     }
   }
 
-  // ── 메타 & 템플릿 ──
+  /* ---------- 템플릿 ---------- */
   const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
@@ -199,7 +175,7 @@
     return `<div class="list-vert">${
       items.map(it=>`
         <article class="item">
-          <img class="thumb" src="${thumbOr(injectCloud(it.thumb, THUMB.card169))}" alt="" loading="lazy"
+          <img class="thumb" src="${injectCloud(it.thumb, THUMB.card169) || PLACEHOLDER}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
           <div class="item-body">
             <div class="lv-brand">${it.brandName}</div>
@@ -223,7 +199,7 @@
     return `<div class="hscroll">${
       items.map(r=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${thumbOr(injectCloud(r.thumb, THUMB.card169))}" alt="" loading="lazy"
+          <img class="mini-thumb" src="${injectCloud(r.thumb, THUMB.card169) || PLACEHOLDER}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
           <div class="mini-body">
             <div class="lv-brand">${r.brandName}</div>
@@ -234,26 +210,27 @@
     }</div>`;
   }
 
-  // ★ 포트폴리오 카드: 썸네일/닉네임/(경력)/한줄소개
+  // ★ 추천 포트폴리오: 2열 그리드
   function tplPortfolios(items){
     if(!items.length){
-      return `<div class="hscroll"><article class="card-mini">
-        <img class="mini-thumb" src="${PLACEHOLDER}" alt=""/>
-        <div class="mini-body">
-          <div class="lv-brand">포트폴리오</div>
-          <div class="lv-title">추천 포트폴리오가 없습니다</div>
-          <div class="lv-meta">등록된 포트폴리오가 보이면 여기에 표시됩니다</div>
+      return `<div class="pf-grid"><article class="pf-card">
+        <img class="pf-thumb" src="${PLACEHOLDER}" alt=""/>
+        <div class="pf-body">
+          <div class="pf-nameRow"><span class="pf-name">포트폴리오</span></div>
+          <div class="pf-intro">등록된 포트폴리오가 없습니다</div>
         </div></article></div>`;
     }
-    return `<div class="hscroll">${
+    return `<div class="pf-grid">${
       items.map(p=>`
-        <article class="card-mini">
-          <img class="mini-thumb" src="${thumbOr(p.thumb)}" alt="" loading="lazy"
+        <article class="pf-card">
+          <img class="pf-thumb" src="${p.thumb || PLACEHOLDER}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
-          <div class="mini-body">
-            <div class="lv-brand">${p.name}${Number.isFinite(p.careerYears) ? ` · 경력 ${p.careerYears}년` : ''}</div>
-            <div class="lv-title">${p.headline || '소개가 없습니다'}</div>
-            <div class="lv-meta"></div>
+          <div class="pf-body">
+            <div class="pf-nameRow">
+              <span class="pf-name">${p.name}</span>
+              ${Number.isFinite(p.careerYears) ? `<span class="pf-career">경력 ${p.careerYears}년</span>` : ''}
+            </div>
+            <div class="pf-intro">${p.headline || ''}</div>
           </div>
         </article>`).join('')
     }</div>`;
