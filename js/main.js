@@ -1,8 +1,4 @@
-/* Home main.js — v2.6 (simplified, unified schema)
-   - portfolios: /portfolio-test?status=published&limit=12
-   - thumbnail pick: mainThumbnailUrl → subThumbnails[0] → coverImageUrl → default.jpg
-   - card: thumb / nickname / (careerYears) / headline
-*/
+/* Home main.js — v2.7 (unified schema, Cloudinary-safe, portfolio grid 2-cols) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -10,14 +6,20 @@
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const EP = CFG.endpoints || {};
-  const EP_RECRUITS = EP.recruits || '/recruit-test?status=published&limit=20';
+  const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
+
+  const THUMB = CFG.thumb || {
+    square:  "c_fill,g_auto,w_320,h_320,f_auto,q_auto",
+    card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
+  };
 
   // 루트의 default.jpg 사용
   const FALLBACK_IMG = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   // ---- utils --------------------------------------------------------------
-  const fmt = (v) => (v==null || v==='') ? '' : String(v);
+  const parseList = (j) => (Array.isArray(j) && j)
+                        || j.items || j.data?.items || j.docs || j.data?.docs || [];
   const money = (v) => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
@@ -26,16 +28,23 @@
     if (isNaN(d)) return String(iso).slice(0,10);
     return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   };
-  const parseList = (j) => (Array.isArray(j) && j)
-                        || j.items || j.data?.items || j.docs || j.data?.docs || [];
 
-  const pickThumb = (p) =>
-    p.mainThumbnailUrl
-    || (Array.isArray(p.subThumbnails) && p.subThumbnails[0])
-    || p.coverImageUrl
-    || FALLBACK_IMG;
+  const hasTransform = (url='')=>{
+    const i=url.indexOf('/upload/');
+    if(i<0) return false;
+    const after=url.slice(i+8).split('/')[0]||'';
+    return /^([a-zA-Z]+_[^/]+,?)+$/.test(after);
+  };
+  const inject = (url, preset)=>{
+    try{
+      if(!url) return '';
+      if(!/\/upload\//.test(url)) return url;
+      if(hasTransform(url)) return url;
+      const i=url.indexOf('/upload/');
+      return url.slice(0,i+8)+preset+'/'+url.slice(i+8);
+    }catch{ return url; }
+  };
 
-  // ---- fetchers -----------------------------------------------------------
   async function getJSON(url){
     const r = await fetch(url, { headers: { 'Accept':'application/json' } });
     const j = await r.json().catch(()=> ({}));
@@ -43,6 +52,7 @@
     return j;
   }
 
+  // ---- fetchers -----------------------------------------------------------
   async function fetchRecruits(){
     try{
       const j = await getJSON(`${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`);
@@ -63,13 +73,16 @@
     try{
       const j = await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`);
       const arr = parseList(j);
-      return arr.map((p,i)=>({
-        id: p.id || p._id || `${i}`,
-        nickname: fmt(p.nickname) || fmt(p.displayName) || fmt(p.name) || '무명',
-        careerYears: Number.isFinite(+p.careerYears) ? +p.careerYears : undefined,
-        headline: fmt(p.headline) || '',
-        thumb: pickThumb(p),
-      }));
+      return arr.map((p,i)=>{
+        const rawThumb = p.mainThumbnailUrl || (Array.isArray(p.subThumbnails)&&p.subThumbnails[0]) || p.coverImageUrl || FALLBACK_IMG;
+        return {
+          id: p.id || p._id || `${i}`,
+          nickname: (p.nickname || p.displayName || p.name || '무명').trim(),
+          careerYears: (p.careerYears ?? undefined),
+          headline: (p.headline || '').trim(),
+          thumb: /http/.test(rawThumb) ? inject(rawThumb, THUMB.card169) : FALLBACK_IMG,
+        };
+      });
     }catch{ return []; }
   }
 
@@ -91,7 +104,7 @@
     return `<div class="hscroll">${
       items.map(r=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${r.thumb}" alt=""/>
+          <img class="mini-thumb" src="${r.thumb}" alt="" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"/>
           <div class="mini-body">
             <div class="lv-brand">브랜드</div>
             <div class="lv-title">${r.title}</div>
@@ -109,25 +122,26 @@
         <article class="pf-card">
           <div class="pf-thumbWrap"><img class="pf-thumb" src="${FALLBACK_IMG}" alt=""></div>
           <div class="pf-name">포트폴리오가 없습니다</div>
-          <div class="pf-meta">첫 포트폴리오를 등록해보세요</div>
+          <div class="pf-meta"><span class="hl muted">첫 포트폴리오를 등록해보세요</span></div>
         </article>
       </div>`;
     }
     return `<div class="pf-grid2">${
       items.map(p=>`
         <article class="pf-card" onclick="location.href='portfolio-view.html?id=${encodeURIComponent(p.id)}'">
-          <div class="pf-thumbWrap"><img class="pf-thumb" src="${p.thumb}" alt=""></div>
+          <div class="pf-thumbWrap">
+            <img class="pf-thumb" src="${p.thumb}" alt="" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'">
+          </div>
           <div class="pf-name">${p.nickname}</div>
-          <div class="pf-meta">${
-            (p.careerYears || p.careerYears===0)
-              ? `<span class="badge-years">${p.careerYears}년</span>` : ''
-          }${p.headline ? `<span class="hl">${p.headline}</span>` : `<span class="hl muted">소개가 없습니다</span>`}
+          <div class="pf-meta">
+            ${ (p.careerYears || p.careerYears===0) ? `<span class="badge-years">${p.careerYears}년</span>` : '' }
+            ${ p.headline ? `<span class="hl">${p.headline}</span>` : `<span class="hl muted">한 줄 소개 없음</span>` }
           </div>
         </article>`).join('')
     }</div>`;
   }
 
-  // ---- minimal styles for portfolio grid (safe if main.css already has) ---
+  // ---- minimal styles inject (안전) ---------------------------------------
   function injectOnce(){
     if($('#_home_inject')) return;
     const css = document.createElement('style');
@@ -159,7 +173,6 @@
     injectOnce();
     const root = ensureMount();
 
-    // 데이터 병렬 로딩
     const [recruits, portfolios] = await Promise.all([
       fetchRecruits(),
       fetchPortfolios()
