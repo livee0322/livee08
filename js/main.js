@@ -1,6 +1,7 @@
-/* Home — v2.6.1
+/* Home — v2.6.2
    - recruit-test + portfolio-test
-   - 절대경로/데이터URI 폴백으로 이미지 깨짐 방지
+   - 추천 포트폴리오: 썸네일/닉네임/경력/한줄소개 구성
+   - fallback 이미지는 사이트 루트의 /default.jpg 사용
 */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -8,28 +9,28 @@
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const EP = CFG.endpoints || {};
-  const EP_RECRUITS   = EP.recruits      || '/recruit-test?status=published&limit=50';
-  const EP_PORTFOLIOS = EP.portfolios    || '/portfolio-test?status=published&limit=24';
+  const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=50';
+  const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=24';
 
-  const resolveAsset = (p) => {
-    if (!p) return '';
-    if (/^https?:\/\//i.test(p) || /^data:/i.test(p)) return p;
-    const base = (CFG.BASE_PATH || '').replace(/\/$/, '');
-    return `${base}/${String(p).replace(/^\/+/, '')}`;
+  // --- 이미지 경로/플레이스홀더 ---
+  const ROOT = (CFG.BASE_PATH || '').replace(/\/$/, '');
+  const PLACEHOLDER = `${ROOT}/default.jpg`; // ← 루트의 default.jpg 고정
+  const THUMB = CFG.thumb || {
+    card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
+    square:  "c_fill,g_auto,w_320,h_320,f_auto,q_auto",
   };
-  const PLACEHOLDER_DATA =
-    'data:image/svg+xml;utf8,' +
-    encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">
-         <rect width="100%" height="100%" fill="#e9eef3"/>
-         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
-               fill="#8a97a6" font-family="sans-serif" font-size="18">이미지 없음</text>
-       </svg>`
-    );
-  const PLACEHOLDER = resolveAsset(CFG.placeholderThumb || 'assets/default.jpg') || PLACEHOLDER_DATA;
+  const injectCloud = (url, t) => {
+    try{
+      if (!url || !/\/upload\//.test(url)) return url || PLACEHOLDER;
+      const i = url.indexOf('/upload/');
+      const next = url.slice(i+8).split('/')[0] || '';
+      if (/^([a-z]+_[^/]+,?)+$/.test(next)) return url; // 이미 파라미터 있음
+      return url.slice(0,i+8) + t + '/' + url.slice(i+8);
+    }catch{ return PLACEHOLDER; }
+  };
+  const thumbOr = (src) => src || PLACEHOLDER;
 
-  const thumbOr = (src, seed='lv') => src || PLACEHOLDER;
-
+  // --- 공통 포맷터 ---
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
     if (!iso) return '';
@@ -77,8 +78,7 @@
   const pickNickname = (p = {}) => {
     const direct = [
       p.nickname, p.displayName, p.name,
-      p.user?.nickname, p.createdBy?.nickname,
-      p.realName
+      p.user?.nickname, p.createdBy?.nickname, p.realName
     ].find(v => typeof v === 'string' && v.trim());
     return (direct || '쇼호스트').trim();
   };
@@ -104,6 +104,7 @@
     return data;
   }
 
+  // 데이터 로드
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
@@ -136,8 +137,12 @@
         id: p.id || p._id || `${i}`,
         name: pickNickname(p),
         headline: p.headline || '',
-        thumb: p.mainThumbnailUrl || p.coverImageUrl || '',
-        tags: Array.isArray(p.tags) ? p.tags.slice(0,3) : [],
+        careerYears: Number.isFinite(+p.careerYears) ? +p.careerYears : (p.careerYears ? Number(p.careerYears) : undefined),
+        // 썸네일: mainThumbnailUrl 우선 → coverImageUrl → PLACEHOLDER
+        thumb: injectCloud(
+          p.mainThumbnailUrl || p.coverImageUrl || '',
+          THUMB.card169
+        ),
         createdAt: p.createdAt || p._createdAt || null
       }));
     }catch(e){
@@ -146,13 +151,14 @@
     }
   }
 
+  // 메타 라벨
   const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
   };
-  const metaPortfolio = it => (it.tags.length ? `#${it.tags.join(' #')}` : '태그 없음');
 
+  // 템플릿들
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -166,7 +172,7 @@
     return `<div class="list-vert">${
       items.map(it=>`
         <article class="item">
-          <img class="thumb" src="${thumbOr(it.thumb,it.id)}" alt="" loading="lazy"
+          <img class="thumb" src="${thumbOr(injectCloud(it.thumb, THUMB.card169))}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
           <div class="item-body">
             <div class="lv-brand">${it.brandName}</div>
@@ -190,7 +196,7 @@
     return `<div class="hscroll">${
       items.map(r=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${thumbOr(r.thumb,r.id)}" alt="" loading="lazy"
+          <img class="mini-thumb" src="${thumbOr(injectCloud(r.thumb, THUMB.card169))}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
           <div class="mini-body">
             <div class="lv-brand">${r.brandName}</div>
@@ -201,6 +207,7 @@
     }</div>`;
   }
 
+  // ★ 포트폴리오 카드: 닉네임 / (경력 n년) / 한 줄 소개
   function tplPortfolios(items){
     if(!items.length){
       return `<div class="hscroll"><article class="card-mini">
@@ -214,12 +221,12 @@
     return `<div class="hscroll">${
       items.map(p=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${thumbOr(p.thumb,p.id)}" alt="" loading="lazy"
+          <img class="mini-thumb" src="${thumbOr(p.thumb)}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
           <div class="mini-body">
             <div class="lv-brand">${p.name}</div>
             <div class="lv-title">${p.headline || '소개가 없습니다'}</div>
-            <div class="lv-meta">${metaPortfolio(p)}</div>
+            <div class="lv-meta">${Number.isFinite(p.careerYears) ? `경력 ${p.careerYears}년` : ''}</div>
           </div>
         </article>`).join('')
     }</div>`;
@@ -284,7 +291,6 @@
       `;
     } catch (e) {
       console.error('[HOME] render error:', e);
-      // 폴백 섹션도 비어 보이지 않게
       const emptyLine = tplLineup([]), emptyRec = tplRecruits([]), emptyPf = tplPortfolios([]);
       ensureMount().innerHTML = `
         <div class="section"><div class="section-head"><h2>오늘의 라이브 라인업</h2></div>${emptyLine}</div>
