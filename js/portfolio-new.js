@@ -117,70 +117,56 @@
     return true;
   };
 
-  // elements
-  const mainFile  = $id('mainFile');
-  const coverFile = $id('coverFile');
-  const subsFile  = $id('subsFile');
-  const mainImgEl  = $id('mainPrev');
-  const coverImgEl = $id('coverPrev');
-  const mainTrigger  = $id('mainTrigger');
-  const coverTrigger = $id('coverTrigger');
-  const subsTrigger  = $id('subsTrigger');
+  /* ---------- inputs / elements ---------- */
+const mainFile  = $id('mainFile');
+const coverFile = $id('coverFile');
+const subsFile  = $id('subsFile');
 
-  const nickname     = $id('nickname');
-  const headline     = $id('headline');
-  const bio          = $id('bio');
-  const realName     = $id('realName');
-  const realNamePublic = $id('realNamePublic');
-  const age          = $id('age');
-  const agePublic    = $id('agePublic');
-  const careerYears  = $id('careerYears');
-  const primaryLink  = $id('primaryLink');
-  const visibility   = $id('visibility');
-  const openToOffers = $id('openToOffers');
-  const linksWrap    = $id('linksWrap');
-  const addLinkBtn   = $id('addLinkBtn');
-  const tagInput     = $id('tagInput');
-  const tagList      = $id('tagList');
-  const subsGrid     = $id('subsGrid');
-  const namePreview  = $id('namePreview');
-  const headlinePreview = $id('headlinePreview');
+const mainImgEl  = $id('mainPrev');
+const coverImgEl = $id('coverPrev');
 
-  // state
-  const state = {
-    id: parseQS('id') || '',
-    mainThumbnailUrl: '',
-    coverImageUrl: '',
-    subThumbnails: [],
-    tags: [],
-    pending: 0
-  };
-  const bump = (n)=>{ state.pending = Math.max(0, state.pending + n); };
+const mainTrigger  = $id('mainTrigger');
+const coverTrigger = $id('coverTrigger');
+const subsTrigger  = $id('subsTrigger');
 
-  function setPreview(kind, url){
-    if(!url) return;
-    if(kind==='main' && mainImgEl){
-      mainImgEl.src = url; mainImgEl.style.display = ''; mainImgEl.removeAttribute?.('hidden');
-      mainTrigger?.classList.remove('is-empty');
-    }
-    if(kind==='cover' && coverImgEl){
-      coverImgEl.src = url; coverImgEl.style.display = ''; coverImgEl.removeAttribute?.('hidden');
-      coverTrigger?.classList.remove('is-empty');
-    }
-  }
+const nickname     = $id('nickname');
+const headline     = $id('headline');
+const bio          = $id('bio');
+const realName     = $id('realName');
+const realNamePublic = $id('realNamePublic');
+const age          = $id('age');
+const agePublic    = $id('agePublic');
+const careerYears  = $id('careerYears');
+const primaryLink  = $id('primaryLink');
+const visibility   = $id('visibility');
+const openToOffers = $id('openToOffers');
 
-  // pickers
-  const safeClick = (el, fn)=> safeBind(el, fn);
-  safeClick(mainTrigger, ()=> mainFile?.click());
-  safeClick(coverTrigger,()=> coverFile?.click());
-  safeClick(subsTrigger, ()=> subsFile?.click());
+const linksWrap    = $id('linksWrap');
+const addLinkBtn   = $id('addLinkBtn');
 
-  // live previews
-  function syncName(){ if(namePreview && nickname) namePreview.textContent = nickname.value.trim() || '닉네임'; }
-  function syncHeadline(){ if(headlinePreview && headline) headlinePreview.textContent = headline.value.trim() || ''; }
-  nickname?.addEventListener('input', syncName);
-  headline?.addEventListener('input', syncHeadline);
-  syncName(); syncHeadline();
+const tagInput     = $id('tagInput');
+const tagList      = $id('tagList');
+
+const subsGrid     = $id('subsGrid');
+const namePreview  = $id('namePreview');
+const headlinePreview = $id('headlinePreview');
+
+/* ---------- pickers ---------- */
+// 기본 바인딩
+safeBind(mainTrigger,  ()=> mainFile?.click());
+safeBind(coverTrigger, ()=> coverFile?.click());
+safeBind(subsTrigger,  ()=> subsFile?.click());
+
+// 모바일/오버레이 클릭 누락 방지용 위임 (버블 캡쳐)
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('#mainTrigger, #coverTrigger, #subsTrigger, #subsTrigger2');
+  if (!el) return;
+  e.preventDefault();
+  if (el.id === 'mainTrigger')  return mainFile?.click();
+  if (el.id === 'coverTrigger') return coverFile?.click();
+  // subsTrigger2는 drawSubs()에서 동적 생성
+  if (el.id === 'subsTrigger' || el.id === 'subsTrigger2') return subsFile?.click();
+}, true /* capture */);
 
   // uploads
   mainFile?.addEventListener('change', async (e)=>{
