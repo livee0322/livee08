@@ -39,7 +39,9 @@
     <section class="mp-block">
       <div class="mp-block-head">
         <h3>쇼호스트 메뉴</h3>
-        <a href="myportfolio.html" class="btn outline" id="goMyPortfolio"><i class="ri-layout-grid-line"></i> 내 포트폴리오</a>
+        <a href="myportfolio.html" class="btn outline guard-link" data-guard="host" id="goMyPortfolio">
+          <i class="ri-layout-grid-line"></i> 내 포트폴리오
+        </a>
       </div>
       <ul class="mp-list">
         <li>
@@ -85,6 +87,68 @@
       </ul>
     </section>
 
+    <!-- 브랜드 메뉴 (항상 노출, 클릭 시 권한 가드) -->
+    <section class="mp-block">
+      <div class="mp-block-head">
+        <h3>브랜드 메뉴</h3>
+        <a href="recruit-new.html" class="btn outline guard-link" data-guard="brand">
+          <i class="ri-add-circle-line"></i> 공고 올리기
+        </a>
+      </div>
+      <ul class="mp-list">
+        <li>
+          <a class="mp-item guard-link" data-guard="brand" href="recruit-new.html">
+            <i class="ri-megaphone-line"></i>
+            <div>
+              <div class="title">공고 올리기</div>
+              <div class="meta">라이브 캠페인/출연 공고 등록</div>
+            </div>
+            <i class="ri-arrow-right-s-line arrow"></i>
+          </a>
+        </li>
+        <li>
+          <a class="mp-item guard-link" data-guard="brand" href="recruit-manage.html">
+            <i class="ri-file-list-2-line"></i>
+            <div>
+              <div class="title">내 공고 관리</div>
+              <div class="meta">진행/마감/정산 상태</div>
+            </div>
+            <i class="ri-arrow-right-s-line arrow"></i>
+          </a>
+        </li>
+        <li>
+          <a class="mp-item guard-link" data-guard="brand" href="applications-brand.html">
+            <i class="ri-team-line"></i>
+            <div>
+              <div class="title">지원자 관리</div>
+              <div class="meta">대기/합격/계약/결제(에스크로)</div>
+            </div>
+            <i class="ri-arrow-right-s-line arrow"></i>
+          </a>
+        </li>
+        <li>
+          <a class="mp-item guard-link" data-guard="brand" href="outbox-proposals.html">
+            <i class="ri-mail-send-line"></i>
+            <div>
+              <div class="title">보낸 제안</div>
+              <div class="meta">쇼호스트에게 보낸 제안 내역</div>
+            </div>
+            <i class="ri-arrow-right-s-line arrow"></i>
+          </a>
+        </li>
+        <li>
+          <a class="mp-item guard-link" data-guard="login" href="bookmarks-portfolios.html">
+            <i class="ri-star-line"></i>
+            <div>
+              <div class="title">찜한 포트폴리오</div>
+              <div class="meta">관심 쇼호스트 모아보기</div>
+            </div>
+            <i class="ri-arrow-right-s-line arrow"></i>
+          </a>
+        </li>
+      </ul>
+    </section>
+
     <!-- 설정 -->
     <section class="mp-block">
       <div class="mp-block-head"><h3>설정</h3></div>
@@ -112,11 +176,11 @@
       </ul>
     </section>
 
-    <!-- 권한 가드(로그인/호스트 권한 필요 시 노출) -->
+    <!-- 권한 가드(로그인/호스트/브랜드 권한 필요 시 노출) -->
     <div class="guard" id="mpGuard" aria-hidden="true">
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="guardTitle">
         <h3 id="guardTitle">권한이 필요합니다</h3>
-        <p id="guardDesc">이 메뉴를 이용하려면 로그인 또는 쇼호스트 권한이 필요해요.</p>
+        <p id="guardDesc">이 메뉴를 이용하려면 로그인 또는 권한이 필요해요.</p>
         <div class="actions">
           <button class="btn outline" id="guardClose">닫기</button>
           <a href="login.html" class="btn" id="guardAction">로그인하기</a>
@@ -147,6 +211,9 @@
     // 기본 아바타
     elAvatar.src = CFG.placeholderThumb || 'default.jpg';
 
+    // 현재 URL (login returnTo용)
+    const here = encodeURIComponent(location.pathname + location.search + location.hash);
+
     // 프로필 불러오기(여러 후보 엔드포인트 시도)
     async function fetchMe(){
       if(!token) return null;
@@ -172,7 +239,8 @@
         return;
       }
       elName.textContent = u.name || u.nickname || '사용자';
-      elRole.textContent = (Array.isArray(u.roles)? u.roles.join(', ') : (u.role || '회원'));
+      const roles = Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : []);
+      elRole.textContent = roles.length ? roles.join(', ') : '회원';
       if(u.avatarUrl) elAvatar.src = u.avatarUrl;
       $id('mpAuthTitle').textContent = '로그아웃';
     }
@@ -185,34 +253,63 @@
         localStorage.removeItem('liveeToken');
         location.reload();
       }else{
-        location.href = 'login.html';
+        location.href = 'login.html?returnTo=' + here;
       }
     });
 
-    // 가드(로그인/호스트 권한)
+    // 가드(로그인/호스트/브랜드 권한)
     const guard = $id('mpGuard');
     const guardClose = $id('guardClose');
+    const guardTitle = $id('guardTitle');
+    const guardDesc = $id('guardDesc');
+    const guardAction = $id('guardAction');
+
     guardClose?.addEventListener('click', ()=> guard.classList.remove('show'));
+
+    function hasRole(me, role){
+      if(!me) return false;
+      const roles = (me.roles && Array.isArray(me.roles)) ? me.roles : (me.role ? [me.role] : []);
+      return roles.includes(role) || roles.includes('admin');
+    }
+
     function needGuard(kind, me){
       if(kind === 'login') return !me;
-      if(kind === 'host')  {
-        const roles = (me && (me.roles || [me.role])).filter(Boolean) || [];
-        return roles.indexOf('showhost') === -1 && roles.indexOf('admin') === -1;
-      }
+      if(kind === 'host')  return !hasRole(me, 'showhost');
+      if(kind === 'brand') return !hasRole(me, 'brand');
       return false;
     }
+
+    function setGuardUI(kind){
+      if(kind === 'login'){
+        guardTitle.textContent = '로그인이 필요합니다';
+        guardDesc.textContent = '로그인 후 이용해 주세요.';
+        guardAction.textContent = '로그인하기';
+        guardAction.href = 'login.html?returnTo=' + here;
+      }else if(kind === 'host'){
+        guardTitle.textContent = '쇼호스트 권한이 필요합니다';
+        guardDesc.textContent = '쇼호스트 인증 후 이용하실 수 있어요.';
+        guardAction.textContent = '권한 문의';
+        guardAction.href = 'help.html#host';
+      }else if(kind === 'brand'){
+        guardTitle.textContent = '브랜드 권한이 필요합니다';
+        guardDesc.textContent = '브랜드 인증 후 이용하실 수 있어요.';
+        guardAction.textContent = '권한 문의';
+        guardAction.href = 'help.html#brand';
+      }else{
+        guardTitle.textContent = '권한이 필요합니다';
+        guardDesc.textContent = '이 메뉴를 이용하려면 권한이 필요해요.';
+        guardAction.textContent = '확인';
+        guardAction.href = '#';
+      }
+    }
+
     function bindGuards(me){
       document.querySelectorAll('.guard-link').forEach(a=>{
         a.addEventListener('click', (e)=>{
           const kind = a.dataset.guard;
           if(needGuard(kind, me)){
             e.preventDefault();
-            $id('guardTitle').textContent = (kind === 'host') ? '쇼호스트 권한이 필요합니다' : '로그인이 필요합니다';
-            $id('guardDesc').textContent = (kind === 'host')
-              ? '쇼호스트 인증 후 이용하실 수 있어요.'
-              : '로그인 후 이용해 주세요.';
-            $id('guardAction').textContent = (kind === 'host') ? '권한 문의' : '로그인하기';
-            $id('guardAction').href = (kind === 'host') ? 'help.html' : 'login.html';
+            setGuardUI(kind);
             guard.classList.add('show');
           }
         });
