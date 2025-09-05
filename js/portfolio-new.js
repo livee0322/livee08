@@ -1,15 +1,15 @@
-/* Portfolio Create – v2.9.6 (portfolio-test endpoint, implicit-submit guard) */
+/* Portfolio Create – v2.9.6 (portfolio-test endpoint, implicit-submit guard, server-error expose) */
 (() => {
   const form = document.getElementById('pfForm');
   if (!form) return;
 
-  /* ---- block accidental form submits (mobile/webview quirks) ---- */
+  // 모바일/웹뷰 암묵 submit 차단
   form.addEventListener('submit', (e)=> e.preventDefault());
 
   /* ---------- config ---------- */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const ENTITY = 'portfolio-test'; // ✅ 서버 라우터에 맞춤
+  const ENTITY = 'portfolio-test'; // 서버 라우터에 맞춤
   const THUMB = CFG.thumb || {
     square:  "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
     cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto",
@@ -76,8 +76,8 @@
     if(!TOKEN) return null;
     const headersMe = { 'Authorization':'Bearer '+TOKEN };
     const candidates = [
-      `${API_BASE}/users/me`, // 신규
-      `/api/auth/me`,         // 레거시
+      `${API_BASE}/users/me`,
+      `/api/auth/me`,
     ];
     for (const url of candidates){
       try{
@@ -416,22 +416,8 @@
     if(!data) return '유효성 오류';
     if(Array.isArray(data.details) && data.details.length){
       const d = data.details[0];
-      const field = d.param || d.field || '';
-      const map = {
-        nickname: '닉네임을 확인해주세요.',
-        displayName: '닉네임(표시명)을 확인해주세요.',
-        headline: '한 줄 소개를 확인해주세요.',
-        bio: '상세 소개를 50자 이상 입력해주세요.',
-        mainThumbnailUrl: '메인 썸네일을 업로드해주세요.',
-        mainThumbnail: '메인 썸네일을 업로드해주세요.',
-        visibility: '공개 범위를 확인해주세요.',
-        tags: '태그는 최대 8개까지 가능합니다.',
-        subThumbnails: '서브 썸네일은 최대 5장까지 가능합니다.',
-        liveLinks: '라이브 링크 형식을 확인해주세요.',
-        primaryLink: '대표 링크 형식을 확인해주세요.',
-      };
-      if(map[field]) return map[field];
-      if(d.msg) return String(d.msg).slice(0, 80);
+      const field = d.param || d.field || d.path || '';
+      if(d.msg) return `[${field||'?'}] ${String(d.msg)}`;
     }
     if(data.message && data.message !== 'VALIDATION_FAILED') return data.message;
     return '유효성 오류';
@@ -453,6 +439,7 @@
       const data = await res.json().catch(()=> ({}));
 
       if(!res.ok || data.ok === false){
+        console.error('[server error raw]', data);
         throw new Error(formatServerError(data) || `HTTP_${res.status}`);
       }
 
