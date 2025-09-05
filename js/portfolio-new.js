@@ -1,17 +1,15 @@
-/* Portfolio Create – v2.9.5
-   - 통일 스키마 대응(draft 빈값 허용, publish 필수 4종)
-   - fetchMe 후보 정리(/users/me, /api/auth/me)
-   - 빈 문자열은 undefined로 전송하여 검증 스킵
-   - 이미지 피커 위임(모바일 오버레이 대응)
-*/
+/* Portfolio Create – v2.9.6 (portfolio-test endpoint, implicit-submit guard) */
 (() => {
   const form = document.getElementById('pfForm');
   if (!form) return;
 
+  /* ---- block accidental form submits (mobile/webview quirks) ---- */
+  form.addEventListener('submit', (e)=> e.preventDefault());
+
   /* ---------- config ---------- */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const ENTITY = 'portfolios'; // ✅ 정식 라우트 사용
+  const ENTITY = 'portfolio-test'; // ✅ 서버 라우터에 맞춤
   const THUMB = CFG.thumb || {
     square:  "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
     cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto",
@@ -357,7 +355,6 @@
       if(!headline?.value.trim()){ say('한 줄 소개를 입력해주세요'); return false; }
       if(!bio?.value.trim() || bio.value.trim().length<50){ say('상세 소개를 50자 이상 입력해주세요'); return false; }
     }
-    // URL 형식만 사전 체크
     const rows = Array.from(linksWrap?.querySelectorAll('.link-row') || []);
     for(const row of rows){
       const url = row.querySelector('.l-url')?.value.trim();
