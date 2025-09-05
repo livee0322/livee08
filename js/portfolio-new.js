@@ -1,8 +1,8 @@
-/* Portfolio Create – v2.9.4
-   - unified schema (nickname/headline/bio/mainThumbnailUrl)
-   - robust image pickers (overlay/capture delegation)
-   - clear validation + server 422 details surfaced
-   - fetchMe() 후보 정리: /api/v1/users/me, /api/auth/me (404 소음 제거)
+/* Portfolio Create – v2.9.5
+   - 통일 스키마 대응(draft 빈값 허용, publish 필수 4종)
+   - fetchMe 후보 정리(/users/me, /api/auth/me)
+   - 빈 문자열은 undefined로 전송하여 검증 스킵
+   - 이미지 피커 위임(모바일 오버레이 대응)
 */
 (() => {
   const form = document.getElementById('pfForm');
@@ -11,6 +11,7 @@
   /* ---------- config ---------- */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
+  const ENTITY = 'portfolios'; // ✅ 정식 라우트 사용
   const THUMB = CFG.thumb || {
     square:  "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
     cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto",
@@ -76,13 +77,10 @@
   async function fetchMe(){
     if(!TOKEN) return null;
     const headersMe = { 'Authorization':'Bearer '+TOKEN };
-
-    // ✅ 실제 존재하는 후보만 시도
     const candidates = [
       `${API_BASE}/users/me`, // 신규
-      `/api/auth/me`,         // 레거시 고정 경로
+      `/api/auth/me`,         // 레거시
     ];
-
     for (const url of candidates){
       try{
         const r = await fetch(url, { headers: headersMe });
@@ -125,7 +123,7 @@
     return true;
   };
 
-  /* ---------- inputs / elements (single declaration) ---------- */
+  /* ---------- inputs ---------- */
   const mainFile  = $id('mainFile');
   const coverFile = $id('coverFile');
   const subsFile  = $id('subsFile');
@@ -183,21 +181,21 @@
     }
   }
 
-  /* ---------- pickers (with delegation for overlays) ---------- */
-  safeBind(mainTrigger,  ()=> mainFile?.click());
-  safeBind(coverTrigger, ()=> coverFile?.click());
-  safeBind(subsTrigger,  ()=> subsFile?.click());
-
-  document.addEventListener('click', (e) => {
+  /* ---------- pickers (위임 포함) ---------- */
+  const delegate = (e) => {
     const el = e.target.closest('#mainTrigger, #coverTrigger, #subsTrigger, #subsTrigger2');
     if (!el) return;
     e.preventDefault();
     if (el.id === 'mainTrigger')  return mainFile?.click();
     if (el.id === 'coverTrigger') return coverFile?.click();
     if (el.id === 'subsTrigger' || el.id === 'subsTrigger2') return subsFile?.click();
-  }, true);
+  };
+  safeBind(mainTrigger,  ()=> mainFile?.click());
+  safeBind(coverTrigger, ()=> coverFile?.click());
+  safeBind(subsTrigger,  ()=> subsFile?.click());
+  document.addEventListener('click', delegate, true);
 
-  /* ---------- live previews (nickname/headline) ---------- */
+  /* ---------- live previews ---------- */
   function syncName(){ if(namePreview && nickname) namePreview.textContent = nickname.value.trim() || '닉네임'; }
   function syncHeadline(){ if(headlinePreview && headline) headlinePreview.textContent = headline.value.trim() || ''; }
   nickname?.addEventListener('input', syncName);
@@ -278,7 +276,7 @@
       if(!isImgOk(f)) continue;
       const local = URL.createObjectURL(f);
 
-      // 임시 카드 (업로드 대기 표시)
+      // 임시 카드
       const tmp = document.createElement('div');
       tmp.className = 'sub';
       tmp.innerHTML = `<img src="${local}" alt="uploading"/>`;
@@ -304,7 +302,7 @@
     e.target.value='';
   });
 
-  /* ---------- live links & tags ---------- */
+  /* ---------- links & tags ---------- */
   function addLinkRow(v={title:'',url:'',date:''}){
     const row = document.createElement('div');
     row.className='link-row v';
@@ -339,7 +337,7 @@
   tagInput?.addEventListener('keydown', (e)=>{
     if(e.key==='Enter' || e.key===','){
       e.preventDefault();
-      const raw = tagInput.value.trim().replace(/,$/,'');
+      const raw = (tagInput.value || '').trim().replace(/,$/,'');
       if(!raw) return;
       if(tagState.length>=8){ say('태그는 최대 8개'); return; }
       if(tagState.includes(raw)){ tagInput.value=''; return; }
@@ -349,6 +347,8 @@
   addLinkRow(); drawTags();
 
   /* ---------- validate & payload ---------- */
+  const strOrU = (v)=> (v && String(v).trim() ? String(v).trim() : undefined);
+
   function validate(isPublish){
     if(state.pending>0){ say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
     if(isPublish){
@@ -357,13 +357,14 @@
       if(!headline?.value.trim()){ say('한 줄 소개를 입력해주세요'); return false; }
       if(!bio?.value.trim() || bio.value.trim().length<50){ say('상세 소개를 50자 이상 입력해주세요'); return false; }
     }
-    if(primaryLink?.value && !/^https:\/\//.test(primaryLink.value.trim())){
-      say('대표 링크는 https:// 로 시작해야 합니다'); return false;
-    }
+    // URL 형식만 사전 체크
     const rows = Array.from(linksWrap?.querySelectorAll('.link-row') || []);
     for(const row of rows){
       const url = row.querySelector('.l-url')?.value.trim();
       if(url && !/^https:\/\//.test(url)){ say('라이브 URL은 https:// 로 시작해야 합니다'); return false; }
+    }
+    if(primaryLink?.value && primaryLink.value.trim() && !/^https:\/\//.test(primaryLink.value.trim())){
+      say('대표 링크는 https:// 로 시작해야 합니다'); return false;
     }
     return true;
   }
@@ -371,34 +372,39 @@
   function collectPayload(status){
     const rows = Array.from(linksWrap?.querySelectorAll('.link-row') || []);
     const links = rows.map(row=>({
-      title: row.querySelector('.l-title')?.value.trim() || '',
-      url:   row.querySelector('.l-url')?.value.trim() || '',
-      date:  row.querySelector('.l-date')?.value || undefined
+      title: strOrU(row.querySelector('.l-title')?.value),
+      url:   strOrU(row.querySelector('.l-url')?.value),
+      date:  strOrU(row.querySelector('.l-date')?.value)
     })).filter(x=>x.title || x.url);
 
     return {
       type: 'portfolio',
       status,
       visibility: visibility?.value || 'public',
-      nickname: nickname?.value.trim() || '',
-      headline: headline?.value.trim() || '',
-      mainThumbnailUrl: state.mainThumbnailUrl || '',
-      subThumbnails: state.subThumbnails,
-      coverImageUrl: state.coverImageUrl || '',
-      realName: realName?.value.trim() || '',
-      realNamePublic: !!realNamePublic?.checked,
-      careerYears: careerYears?.value ? Number(careerYears.value) : undefined,
-      age: age?.value ? Number(age.value) : undefined,
-      agePublic: !!agePublic?.checked,
-      primaryLink: primaryLink?.value.trim() || '',
+
+      nickname: strOrU(nickname?.value),
+      headline: strOrU(headline?.value),
+      bio:      strOrU(bio?.value),
+
+      mainThumbnailUrl: state.mainThumbnailUrl || undefined,
+      coverImageUrl:    state.coverImageUrl || undefined,
+      subThumbnails:    state.subThumbnails?.filter(Boolean) || [],
+
+      realName:        strOrU(realName?.value),
+      realNamePublic:  !!realNamePublic?.checked,
+      careerYears:     careerYears?.value ? Number(careerYears.value) : undefined,
+      age:             age?.value ? Number(age.value) : undefined,
+      agePublic:       !!agePublic?.checked,
+
+      primaryLink: strOrU(primaryLink?.value),
+
       liveLinks: links,
-      bio: bio?.value.trim() || '',
       tags: state.tags,
       openToOffers: !!openToOffers?.checked
     };
   }
 
-  // 구버전 호환 필드 동시 전송
+  // 구버전 호환 필드 동시 전송(서버 compatBody와 짝)
   function compatPayload(p){
     return {
       ...p,
@@ -425,9 +431,10 @@
         tags: '태그는 최대 8개까지 가능합니다.',
         subThumbnails: '서브 썸네일은 최대 5장까지 가능합니다.',
         liveLinks: '라이브 링크 형식을 확인해주세요.',
+        primaryLink: '대표 링크 형식을 확인해주세요.',
       };
       if(map[field]) return map[field];
-      if(d.msg) return String(d.msg).slice(0, 60);
+      if(d.msg) return String(d.msg).slice(0, 80);
     }
     if(data.message && data.message !== 'VALIDATION_FAILED') return data.message;
     return '유효성 오류';
@@ -443,7 +450,7 @@
 
     try{
       say(isPublish ? '발행 중…' : '임시저장 중…');
-      const url = state.id ? `${API_BASE}/portfolio-test/${state.id}` : `${API_BASE}/portfolio-test`;
+      const url = state.id ? `${API_BASE}/${ENTITY}/${state.id}` : `${API_BASE}/${ENTITY}`;
       const method = state.id ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(payload) });
       const data = await res.json().catch(()=> ({}));
@@ -468,7 +475,7 @@
     if(!state.id) return;
     try{
       say('불러오는 중…');
-      const r = await fetch(`${API_BASE}/portfolio-test/${state.id}`, { headers: headers(false) });
+      const r = await fetch(`${API_BASE}/${ENTITY}/${state.id}`, { headers: headers(false) });
       const j = await r.json().catch(()=>({}));
       if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
       const d = j.data || j;
