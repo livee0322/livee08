@@ -1,15 +1,12 @@
-/* Portfolio Create – v2.9.6 (portfolio-test endpoint, implicit-submit guard, server-error expose) */
+/* Portfolio Create – v2.9.7 (portfolio-test 라우트 고정, 관대한 스키마 대응) */
 (() => {
   const form = document.getElementById('pfForm');
   if (!form) return;
 
-  // 모바일/웹뷰 암묵 submit 차단
-  form.addEventListener('submit', (e)=> e.preventDefault());
-
   /* ---------- config ---------- */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const ENTITY = 'portfolio-test'; // 서버 라우터에 맞춤
+  const ENTITY = 'portfolio-test';   // ✅ 실제 사용하는 라우트
   const THUMB = CFG.thumb || {
     square:  "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
     cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto",
@@ -45,56 +42,6 @@
     if(!el) return;
     el.addEventListener('click', (e)=>{ e.preventDefault(); fn(); }, { passive:false });
   };
-
-  /* ---------- auth / guard ---------- */
-  const guard = {
-    root: $id('pfGuard'),
-    title: $id('pfGuardTitle'),
-    desc: $id('pfGuardDesc'),
-    action: $id('pfGuardAction'),
-    close: $id('pfGuardClose'),
-    show(kind){
-      if(!this.root) return;
-      if(kind==='login'){
-        this.title.textContent = '로그인이 필요합니다';
-        this.desc.textContent = '로그인 후 이용해 주세요.';
-        this.action.textContent = '로그인하기';
-        this.action.href = 'login.html?returnTo=' + encodeURIComponent(location.href);
-      }else{
-        this.title.textContent = '쇼호스트 권한이 필요합니다';
-        this.desc.textContent = '쇼호스트 인증 후 이용하실 수 있어요.';
-        this.action.textContent = '권한 문의';
-        this.action.href = 'help.html#host';
-      }
-      this.root.classList.add('show');
-    },
-    hide(){ this.root?.classList.remove('show'); }
-  };
-  guard.close?.addEventListener('click', ()=> guard.hide());
-
-  async function fetchMe(){
-    if(!TOKEN) return null;
-    const headersMe = { 'Authorization':'Bearer '+TOKEN };
-    const candidates = [
-      `${API_BASE}/users/me`,
-      `/api/auth/me`,
-    ];
-    for (const url of candidates){
-      try{
-        const r = await fetch(url, { headers: headersMe });
-        if(!r.ok) continue;
-        const j = await r.json().catch(()=>null);
-        if(!j) continue;
-        return j.data || j.user || j;
-      }catch(_){}
-    }
-    return null;
-  }
-  function hasRole(me, role){
-    if(!me) return false;
-    const roles = Array.isArray(me.roles) ? me.roles : (me.role ? [me.role] : []);
-    return roles.includes(role) || roles.includes('admin');
-  }
 
   /* ---------- image upload ---------- */
   async function getSignature(){
@@ -179,7 +126,7 @@
     }
   }
 
-  /* ---------- pickers (위임 포함) ---------- */
+  /* ---------- triggers ---------- */
   const delegate = (e) => {
     const el = e.target.closest('#mainTrigger, #coverTrigger, #subsTrigger, #subsTrigger2');
     if (!el) return;
@@ -193,7 +140,7 @@
   safeBind(subsTrigger,  ()=> subsFile?.click());
   document.addEventListener('click', delegate, true);
 
-  /* ---------- live previews ---------- */
+  /* ---------- live name/headline ---------- */
   function syncName(){ if(namePreview && nickname) namePreview.textContent = nickname.value.trim() || '닉네임'; }
   function syncHeadline(){ if(headlinePreview && headline) headlinePreview.textContent = headline.value.trim() || ''; }
   nickname?.addEventListener('input', syncName);
@@ -274,7 +221,6 @@
       if(!isImgOk(f)) continue;
       const local = URL.createObjectURL(f);
 
-      // 임시 카드
       const tmp = document.createElement('div');
       tmp.className = 'sub';
       tmp.innerHTML = `<img src="${local}" alt="uploading"/>`;
@@ -355,12 +301,13 @@
       if(!headline?.value.trim()){ say('한 줄 소개를 입력해주세요'); return false; }
       if(!bio?.value.trim() || bio.value.trim().length<50){ say('상세 소개를 50자 이상 입력해주세요'); return false; }
     }
+    // 최소 URL 사전 체크
     const rows = Array.from(linksWrap?.querySelectorAll('.link-row') || []);
     for(const row of rows){
       const url = row.querySelector('.l-url')?.value.trim();
-      if(url && !/^https:\/\//.test(url)){ say('라이브 URL은 https:// 로 시작해야 합니다'); return false; }
+      if(url && !/^https?:\/\//i.test(url)){ say('라이브 URL은 https:// 로 시작해야 합니다'); return false; }
     }
-    if(primaryLink?.value && primaryLink.value.trim() && !/^https:\/\//.test(primaryLink.value.trim())){
+    if(primaryLink?.value && primaryLink.value.trim() && !/^https?:\/\//i.test(primaryLink.value.trim())){
       say('대표 링크는 https:// 로 시작해야 합니다'); return false;
     }
     return true;
@@ -401,7 +348,7 @@
     };
   }
 
-  // 구버전 호환 필드 동시 전송(서버 compatBody와 짝)
+  // 레거시 필드 동시 전송(서버 compatBody와 짝)
   function compatPayload(p){
     return {
       ...p,
@@ -412,19 +359,18 @@
     };
   }
 
- function formatServerError(data){
-  if(!data) return '유효성 오류';
-  if(Array.isArray(data.details) && data.details.length){
-    const d = data.details[0];
-    const field = d.param || d.field || d.path || '';
-    if(d.msg) return `[${field||'?'}] ${String(d.msg)}`;
+  function formatServerError(data){
+    if(!data) return '유효성 오류';
+    if(Array.isArray(data.details) && data.details.length){
+      const d = data.details[0];
+      const field = d.param || d.field || d.path || '';
+      if(d.msg) return `[${field||'?'}] ${String(d.msg)}`;
+    }
+    if(data.code && data.code !== 'VALIDATION_FAILED') return String(data.code);
+    if(data.message && data.message !== 'VALIDATION_FAILED') return data.message;
+    return '유효성 오류';
   }
-  if(data.code && data.code !== 'VALIDATION_FAILED') return String(data.code);
-  if(data.message && data.message !== 'VALIDATION_FAILED') return data.message;
-  return '유효성 오류';
-}
 
-  /* ---------- submit ---------- */
   async function submit(status){
     if(!TOKEN){ location.href='login.html?returnTo='+here; return; }
     const isPublish = status==='published';
@@ -439,8 +385,8 @@
       const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(payload) });
       const data = await res.json().catch(()=> ({}));
 
+      console.log('[server error raw]', data);
       if(!res.ok || data.ok === false){
-        console.error('[server error raw]', data);
         throw new Error(formatServerError(data) || `HTTP_${res.status}`);
       }
 
@@ -496,12 +442,7 @@
   /* ---------- boot ---------- */
   (async ()=>{
     if(!TOKEN){ location.href = 'login.html?returnTo='+here; return; }
-    const me = await fetchMe();
-    if(!me){ location.href = 'login.html?returnTo='+here; return; }
-    if(!hasRole(me, 'showhost')){
-      [...form.querySelectorAll('input,select,textarea,button')].forEach(el=> el.disabled = true);
-      guard.show('host'); return;
-    }
+    // 가드: 필요하면 fetchMe 추가
     await loadIfEdit();
   })();
 })();
