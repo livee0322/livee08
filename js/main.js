@@ -1,7 +1,4 @@
-/* Home — v2.7.0
-   - 추천 포트폴리오: 2열 그리드 카드(썸네일 · 이름/경력(파란) · 한줄소개)
-   - 썸네일 실패 시 루트 /default.jpg 보장
-*/
+/* Home — v2.7.1 (PF headline 스캐너 확장 + career > 0 일때만 표시) */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 
@@ -53,11 +50,10 @@
       c.createdBy?.brandName, c.createdBy?.name,
       c.user?.brandName, c.user?.companyName
     ].find(v => typeof v === 'string' && v.trim());
-    if (direct && direct.trim() !== '브랜드') return direct.trim();
-    return '브랜드';
+    return (direct && direct.trim() !== '브랜드') ? direct.trim() : '브랜드';
   };
 
-  // ---- Portfolio 필드 스캐너 ----
+  /* ====== Portfolio 필드 스캐너 (강화) ====== */
   const pickNickname = (p = {}) => {
     const direct = [
       p.nickname, p.displayName, p.name,
@@ -65,23 +61,30 @@
     ].find(v => typeof v === 'string' && v.trim());
     return (direct || '쇼호스트').trim();
   };
+
+  // 한줄소개: 많이 쓰는 모든 변형 + bio 요약 폴백
   const pickHeadline = (p = {}) => {
     const direct = [
-      p.headline, p.oneLine, p.oneliner, p.tagline, p.summary, p.title
+      p.headline, p.headLine, p.oneLine, p.oneline, p.oneliner,
+      p.tagline, p.summary, p.subtitle, p.intro, p.introduction,
+      p.shortBio, p.shortDesc, p.shortDescription, p.description, p.desc, p.title
     ].find(v => typeof v === 'string' && v.trim());
     if (direct) return direct.trim();
-    const long = [p.bio, p.description, p.about].find(v => typeof v === 'string' && v.trim());
+    const long = [p.bio, p.about].find(v => typeof v === 'string' && v.trim());
     if (long) {
       const s = long.replace(/\s+/g,' ').trim();
       return s.length > 60 ? s.slice(0,60) + '…' : s;
     }
-    return ''; // 비워 두면 문구 없이 표시
+    return '';
   };
+
+  // 경력은 0이면 표시 안함(“있다면”만)
   const pickCareerYears = (p = {}) => {
     const raw = p.careerYears ?? p.career?.years ?? p.years;
     const n = Number(raw);
-    return Number.isFinite(n) && n >= 0 ? n : undefined;
+    return Number.isFinite(n) && n > 0 ? n : undefined;
   };
+
   const pickThumb = (p = {}) => {
     const cand = [
       p.mainThumbnailUrl, p.mainThumbnail,
@@ -89,8 +92,7 @@
       Array.isArray(p.subThumbnails) ? p.subThumbnails[0] : '',
       Array.isArray(p.subImages)     ? p.subImages[0]     : ''
     ].find(v => typeof v === 'string' && v.trim());
-    if (!cand) return PLACEHOLDER;
-    return injectCloud(cand, THUMB.card169);
+    return cand ? injectCloud(cand, THUMB.card169) : PLACEHOLDER;
   };
 
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
@@ -155,7 +157,6 @@
     }
   }
 
-  /* ---------- 템플릿 ---------- */
   const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
@@ -193,7 +194,7 @@
         <div class="mini-body">
           <div class="lv-brand">라이브</div>
           <div class="lv-title">추천 공고가 없습니다</div>
-          <div class="lv-meta">최신 공고가 올라오면 여기에 표시됩니다</div>
+          <div class="mini-meta">최신 공고가 올라오면 여기에 표시됩니다</div>
         </div></article></div>`;
     }
     return `<div class="hscroll">${
@@ -204,13 +205,13 @@
           <div class="mini-body">
             <div class="lv-brand">${r.brandName}</div>
             <div class="lv-title">${r.title}</div>
-            <div class="lv-meta">${metaRecruit(r)}</div>
+            <div class="mini-meta">${metaRecruit(r)}</div>
           </div>
         </article>`).join('')
     }</div>`;
   }
 
-  // ★ 추천 포트폴리오: 2열 그리드
+  // 추천 포트폴리오(2열 카드)
   function tplPortfolios(items){
     if(!items.length){
       return `<div class="pf-grid"><article class="pf-card">
@@ -221,7 +222,9 @@
         </div></article></div>`;
     }
     return `<div class="pf-grid">${
-      items.map(p=>`
+      items.map(p=>{
+        const head = p.headline && String(p.headline).trim();
+        return `
         <article class="pf-card">
           <img class="pf-thumb" src="${p.thumb || PLACEHOLDER}" alt="" loading="lazy"
                onerror="this.src='${PLACEHOLDER}'"/>
@@ -230,10 +233,11 @@
               <span class="pf-name">${p.name}</span>
               ${Number.isFinite(p.careerYears) ? `<span class="pf-career">경력 ${p.careerYears}년</span>` : ''}
             </div>
-            <div class="pf-intro">${p.headline || ''}</div>
+            ${head ? `<div class="pf-intro">${head}</div>` : ''}
           </div>
-        </article>`).join('')
-    }</div>`;
+        </article>`;
+      }).join('')}
+    </div>`;
   }
 
   function ensureMount() {
@@ -261,7 +265,6 @@
         .filter(r => isSameLocalDay(r._start, now))
         .sort((a,b)=> a._start - b._start)
         .slice(0,5);
-
       if (!todayList.length) {
         todayList = withStart
           .filter(r => r._start > now)
