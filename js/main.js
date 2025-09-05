@@ -1,7 +1,7 @@
-<script>
 /* Home — v2.6
-   - recruit-test: 브랜드명 강제 통일 + 라인업 폴백 유지
-   - portfolio-test: 추천 포트폴리오 섹션 추가
+   - recruit-test: 라인업/추천 공고
+   - portfolio-test: 추천 포트폴리오
+   - 외부 JS 파일용: <script> 태그 없음
 */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -9,9 +9,9 @@
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const EP = CFG.endpoints || {};
-  const EP_RECRUITS   = EP.recruits    || '/recruit-test?status=published&limit=50';
-  const EP_PORTFOLIOS = EP.portfolios  || '/portfolio-test?status=published&limit=24';
-  const PF_BASE       = EP.portfolioBase || '/portfolio-test'; // 상세 링크 만들 때 사용(선택)
+  const EP_RECRUITS   = EP.recruits      || '/recruit-test?status=published&limit=50';
+  const EP_PORTFOLIOS = EP.portfolios    || '/portfolio-test?status=published&limit=24';
+  const PF_BASE       = EP.portfolioBase || '/portfolio-test';
 
   const placeholder = CFG.placeholderThumb || '';
   const thumbOr = (src, seed='lv') =>
@@ -32,7 +32,7 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
-  /* ── 브랜드명(Recruit) : 변형 흡수 ── */
+  // 브랜드명(Recruit)
   const pickBrandName = (c = {}) => {
     const direct = [
       c.brandName, c.brandname,
@@ -60,7 +60,7 @@
     return found && found !== '브랜드' ? found : '브랜드';
   };
 
-  /* ── 닉네임(Portfolio) : 변형 흡수 ── */
+  // 닉네임(Portfolio)
   const pickNickname = (p = {}) => {
     const direct = [
       p.nickname, p.displayName, p.name,
@@ -70,7 +70,7 @@
     return (direct || '쇼호스트').trim();
   };
 
-  /* ── 시간: shootDate 없으면 closeAt→createdAt 폴백 ── */
+  // 라인업 시간 계산
   const parseStartDate = (shootDate, shootTime, fallbackISO) => {
     let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
     if (!d || isNaN(d)) return null;
@@ -84,7 +84,6 @@
   const isSameLocalDay = (a, b=new Date()) =>
     a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 
-  /* ── 데이터 ── */
   async function fetchJSON(url){
     const res = await fetch(url, { headers:{'Accept':'application/json'} });
     const data = await res.json().catch(()=>({}));
@@ -134,7 +133,6 @@
     }
   }
 
-  /* ── 메타 문자열 ── */
   const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
@@ -142,7 +140,6 @@
   };
   const metaPortfolio = it => (it.tags.length ? `#${it.tags.join(' #')}` : '태그 없음');
 
-  /* ── 템플릿 ── */
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
@@ -227,53 +224,60 @@
 
   async function render(){
     const root = ensureMount();
+    try {
+      const [recruitsAll, pfsAll] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
 
-    // 동시에 불러오기
-    const [recruitsAll, pfsAll] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
+      const withStart = recruitsAll.map(r => ({
+        ...r,
+        _start: parseStartDate(r.shootDate, r.shootTime, r.closeAt || r.createdAt)
+      })).filter(r => r._start instanceof Date && !isNaN(r._start));
 
-    // 라인업 계산
-    const withStart = recruitsAll.map(r => ({
-      ...r,
-      _start: parseStartDate(r.shootDate, r.shootTime, r.closeAt || r.createdAt)
-    })).filter(r => r._start instanceof Date && !isNaN(r._start));
-
-    const now = new Date();
-    let todayList = withStart
-      .filter(r => isSameLocalDay(r._start, now))
-      .sort((a,b)=> a._start - b._start)
-      .slice(0,5);
-
-    if (!todayList.length) {
-      todayList = withStart
-        .filter(r => r._start > now)
+      const now = new Date();
+      let todayList = withStart
+        .filter(r => isSameLocalDay(r._start, now))
         .sort((a,b)=> a._start - b._start)
         .slice(0,5);
+
+      if (!todayList.length) {
+        todayList = withStart
+          .filter(r => r._start > now)
+          .sort((a,b)=> a._start - b._start)
+          .slice(0,5);
+      }
+
+      const latestRecruits = [...recruitsAll]
+        .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+        .slice(0, 10);
+
+      const featuredPF = [...pfsAll]
+        .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+        .slice(0, 12);
+
+      root.innerHTML = `
+        <div class="section">
+          <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="index.html#recruits">더보기</a></div>
+          ${tplLineup(todayList)}
+        </div>
+
+        <div class="section">
+          <div class="section-head"><h2>추천 공고</h2><a class="more" href="index.html#recruits">더보기</a></div>
+          ${tplRecruits(latestRecruits)}
+        </div>
+
+        <div class="section">
+          <div class="section-head"><h2>추천 포트폴리오</h2><a class="more" href="index.html#portfolios">더보기</a></div>
+          ${tplPortfolios(featuredPF)}
+        </div>
+      `;
+      console.log('[HOME] recruits:', recruitsAll.length, 'portfolios:', pfsAll.length);
+    } catch (e) {
+      console.error('[HOME] render error:', e);
+      root.innerHTML = `
+        <div class="section"><div class="section-head"><h2>오늘의 라이브 라인업</h2></div>${tplLineup([])}</div>
+        <div class="section"><div class="section-head"><h2>추천 공고</h2></div>${tplRecruits([])}</div>
+        <div class="section"><div class="section-head"><h2>추천 포트폴리오</h2></div>${tplPortfolios([])}</div>
+      `;
     }
-
-    const latestRecruits = [...recruitsAll]
-      .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
-      .slice(0, 10);
-
-    const featuredPF = [...pfsAll]
-      .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
-      .slice(0, 12);
-
-    root.innerHTML = `
-      <div class="section">
-        <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="index.html#recruits">더보기</a></div>
-        ${tplLineup(todayList)}
-      </div>
-
-      <div class="section">
-        <div class="section-head"><h2>추천 공고</h2><a class="more" href="index.html#recruits">더보기</a></div>
-        ${tplRecruits(latestRecruits)}
-      </div>
-
-      <div class="section">
-        <div class="section-head"><h2>추천 포트폴리오</h2><a class="more" href="index.html#portfolios">더보기</a></div>
-        ${tplPortfolios(featuredPF)}
-      </div>
-    `;
   }
 
   if (document.readyState === 'loading') {
@@ -282,4 +286,3 @@
     render();
   }
 })();
-</script>
