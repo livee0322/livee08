@@ -7,13 +7,12 @@
   /* color */
   --bg:#fff;
   --text:#111;
-  --sub:#6B7280;              /* 중간 텍스트 */
-  --border:#E5E7EB;           /* 연한 테두리 */
-  --muted:#F5F7FA;            /* 연한 배경 */
+  --sub:#6B7280;
+  --border:#E5E7EB;
+  --muted:#F5F7FA;
 
   /* point */
-  --primary:#3B82F6;          /* 파란 */
-  --lavender:#A78BFA;         /* 라벤더 */
+  --primary:#3B82F6;      /* 파란 */
 
   /* layout */
   --container-w: 980px;
@@ -24,7 +23,7 @@
   /* bars */
   --appbar-h: 56px;
   --topTabs-h: 56px;
-  --tabbar-h: 72px;           /* 하단 탭 고정 높이 */
+  --tabbar-h: 72px;
 
   /* safe area */
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -39,18 +38,14 @@ body{
   font-family: SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   line-height:1.5;
 }
-
-/* 링크 공통 */
 a{ color:inherit; text-decoration:none; }
 
-/* 컨테이너: 하단탭 높이만큼 패딩 확보(가려짐 방지) */
 .container{
   max-width:var(--container-w);
   margin:0 auto;
   padding: 12px 16px calc(var(--tabbar-h) + var(--safe-b) + 24px);
 }
 
-/* 섹션 */
 .section{ margin: 18px 0; }
 .section-head{
   display:flex; align-items:center; gap:8px;
@@ -95,148 +90,100 @@ a{ color:inherit; text-decoration:none; }
   color:#111; background:transparent; border:0;
 }
 .lv-topTabs .tab.is-active{
-  color:#fff; background:linear-gradient(90deg,var(--primary),var(--lavender));
+  color:#fff; background:linear-gradient(90deg,var(--primary),#A78BFA);
 }
 
-/* ====== Banner (horizontal scroll, side peeking) ====== */
-.banner-wrap{
-  position: relative;
-  margin: 12px -12px 20px;         /* 좌우 여백을 줄여 카드가 화면 끝을 살짝 넘겨 보이게 */
-  overflow: visible;
-}
-
+/* ====== Banner ====== */
+.banner-wrap{ position: relative; margin: 12px -12px 20px; overflow: visible; }
 .banner{
-  display: flex;
-  gap: 14px;
-  padding: 0 12px;                 /* 스크린 좌우 여백 */
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;   /* 스냅 스크롤 */
-  -webkit-overflow-scrolling: touch;
+  display:flex; gap:14px; padding:0 12px; overflow-x:auto;
+  overscroll-behavior-x:contain; scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
 }
 .banner::-webkit-scrollbar{ display:none; }
-
 .banner-card{
-  scroll-snap-align: start;
-  flex: 0 0 86%;                   /* 한 장이 화면의 약 86% → 옆 카드가 살짝 보임 */
-  min-width: 86%;
-  border-radius: 22px;
-  padding: 22px 20px 24px;
-  color: #000;
-  background: #eee;
-  border: 1px solid rgba(0,0,0,.06);
+  scroll-snap-align:start; flex:0 0 86%; min-width:86%;
+  border-radius:22px; padding:22px 20px 24px;
+  color:#000; background:#eee; border:1px solid rgba(0,0,0,.06);
 }
-.banner-card h3{
-  margin: 0 0 8px;
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -.2px;
-}
-.banner-card p{
-  margin: 0;
-  font-size: 15px;
-  color: #222;
-  opacity: .85;
-}
-
-/* 좌/우 네비 버튼 (선택) */
+.banner-card h3{ margin:0 0 8px; font-size:22px; font-weight:800; letter-spacing:-.2px; }
+.banner-card p{ margin:0; font-size:15px; color:#222; opacity:.85; }
 .banner-nav{
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px; height: 36px;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  border: 1px solid rgba(0,0,0,.12);
-  background: rgba(255,255,255,.85);
-  backdrop-filter: blur(6px);
-  cursor: pointer;
-  z-index: 2;
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:36px; height:36px; display:grid; place-items:center;
+  border-radius:50%; border:1px solid rgba(0,0,0,.12);
+  background:rgba(255,255,255,.85); backdrop-filter:blur(6px); cursor:pointer; z-index:2;
 }
-.banner-nav.prev{ left: 6px; }
-.banner-nav.next{ right: 6px; }
-.banner-nav i{ font-size: 18px; color:#333; }
+.banner-nav.prev{ left:6px; } .banner-nav.next{ right:6px; }
+.banner-nav i{ font-size:18px; color:#333; }
 
-/* ---------- 오늘의 라이브 라인업 (네이버 스타일) ---------- */
+/* ---------- 오늘의 라이브 라인업 ---------- */
 .list-vert{ display:grid; gap:12px; }
 .list-vert .item{
   display:grid; grid-template-columns: 84px 1fr; gap:12px;
   border:1px solid var(--border); border-radius:var(--radius-md);
   padding:10px; background:#fff;
 }
-.list-vert .thumb{
-  width:84px; height:84px; object-fit:cover; border-radius:12px;
-  background:#eee;
-}
+.list-vert .thumb{ width:84px; height:84px; object-fit:cover; border-radius:12px; background:#eee; }
 .list-vert .title{ font-weight:700; margin-top:2px; }
 .list-vert .meta{ font-size:13px; color:var(--sub); margin-top:4px; }
-.list-vert .meta .date{ color:var(--primary); } /* 포인트 색 날짜 */
-
-/* 섹션 타이틀과 목록 사이 여백 */
+.list-vert .meta .date{ color:var(--primary); }
 #home .section:first-child{ margin-top:8px; }
 #home .section .list-vert{ margin-top:8px; }
 
-/* ---------- 추천 공고 (톡딜-오늘공구 스타일) ---------- */
+/* ---------- 추천 공고(가로 스크롤) ---------- */
 .hscroll{
   display:flex; gap:12px; overflow-x:auto; padding:4px 2px 2px 2px;
   scroll-snap-type:x mandatory;
 }
 .hscroll::-webkit-scrollbar{ display:none; }
-
 .card-mini{
-  flex:0 0 85%;                          /* 살짝 더 넓게 보이도록 */
-  display:grid; grid-template-columns: 96px 1fr; gap:10px;
+  flex:0 0 85%; display:grid; grid-template-columns: 96px 1fr; gap:10px;
   border:1px solid var(--border); background:#fff;
-  border-radius:var(--radius-md);
-  padding:10px; scroll-snap-align:center;
+  border-radius:var(--radius-md); padding:10px; scroll-snap-align:center;
 }
-.card-mini .mini-thumb{
-  width:96px; height:96px; border-radius:12px; object-fit:cover; background:#eee;
-}
+.card-mini .mini-thumb{ width:96px; height:96px; border-radius:12px; object-fit:cover; background:#eee; }
 .card-mini .mini-title{ font-weight:700; }
 .card-mini .mini-meta{ font-size:13px; color:var(--sub); margin-top:6px; }
-.card-mini .mini-meta .price{ font-weight:700; color:#111; }
-.card-mini .mini-meta .due{ color:var(--primary); }
+
+/* ---------- 추천 포트폴리오(2열 그리드 카드) ---------- */
+.pf-grid{
+  display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;
+}
+.pf-card{
+  border:1px solid var(--border); background:#fff;
+  border-radius:var(--radius-md); overflow:hidden;
+}
+.pf-card .pf-thumb{
+  width:100%; aspect-ratio:16/9; object-fit:cover; background:#eee; display:block;
+}
+.pf-card .pf-body{ padding:10px 12px 12px; }
+.pf-card .pf-nameRow{ display:flex; align-items:baseline; gap:6px; }
+.pf-card .pf-name{ font-weight:700; }
+.pf-card .pf-career{ font-size:12px; color:var(--primary); font-weight:600; }
+.pf-card .pf-intro{ margin-top:6px; font-size:13px; color:#111; line-height:1.35; }
 
 /* ---------- 하단 탭바 ---------- */
-.lv-tabbar{
-  position:fixed; left:0; right:0; bottom:0; z-index:40;
-  background:#fff; border-top:1px solid var(--border);
-}
-.lv-tabbar__in{
-  height: calc(var(--tabbar-h) + var(--safe-b));
-  padding-bottom: var(--safe-b);
-  display:grid; grid-template-columns:repeat(5,1fr);
-}
-.tbi{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:3px; color:#6B7280; font-size:12px;
-}
+.lv-tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:40; background:#fff; border-top:1px solid var(--border); }
+.lv-tabbar__in{ height: calc(var(--tabbar-h) + var(--safe-b)); padding-bottom: var(--safe-b); display:grid; grid-template-columns:repeat(5,1fr); }
+.tbi{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:#6B7280; font-size:12px; }
 .tbi i{ font-size:22px; line-height:1; }
 .tbi.is-active{ color:var(--primary); }
 
-/* 브랜드/제목/메타 라인 */
+/* 공통 타이포 */
 .lv-brand { font-size:12px; color:#2563eb; font-weight:600; line-height:1.2; }
 .lv-title { font-size:15px; font-weight:700; color:#111; margin-top:2px; line-height:1.35; }
 .lv-when, .lv-meta { margin-top:6px; font-size:12px; color:#6b7280; }
 
-/* 기존 .brand 변수 오타 수정 ( --pri → --primary ) */
-.brand{ color: var(--primary); font-weight: 700; }
-
-
-
-/* 브랜드명 강조 */
-.brand{ color: var(--pri); font-weight: 700; }
-
-/* ---------- 유틸 ---------- */
+/* 유틸 */
 img{ max-width:100%; display:block; }
 hr{ border:none; border-top:1px solid var(--border); margin:16px 0; }
-
-/* (의도치 않은 마커/불릿/장식 제거) */
 ul,ol{ list-style:none; padding:0; margin:0; }
 ::marker{ content:''; }
 
-/* ---------- 반응형 ---------- */
+/* 반응형(선택) */
 @media (min-width:720px){
   .list-vert{ grid-template-columns: 1fr 1fr; }
+  /* 포트폴리오를 2열 고정으로 두고 싶으면 아래 줄은 주석처리 */
+  /* .pf-grid{ grid-template-columns: repeat(3, 1fr); } */
 }
