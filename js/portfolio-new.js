@@ -1,8 +1,8 @@
-/* Portfolio Create – v2.9.3
+/* Portfolio Create – v2.9.4
    - unified schema (nickname/headline/bio/mainThumbnailUrl)
-   - no duplicate consts (fixed)
    - robust image pickers (overlay/capture delegation)
    - clear validation + server 422 details surfaced
+   - fetchMe() 후보 정리: /api/v1/users/me, /api/auth/me (404 소음 제거)
 */
 (() => {
   const form = document.getElementById('pfForm');
@@ -46,10 +46,6 @@
     if(!el) return;
     el.addEventListener('click', (e)=>{ e.preventDefault(); fn(); }, { passive:false });
   };
-  const parseQS = (k)=>{
-    const m = new URLSearchParams(location.search).get(k);
-    return m ? decodeURIComponent(m) : '';
-  };
 
   /* ---------- auth / guard ---------- */
   const guard = {
@@ -64,7 +60,7 @@
         this.title.textContent = '로그인이 필요합니다';
         this.desc.textContent = '로그인 후 이용해 주세요.';
         this.action.textContent = '로그인하기';
-        this.action.href = 'login.html?returnTo=' + here;
+        this.action.href = 'login.html?returnTo=' + encodeURIComponent(location.href);
       }else{
         this.title.textContent = '쇼호스트 권한이 필요합니다';
         this.desc.textContent = '쇼호스트 인증 후 이용하실 수 있어요.';
@@ -80,15 +76,21 @@
   async function fetchMe(){
     if(!TOKEN) return null;
     const headersMe = { 'Authorization':'Bearer '+TOKEN };
-    const cands = ['/me','/auth/me','/users/me'].map(p=>API_BASE+p);
-    for(const url of cands){
+
+    // ✅ 실제 존재하는 후보만 시도
+    const candidates = [
+      `${API_BASE}/users/me`, // 신규
+      `/api/auth/me`,         // 레거시 고정 경로
+    ];
+
+    for (const url of candidates){
       try{
         const r = await fetch(url, { headers: headersMe });
         if(!r.ok) continue;
         const j = await r.json().catch(()=>null);
         if(!j) continue;
         return j.data || j.user || j;
-      }catch(e){}
+      }catch(_){}
     }
     return null;
   }
@@ -505,7 +507,6 @@
     const me = await fetchMe();
     if(!me){ location.href = 'login.html?returnTo='+here; return; }
     if(!hasRole(me, 'showhost')){
-      // 폼 비활성화 + 가드
       [...form.querySelectorAll('input,select,textarea,button')].forEach(el=> el.disabled = true);
       guard.show('host'); return;
     }
