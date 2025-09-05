@@ -38,6 +38,11 @@
 .pf-form .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 .pf-form .btn[disabled]{opacity:.5;cursor:not-allowed}
 
+/* 상태 알림 */
+.notice{display:none;margin:10px 0;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#f8fafc;color:#0f172a}
+.notice.show{display:block}
+.notice.ok{border-color:#10b981;background:#ecfdf5;color:#064e3b}
+
 /* 숨김 파일 인풋 */
 .file-ghost{position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;opacity:0;pointer-events:none}
 
@@ -99,15 +104,16 @@
 
 /* =================== Links (참여 라이브) =================== */
 .links-wrap{display:flex;flex-direction:column;gap:12px}
-.link-card{border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:10px;background:#fafafa}
-.link-card .row{display:grid;grid-template-columns:1fr;gap:8px}
-.link-card .row2{display:grid;grid-template-columns:1.4fr 140px 44px;gap:8px}
-.link-card .row2 .ic{
+.link-row.v{border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:10px;background:#fafafa}
+.link-row.v .row{display:grid;grid-template-columns:1fr;gap:8px}
+.link-row.v .row input{width:100%}
+.link-row.v .row{grid-template-columns:1fr 160px 44px}
+.link-row.v .row .ic{
   width:44px;height:44px;display:grid;place-items:center;
   border:1px solid var(--line,#e5e7eb);border-radius:8px;background:#fff;color:#333;cursor:pointer
 }
 @media (max-width:420px){
-  .link-card .row2{grid-template-columns:1fr 120px 44px}
+  .link-row.v .row{grid-template-columns:1fr 120px 44px}
 }
 
 /* 태그 */
@@ -115,3 +121,9 @@
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line,#e5e7eb);background:#fff}
 .chip .x{width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#eee;line-height:1}
+
+/* 페이지 가드 */
+.guard{position:fixed;inset:0;background:rgba(0,0,0,.25);display:none;align-items:flex-end;justify-content:center}
+.guard.show{display:flex}
+.guard .sheet{width:100%;max-width:480px;margin:0 auto 0;background:#fff;border-radius:16px 16px 0 0;padding:16px;box-shadow:0 -8px 30px rgba(0,0,0,.15)}
+.guard .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
