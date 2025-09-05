@@ -412,16 +412,17 @@
     };
   }
 
-  function formatServerError(data){
-    if(!data) return '유효성 오류';
-    if(Array.isArray(data.details) && data.details.length){
-      const d = data.details[0];
-      const field = d.param || d.field || d.path || '';
-      if(d.msg) return `[${field||'?'}] ${String(d.msg)}`;
-    }
-    if(data.message && data.message !== 'VALIDATION_FAILED') return data.message;
-    return '유효성 오류';
+ function formatServerError(data){
+  if(!data) return '유효성 오류';
+  if(Array.isArray(data.details) && data.details.length){
+    const d = data.details[0];
+    const field = d.param || d.field || d.path || '';
+    if(d.msg) return `[${field||'?'}] ${String(d.msg)}`;
   }
+  if(data.code && data.code !== 'VALIDATION_FAILED') return String(data.code);
+  if(data.message && data.message !== 'VALIDATION_FAILED') return data.message;
+  return '유효성 오류';
+}
 
   /* ---------- submit ---------- */
   async function submit(status){
