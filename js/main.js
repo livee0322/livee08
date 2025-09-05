@@ -1,4 +1,4 @@
-/* Home main.js — v2.7 (unified schema, cloudinary-safe, 2-col portfolio) */
+/* Home main.js — v2.7.1 (unified keys, cloudinary-safe) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -8,19 +8,16 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
 
-  const THUMB = CFG.thumb || {
-    card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
-  };
-
-  const FALLBACK_IMG = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
+  const THUMB169 = "c_fill,g_auto,w_640,h_360,f_auto,q_auto";
+  const FALLBACK = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   const parseList = j => (Array.isArray(j)&&j) || j.items || j.data?.items || j.docs || j.data?.docs || [];
   const money = v => (v==null||v==='') ? '' : Number(v).toLocaleString('ko-KR');
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => { if(!iso) return ''; const d=new Date(iso); return isNaN(d)?String(iso).slice(0,10):`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
 
-  const hasTransform = (u='')=>{ const i=u.indexOf('/upload/'); if(i<0) return false; const first=u.slice(i+8).split('/')[0]||''; return /^([a-zA-Z]+_[^/]+,?)+$/.test(first); };
-  const inject = (u,p)=>{ try{ if(!u) return ''; if(!/\/upload\//.test(u)) return u; if(hasTransform(u)) return u; const i=u.indexOf('/upload/'); return u.slice(0,i+8)+p+'/'+u.slice(i+8); }catch{ return u; } };
+  const hasTransform=(u='')=>{ const i=u.indexOf('/upload/'); if(i<0) return false; const first=u.slice(i+8).split('/')[0]||''; return /^([a-zA-Z]+_[^/]+,?)+$/.test(first); };
+  const inject=(u,p)=>{ try{ if(!u) return ''; if(!/\/upload\//.test(u)) return u; if(hasTransform(u)) return u; const i=u.indexOf('/upload/'); return u.slice(0,i+8)+p+'/'+u.slice(i+8); }catch{ return u; } };
 
   async function getJSON(url){ const r=await fetch(url,{headers:{'Accept':'application/json'}}); const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`); return j; }
 
@@ -31,7 +28,7 @@
       return arr.map((c,i)=>({
         id:c.id||c._id||`${i}`,
         title:c.title || c.recruit?.title || '(제목 없음)',
-        thumb:c.thumbnailUrl || c.coverImageUrl || FALLBACK_IMG,
+        thumb:c.thumbnailUrl || c.coverImageUrl || FALLBACK,
         closeAt:c.closeAt,
         pay:c.recruit?.pay,
         payNegotiable:!!c.recruit?.payNegotiable
@@ -47,10 +44,10 @@
         const raw = p.mainThumbnailUrl || (Array.isArray(p.subThumbnails)&&p.subThumbnails[0]) || p.coverImageUrl || '';
         return {
           id: p.id || p._id || `${i}`,
-          nickname: (p.nickname || p.displayName || p.name || '무명').trim(),
+          nickname: (p.nickname || '무명').trim(),
           careerYears: (p.careerYears ?? undefined),
           headline: (p.headline || '').trim(),
-          thumb: raw ? inject(raw, THUMB.card169) : FALLBACK_IMG
+          thumb: raw ? inject(raw, THUMB169) : FALLBACK
         };
       });
     }catch{ return []; }
@@ -59,7 +56,7 @@
   const tplRecruitsEmpty = `
     <div class="list-vert">
       <article class="item" style="display:grid;grid-template-columns:84px 1fr;gap:12px;border:1px solid var(--border);border-radius:var(--radius-md);padding:10px;background:#fff;">
-        <img class="thumb" src="${FALLBACK_IMG}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:12px;background:#eee;"/>
+        <img class="thumb" src="${FALLBACK}" alt="" style="width:84px;height:84px;object-fit:cover;border-radius:12px;background:#eee;"/>
         <div>
           <div class="lv-brand" style="color:#2563eb;font-weight:600;font-size:12px;">라이브</div>
           <div class="lv-title" style="font-weight:700;margin-top:2px;">등록된 라이브가 없습니다</div>
@@ -73,7 +70,7 @@
     return `<div class="hscroll">${
       items.map(r=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${r.thumb}" alt="" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"/>
+          <img class="mini-thumb" src="${r.thumb}" alt="" onerror="this.onerror=null;this.src='${FALLBACK}'">
           <div class="mini-body">
             <div class="lv-brand">브랜드</div>
             <div class="lv-title">${r.title}</div>
@@ -87,7 +84,7 @@
     if(!items.length){
       return `<div class="pf-grid2">
         <article class="pf-card">
-          <div class="pf-thumbWrap"><img class="pf-thumb" src="${FALLBACK_IMG}" alt=""></div>
+          <div class="pf-thumbWrap"><img class="pf-thumb" src="${FALLBACK}" alt=""></div>
           <div class="pf-name">포트폴리오가 없습니다</div>
           <div class="pf-meta"><span class="hl muted">첫 포트폴리오를 등록해보세요</span></div>
         </article>
@@ -96,9 +93,7 @@
     return `<div class="pf-grid2">${
       items.map(p=>`
         <article class="pf-card" onclick="location.href='portfolio-view.html?id=${encodeURIComponent(p.id)}'">
-          <div class="pf-thumbWrap">
-            <img class="pf-thumb" src="${p.thumb}" alt="" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'">
-          </div>
+          <div class="pf-thumbWrap"><img class="pf-thumb" src="${p.thumb}" alt="" onerror="this.onerror=null;this.src='${FALLBACK}'"></div>
           <div class="pf-name">${p.nickname}</div>
           <div class="pf-meta">
             ${ (p.careerYears || p.careerYears===0) ? `<span class="badge-years">${p.careerYears}년</span>` : '' }
@@ -124,7 +119,8 @@
       .pf-meta{padding:0 12px 12px;font-size:13px;color:#374151;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
       .pf-meta .hl.muted{color:#9CA3AF}
       .badge-years{font-size:12px;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:2px 8px}
-    `; document.head.appendChild(css);
+    `;
+    document.head.appendChild(css);
   }
 
   function mount(){ return $('#home') || document.querySelector('main') || document.body; }
@@ -148,5 +144,9 @@
       </div>`;
   }
 
-  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',render,{once:true}); } else { render(); }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',render,{once:true});
+  }else{
+    render();
+  }
 })();
