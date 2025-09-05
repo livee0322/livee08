@@ -1,30 +1,21 @@
-/* Home — v2.7.1 (PF headline 스캐너 확장 + career > 0 일때만 표시) */
+/* main.js — Home v2.7 (recruits + portfolios) */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
 
+  /* ===== Config ===== */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const EP = CFG.endpoints || {};
-  const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=50';
-  const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=24';
+  const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
+  const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
 
-  const ROOT = (CFG.BASE_PATH || '').replace(/\/$/, '');
-  const PLACEHOLDER = `${ROOT}/default.jpg`;
-  const THUMB = CFG.thumb || {
-    card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
-    square:  "c_fill,g_auto,w_320,h_320,f_auto,q_auto",
-  };
-  const injectCloud = (url, t) => {
-    try{
-      if (!url) return PLACEHOLDER;
-      if (!/\/upload\//.test(url)) return url;
-      const i = url.indexOf('/upload/');
-      const next = url.slice(i+8).split('/')[0] || '';
-      if (/^([a-z]+_[^/]+,?)+$/.test(next)) return url;
-      return url.slice(0,i+8) + t + '/' + url.slice(i+8);
-    }catch{ return PLACEHOLDER; }
-  };
+  /* ===== Image helpers ===== */
+  const FALLBACK_IMG =
+    (CFG.BASE_PATH ? `${CFG.BASE_PATH.replace(/\/$/, '')}/default.jpg` : 'default.jpg');
 
+  const withFallback = (url) => (url && String(url).trim()) || FALLBACK_IMG;
+
+  /* ===== Date / money ===== */
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
     if (!iso) return '';
@@ -40,6 +31,7 @@
   };
   const money = v => (v==null || v==='') ? '' : Number(v).toLocaleString('ko-KR');
 
+  /* ===== Brand name (for recruits) ===== */
   const pickBrandName = (c = {}) => {
     const direct = [
       c.brandName, c.brandname,
@@ -50,81 +42,29 @@
       c.createdBy?.brandName, c.createdBy?.name,
       c.user?.brandName, c.user?.companyName
     ].find(v => typeof v === 'string' && v.trim());
-    return (direct && direct.trim() !== '브랜드') ? direct.trim() : '브랜드';
+    if (direct && direct.trim() !== '브랜드') return direct.trim();
+    return '브랜드';
   };
 
-  /* ====== Portfolio 필드 스캐너 (강화) ====== */
-  const pickNickname = (p = {}) => {
-    const direct = [
-      p.nickname, p.displayName, p.name,
-      p.user?.nickname, p.createdBy?.nickname, p.realName
-    ].find(v => typeof v === 'string' && v.trim());
-    return (direct || '쇼호스트').trim();
-  };
-
-  // 한줄소개: 많이 쓰는 모든 변형 + bio 요약 폴백
-  const pickHeadline = (p = {}) => {
-    const direct = [
-      p.headline, p.headLine, p.oneLine, p.oneline, p.oneliner,
-      p.tagline, p.summary, p.subtitle, p.intro, p.introduction,
-      p.shortBio, p.shortDesc, p.shortDescription, p.description, p.desc, p.title
-    ].find(v => typeof v === 'string' && v.trim());
-    if (direct) return direct.trim();
-    const long = [p.bio, p.about].find(v => typeof v === 'string' && v.trim());
-    if (long) {
-      const s = long.replace(/\s+/g,' ').trim();
-      return s.length > 60 ? s.slice(0,60) + '…' : s;
-    }
-    return '';
-  };
-
-  // 경력은 0이면 표시 안함(“있다면”만)
-  const pickCareerYears = (p = {}) => {
-    const raw = p.careerYears ?? p.career?.years ?? p.years;
-    const n = Number(raw);
-    return Number.isFinite(n) && n > 0 ? n : undefined;
-  };
-
-  const pickThumb = (p = {}) => {
-    const cand = [
-      p.mainThumbnailUrl, p.mainThumbnail,
-      p.coverImageUrl, p.coverImage,
-      Array.isArray(p.subThumbnails) ? p.subThumbnails[0] : '',
-      Array.isArray(p.subImages)     ? p.subImages[0]     : ''
-    ].find(v => typeof v === 'string' && v.trim());
-    return cand ? injectCloud(cand, THUMB.card169) : PLACEHOLDER;
-  };
-
-  const parseStartDate = (shootDate, shootTime, fallbackISO) => {
-    let d = shootDate ? new Date(shootDate) : (fallbackISO ? new Date(fallbackISO) : null);
-    if (!d || isNaN(d)) return null;
-    const hm = (shootTime || '').split('~')[0] || '';
-    const m = hm.match(/(\d{1,2})(?::?(\d{2}))?/);
-    const hh = m ? Number(m[1] || 0) : 0;
-    const mm = m ? Number(m[2] || 0) : 0;
-    d.setHours(hh||0, mm||0, 0, 0);
-    return d;
-  };
-  const isSameLocalDay = (a, b=new Date()) =>
-    a && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-
+  /* ===== API ===== */
   async function fetchJSON(url){
-    const res = await fetch(url, { headers:{'Accept':'application/json'} });
-    const data = await res.json().catch(()=>({}));
-    if(!res.ok || data.ok===false) throw new Error(data.message||`HTTP_${res.status}`);
-    return data;
+    const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
+    const j = await res.json().catch(()=> ({}));
+    if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
+    return j;
   }
 
+  // Recruits (for "오늘의 라이브 라인업" + "추천 공고")
   async function fetchRecruits(){
     const url = `${API_BASE}${EP_RECRUITS.startsWith('/') ? EP_RECRUITS : `/${EP_RECRUITS}`}`;
     try{
-      const data = await fetchJSON(url);
-      const list = (Array.isArray(data)&&data) || data.items || data.data?.items || data.docs || data.data?.docs || [];
+      const j = await fetchJSON(url);
+      const list = (Array.isArray(j)&&j) || j.items || j.data?.items || j.docs || j.data?.docs || [];
       return list.map((c,i)=>({
         id: c.id||c._id||`${i}`,
         brandName: pickBrandName(c),
         title: c.title || c.recruit?.title || '(제목 없음)',
-        thumb: c.thumbnailUrl || c.coverImageUrl || '',
+        thumb: withFallback(c.thumbnailUrl || c.coverImageUrl),
         closeAt: c.closeAt,
         createdAt: c.createdAt || c._createdAt || c.meta?.createdAt || null,
         shootDate: c.recruit?.shootDate,
@@ -138,18 +78,18 @@
     }
   }
 
+  // Portfolios (server returns unified schema: id, nickname, headline, careerYears, mainThumbnailUrl)
   async function fetchPortfolios(){
     const url = `${API_BASE}${EP_PORTFOLIOS.startsWith('/') ? EP_PORTFOLIOS : `/${EP_PORTFOLIOS}`}`;
     try{
-      const data = await fetchJSON(url);
-      const list = (Array.isArray(data)&&data) || data.items || data.data?.items || data.docs || data.data?.docs || [];
-      return list.map((p,i)=>({
+      const j = await fetchJSON(url);
+      const arr = (Array.isArray(j)&&j) || j.items || j.data?.items || j.docs || j.data?.docs || [];
+      return arr.map((p,i)=>({
         id: p.id || p._id || `${i}`,
-        name: pickNickname(p),
-        headline: pickHeadline(p),
-        careerYears: pickCareerYears(p),
-        thumb: pickThumb(p),
-        createdAt: p.createdAt || p._createdAt || null
+        name: p.nickname || p.displayName || p.name || '무명',
+        headline: p.headline || '',
+        careerYears: Number.isFinite(+p.careerYears) ? +p.careerYears : undefined,
+        thumb: withFallback(p.mainThumbnailUrl || p.mainThumbnail || (Array.isArray(p.subThumbnails)&&p.subThumbnails[0])),
       }));
     }catch(e){
       console.warn('[HOME] fetch portfolios error:', e);
@@ -157,7 +97,8 @@
     }
   }
 
-  const metaLineup  = it => fmtDateHM(it._start || it.shootDate || it.closeAt, it.shootTime);
+  /* ===== Templating ===== */
+  const metaLineup  = it => fmtDateHM(it.shootDate || it.closeAt, it.shootTime);
   const metaRecruit = it => {
     const pay = it.payNegotiable ? '협의 가능' : (it.pay ? `${money(it.pay)}원` : '미정');
     return `${it.closeAt ? `마감 ${fmtDate(it.closeAt)}` : '마감일 미정'} · 출연료 ${pay}`;
@@ -166,7 +107,7 @@
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
-        <img class="thumb" src="${PLACEHOLDER}" alt=""/>
+        <img class="thumb" src="${FALLBACK_IMG}" alt=""/>
         <div class="item-body">
           <div class="lv-brand">라이브</div>
           <div class="lv-title">등록된 라이브가 없습니다</div>
@@ -176,8 +117,7 @@
     return `<div class="list-vert">${
       items.map(it=>`
         <article class="item">
-          <img class="thumb" src="${injectCloud(it.thumb, THUMB.card169) || PLACEHOLDER}" alt="" loading="lazy"
-               onerror="this.src='${PLACEHOLDER}'"/>
+          <img class="thumb" src="${withFallback(it.thumb)}" alt="" onerror="this.src='${FALLBACK_IMG}'"/>
           <div class="item-body">
             <div class="lv-brand">${it.brandName}</div>
             <div class="lv-title">${it.title}</div>
@@ -190,56 +130,54 @@
   function tplRecruits(items){
     if(!items.length){
       return `<div class="hscroll"><article class="card-mini">
-        <img class="mini-thumb" src="${PLACEHOLDER}" alt=""/>
+        <img class="mini-thumb" src="${FALLBACK_IMG}" alt=""/>
         <div class="mini-body">
           <div class="lv-brand">라이브</div>
           <div class="lv-title">추천 공고가 없습니다</div>
-          <div class="mini-meta">최신 공고가 올라오면 여기에 표시됩니다</div>
+          <div class="lv-meta">최신 공고가 올라오면 여기에 표시됩니다</div>
         </div></article></div>`;
     }
     return `<div class="hscroll">${
       items.map(r=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${injectCloud(r.thumb, THUMB.card169) || PLACEHOLDER}" alt="" loading="lazy"
-               onerror="this.src='${PLACEHOLDER}'"/>
+          <img class="mini-thumb" src="${withFallback(r.thumb)}" alt="" onerror="this.src='${FALLBACK_IMG}'"/>
           <div class="mini-body">
             <div class="lv-brand">${r.brandName}</div>
             <div class="lv-title">${r.title}</div>
-            <div class="mini-meta">${metaRecruit(r)}</div>
+            <div class="lv-meta">${metaRecruit(r)}</div>
           </div>
         </article>`).join('')
     }</div>`;
   }
 
-  // 추천 포트폴리오(2열 카드)
   function tplPortfolios(items){
     if(!items.length){
-      return `<div class="pf-grid"><article class="pf-card">
-        <img class="pf-thumb" src="${PLACEHOLDER}" alt=""/>
-        <div class="pf-body">
-          <div class="pf-nameRow"><span class="pf-name">포트폴리오</span></div>
-          <div class="pf-intro">등록된 포트폴리오가 없습니다</div>
-        </div></article></div>`;
+      return `<div class="pgrid"><article class="p-card">
+        <div class="p-thumbWrap"><img class="p-thumb" src="${FALLBACK_IMG}" alt=""></div>
+        <div class="p-body">
+          <div class="p-name">포트폴리오 없음</div>
+          <div class="p-headline">등록된 포트폴리오가 없어요</div>
+        </div>
+      </article></div>`;
     }
-    return `<div class="pf-grid">${
+    return `<div class="pgrid">${
       items.map(p=>{
-        const head = p.headline && String(p.headline).trim();
-        return `
-        <article class="pf-card">
-          <img class="pf-thumb" src="${p.thumb || PLACEHOLDER}" alt="" loading="lazy"
-               onerror="this.src='${PLACEHOLDER}'"/>
-          <div class="pf-body">
-            <div class="pf-nameRow">
-              <span class="pf-name">${p.name}</span>
-              ${Number.isFinite(p.careerYears) ? `<span class="pf-career">경력 ${p.careerYears}년</span>` : ''}
-            </div>
-            ${head ? `<div class="pf-intro">${head}</div>` : ''}
+        const sub = p.headline && p.headline.trim() ? p.headline.trim() : '소개가 없습니다';
+        const yrs = Number.isFinite(p.careerYears) ? `<span class="p-career">${p.careerYears}년</span>` : '';
+        return `<article class="p-card" data-id="${p.id}">
+          <a class="p-thumbWrap" href="portfolio-view.html?id=${encodeURIComponent(p.id)}" aria-label="${p.name}">
+            <img class="p-thumb" src="${withFallback(p.thumb)}" alt="" onerror="this.src='${FALLBACK_IMG}'"/>
+          </a>
+          <div class="p-body">
+            <div class="p-name">${p.name}${yrs}</div>
+            <div class="p-headline">${sub}</div>
           </div>
         </article>`;
-      }).join('')}
-    </div>`;
+      }).join('')
+    }</div>`;
   }
 
+  /* ===== Mount & render ===== */
   function ensureMount() {
     let root = $('#home') || $('#app') || document.querySelector('main');
     if (!root) {
@@ -252,59 +190,55 @@
 
   async function render(){
     const root = ensureMount();
-    try {
-      const [recruitsAll, pfsAll] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
 
-      const withStart = recruitsAll.map(r => ({
-        ...r,
-        _start: parseStartDate(r.shootDate, r.shootTime, r.closeAt || r.createdAt)
-      })).filter(r => r._start instanceof Date && !isNaN(r._start));
+    // fetch in parallel
+    const [recruitsAll, portfolios] = await Promise.all([
+      fetchRecruits(),
+      fetchPortfolios()
+    ]);
 
-      const now = new Date();
-      let todayList = withStart
-        .filter(r => isSameLocalDay(r._start, now))
+    // lineup: today or next upcoming (simple)
+    const now = new Date();
+    const withStart = recruitsAll.map(r => {
+      const d = r.shootDate ? new Date(r.shootDate) : (r.closeAt ? new Date(r.closeAt) : null);
+      return { ...r, _start: d && !isNaN(d) ? d : null };
+    }).filter(r => r._start);
+
+    let todayList = withStart
+      .filter(r => {
+        const a=r._start,b=now;
+        return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+      })
+      .sort((a,b)=> a._start - b._start)
+      .slice(0,5);
+
+    if (!todayList.length) {
+      todayList = withStart
+        .filter(r => r._start > now)
         .sort((a,b)=> a._start - b._start)
         .slice(0,5);
-      if (!todayList.length) {
-        todayList = withStart
-          .filter(r => r._start > now)
-          .sort((a,b)=> a._start - b._start)
-          .slice(0,5);
-      }
-
-      const latestRecruits = [...recruitsAll]
-        .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
-        .slice(0, 10);
-
-      const featuredPF = [...pfsAll]
-        .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
-        .slice(0, 12);
-
-      root.innerHTML = `
-        <div class="section">
-          <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="index.html#recruits">더보기</a></div>
-          ${tplLineup(todayList)}
-        </div>
-
-        <div class="section">
-          <div class="section-head"><h2>추천 공고</h2><a class="more" href="index.html#recruits">더보기</a></div>
-          ${tplRecruits(latestRecruits)}
-        </div>
-
-        <div class="section">
-          <div class="section-head"><h2>추천 포트폴리오</h2><a class="more" href="index.html#portfolios">더보기</a></div>
-          ${tplPortfolios(featuredPF)}
-        </div>
-      `;
-    } catch (e) {
-      console.error('[HOME] render error:', e);
-      const emptyLine = tplLineup([]), emptyRec = tplRecruits([]), emptyPf = tplPortfolios([]);
-      ensureMount().innerHTML = `
-        <div class="section"><div class="section-head"><h2>오늘의 라이브 라인업</h2></div>${emptyLine}</div>
-        <div class="section"><div class="section-head"><h2>추천 공고</h2></div>${emptyRec}</div>
-        <div class="section"><div class="section-head"><h2>추천 포트폴리오</h2></div>${emptyPf}</div>
-      `;
     }
+
+    const latestRecruits = [...recruitsAll]
+      .sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+      .slice(0, 8);
+
+    root.innerHTML = `
+      <div class="section">
+        <div class="section-head"><h2>오늘의 라이브 라인업</h2><a class="more" href="index.html#recruits">더보기</a></div>
+        ${tplLineup(todayList)}
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2>추천 공고</h2><a class="more" href="index.html#recruits">더보기</a></div>
+        ${tplRecruits(latestRecruits)}
+      </div>
+
+      <div class="section">
+        <div class="section-head"><h2>추천 포트폴리오</h2><a class="more" href="library.html#portfolios">더보기</a></div>
+        ${tplPortfolios(portfolios)}
+      </div>
+    `;
   }
 
   if (document.readyState === 'loading') {
