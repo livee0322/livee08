@@ -5,12 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>포트폴리오 등록 - Livee</title>
 
+  <!-- 폰트 & 공통 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
   <link rel="stylesheet" href="css/main.css" />
+
+  <!-- 아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" />
+
+  <!-- 이 페이지 전용 -->
   <link rel="stylesheet" href="css/portfolio-new.css" />
 </head>
 <body>
+  <!-- 상단 앱바 -->
   <header class="lv-appbar">
     <div class="lv-title">포트폴리오 등록</div>
     <div class="lv-actions"></div>
@@ -137,8 +143,21 @@
         <a class="btn" href="mypage.html">취소</a>
       </div>
     </form>
+
+    <!-- 접근 가드(비로그인/호스트 권한) -->
+    <div class="guard" id="pfGuard" aria-hidden="true">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pfGuardTitle">
+        <h3 id="pfGuardTitle">권한이 필요합니다</h3>
+        <p id="pfGuardDesc">이 메뉴는 쇼호스트 권한이 필요해요.</p>
+        <div class="actions">
+          <button class="btn outline" id="pfGuardClose">닫기</button>
+          <a href="login.html" class="btn" id="pfGuardAction">로그인하기</a>
+        </div>
+      </div>
+    </div>
   </main>
 
+  <!-- 전역 설정 -->
   <script src="js/config.js"></script>
   <script src="js/portfolio-new.js"></script>
 </body>
