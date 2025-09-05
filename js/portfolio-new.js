@@ -1,8 +1,14 @@
-/* Portfolio Create – v2.9.2 (unified schema, compat payload, better errors) */
+/* Portfolio Create – v2.9.3
+   - unified schema (nickname/headline/bio/mainThumbnailUrl)
+   - no duplicate consts (fixed)
+   - robust image pickers (overlay/capture delegation)
+   - clear validation + server 422 details surfaced
+*/
 (() => {
   const form = document.getElementById('pfForm');
   if (!form) return;
 
+  /* ---------- config ---------- */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const THUMB = CFG.thumb || {
@@ -15,7 +21,7 @@
 
   const here = encodeURIComponent(location.pathname + location.search + location.hash);
 
-  // utils
+  /* ---------- utils ---------- */
   const $id = (s)=>document.getElementById(s);
   const say = (t, ok=false) => {
     const box = $id('pfMsg'); if (!box) return;
@@ -45,7 +51,7 @@
     return m ? decodeURIComponent(m) : '';
   };
 
-  // auth / guard
+  /* ---------- auth / guard ---------- */
   const guard = {
     root: $id('pfGuard'),
     title: $id('pfGuardTitle'),
@@ -92,7 +98,7 @@
     return roles.includes(role) || roles.includes('admin');
   }
 
-  // upload
+  /* ---------- image upload ---------- */
   async function getSignature(){
     const r = await fetch(`${API_BASE}/uploads/signature`, { headers: headers(false) });
     const j = await r.json().catch(()=>({}));
@@ -117,58 +123,86 @@
     return true;
   };
 
-  /* ---------- inputs / elements ---------- */
-const mainFile  = $id('mainFile');
-const coverFile = $id('coverFile');
-const subsFile  = $id('subsFile');
+  /* ---------- inputs / elements (single declaration) ---------- */
+  const mainFile  = $id('mainFile');
+  const coverFile = $id('coverFile');
+  const subsFile  = $id('subsFile');
 
-const mainImgEl  = $id('mainPrev');
-const coverImgEl = $id('coverPrev');
+  const mainImgEl  = $id('mainPrev');
+  const coverImgEl = $id('coverPrev');
 
-const mainTrigger  = $id('mainTrigger');
-const coverTrigger = $id('coverTrigger');
-const subsTrigger  = $id('subsTrigger');
+  const mainTrigger  = $id('mainTrigger');
+  const coverTrigger = $id('coverTrigger');
+  const subsTrigger  = $id('subsTrigger');
 
-const nickname     = $id('nickname');
-const headline     = $id('headline');
-const bio          = $id('bio');
-const realName     = $id('realName');
-const realNamePublic = $id('realNamePublic');
-const age          = $id('age');
-const agePublic    = $id('agePublic');
-const careerYears  = $id('careerYears');
-const primaryLink  = $id('primaryLink');
-const visibility   = $id('visibility');
-const openToOffers = $id('openToOffers');
+  const nickname     = $id('nickname');
+  const headline     = $id('headline');
+  const bio          = $id('bio');
+  const realName     = $id('realName');
+  const realNamePublic = $id('realNamePublic');
+  const age          = $id('age');
+  const agePublic    = $id('agePublic');
+  const careerYears  = $id('careerYears');
+  const primaryLink  = $id('primaryLink');
+  const visibility   = $id('visibility');
+  const openToOffers = $id('openToOffers');
 
-const linksWrap    = $id('linksWrap');
-const addLinkBtn   = $id('addLinkBtn');
+  const linksWrap    = $id('linksWrap');
+  const addLinkBtn   = $id('addLinkBtn');
 
-const tagInput     = $id('tagInput');
-const tagList      = $id('tagList');
+  const tagInput     = $id('tagInput');
+  const tagList      = $id('tagList');
 
-const subsGrid     = $id('subsGrid');
-const namePreview  = $id('namePreview');
-const headlinePreview = $id('headlinePreview');
+  const subsGrid     = $id('subsGrid');
+  const namePreview  = $id('namePreview');
+  const headlinePreview = $id('headlinePreview');
 
-/* ---------- pickers ---------- */
-// 기본 바인딩
-safeBind(mainTrigger,  ()=> mainFile?.click());
-safeBind(coverTrigger, ()=> coverFile?.click());
-safeBind(subsTrigger,  ()=> subsFile?.click());
+  /* ---------- state ---------- */
+  const state = {
+    id: new URLSearchParams(location.search).get('id') || '',
+    mainThumbnailUrl: '',
+    coverImageUrl: '',
+    subThumbnails: [],
+    tags: [],
+    pending: 0
+  };
+  const bump = (n)=>{ state.pending = Math.max(0, state.pending + n); };
 
-// 모바일/오버레이 클릭 누락 방지용 위임 (버블 캡쳐)
-document.addEventListener('click', (e) => {
-  const el = e.target.closest('#mainTrigger, #coverTrigger, #subsTrigger, #subsTrigger2');
-  if (!el) return;
-  e.preventDefault();
-  if (el.id === 'mainTrigger')  return mainFile?.click();
-  if (el.id === 'coverTrigger') return coverFile?.click();
-  // subsTrigger2는 drawSubs()에서 동적 생성
-  if (el.id === 'subsTrigger' || el.id === 'subsTrigger2') return subsFile?.click();
-}, true /* capture */);
+  /* ---------- previews ---------- */
+  function setPreview(kind, url){
+    if(!url) return;
+    if(kind==='main' && mainImgEl){
+      mainImgEl.src = url; mainImgEl.style.display = ''; mainImgEl.removeAttribute?.('hidden');
+      mainTrigger?.classList.remove('is-empty');
+    }
+    if(kind==='cover' && coverImgEl){
+      coverImgEl.src = url; coverImgEl.style.display = ''; coverImgEl.removeAttribute?.('hidden');
+      coverTrigger?.classList.remove('is-empty');
+    }
+  }
 
-  // uploads
+  /* ---------- pickers (with delegation for overlays) ---------- */
+  safeBind(mainTrigger,  ()=> mainFile?.click());
+  safeBind(coverTrigger, ()=> coverFile?.click());
+  safeBind(subsTrigger,  ()=> subsFile?.click());
+
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('#mainTrigger, #coverTrigger, #subsTrigger, #subsTrigger2');
+    if (!el) return;
+    e.preventDefault();
+    if (el.id === 'mainTrigger')  return mainFile?.click();
+    if (el.id === 'coverTrigger') return coverFile?.click();
+    if (el.id === 'subsTrigger' || el.id === 'subsTrigger2') return subsFile?.click();
+  }, true);
+
+  /* ---------- live previews (nickname/headline) ---------- */
+  function syncName(){ if(namePreview && nickname) namePreview.textContent = nickname.value.trim() || '닉네임'; }
+  function syncHeadline(){ if(headlinePreview && headline) headlinePreview.textContent = headline.value.trim() || ''; }
+  nickname?.addEventListener('input', syncName);
+  headline?.addEventListener('input', syncHeadline);
+  syncName(); syncHeadline();
+
+  /* ---------- uploads ---------- */
   mainFile?.addEventListener('change', async (e)=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)){ e.target.value=''; return; }
@@ -226,7 +260,6 @@ document.addEventListener('click', (e) => {
       <button type="button" class="pf-addThumb" id="subsTrigger2" aria-label="서브 이미지 추가">
         <i class="ri-image-add-line"></i>
       </button>`;
-    safeBind($id('subsTrigger2'), ()=> subsFile?.click());
   }
   subsGrid?.addEventListener('click', (e)=>{
     const btn = e.target.closest('.rm'); if(!btn) return;
@@ -243,10 +276,11 @@ document.addEventListener('click', (e) => {
       if(!isImgOk(f)) continue;
       const local = URL.createObjectURL(f);
 
+      // 임시 카드 (업로드 대기 표시)
       const tmp = document.createElement('div');
       tmp.className = 'sub';
       tmp.innerHTML = `<img src="${local}" alt="uploading"/>`;
-      subsGrid?.insertBefore(tmp, subsGrid.lastElementChild);
+      subsGrid?.appendChild(tmp);
 
       bump(+1);
       try{
@@ -268,9 +302,7 @@ document.addEventListener('click', (e) => {
     e.target.value='';
   });
 
-  // links & tags
-  const linksWrap = $id('linksWrap');
-  const addLinkBtn = $id('addLinkBtn');
+  /* ---------- live links & tags ---------- */
   function addLinkRow(v={title:'',url:'',date:''}){
     const row = document.createElement('div');
     row.className='link-row v';
@@ -280,7 +312,8 @@ document.addEventListener('click', (e) => {
         <input class="input l-url" type="url" placeholder="https://..." value="${v.url||''}"/>
         <input class="input l-date" type="date" value="${v.date?String(v.date).slice(0,10):''}"/>
         <button class="ic" type="button" aria-label="삭제">✕</button>
-      </div>`;
+      </div>
+    `;
     linksWrap?.appendChild(row);
   }
   addLinkBtn?.addEventListener('click', ()=> addLinkRow());
@@ -288,8 +321,7 @@ document.addEventListener('click', (e) => {
     const b=e.target.closest('.ic'); if(!b) return;
     b.closest('.link-row')?.remove();
   });
-  const tagList = $id('tagList');
-  const tagInput = $id('tagInput');
+
   const tagState = state.tags;
   function drawTags(){
     if(!tagList) return;
@@ -314,7 +346,7 @@ document.addEventListener('click', (e) => {
   });
   addLinkRow(); drawTags();
 
-  // validate & payload
+  /* ---------- validate & payload ---------- */
   function validate(isPublish){
     if(state.pending>0){ say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
     if(isPublish){
@@ -345,22 +377,22 @@ document.addEventListener('click', (e) => {
     return {
       type: 'portfolio',
       status,
-      visibility: $id('visibility')?.value || 'public',
-      nickname: $id('nickname')?.value.trim() || '',
-      headline: $id('headline')?.value.trim() || '',
+      visibility: visibility?.value || 'public',
+      nickname: nickname?.value.trim() || '',
+      headline: headline?.value.trim() || '',
       mainThumbnailUrl: state.mainThumbnailUrl || '',
       subThumbnails: state.subThumbnails,
       coverImageUrl: state.coverImageUrl || '',
-      realName: $id('realName')?.value.trim() || '',
-      realNamePublic: !!$id('realNamePublic')?.checked,
-      careerYears: $id('careerYears')?.value ? Number($id('careerYears').value) : undefined,
-      age: $id('age')?.value ? Number($id('age').value) : undefined,
-      agePublic: !!$id('agePublic')?.checked,
-      primaryLink: $id('primaryLink')?.value.trim() || '',
+      realName: realName?.value.trim() || '',
+      realNamePublic: !!realNamePublic?.checked,
+      careerYears: careerYears?.value ? Number(careerYears.value) : undefined,
+      age: age?.value ? Number(age.value) : undefined,
+      agePublic: !!agePublic?.checked,
+      primaryLink: primaryLink?.value.trim() || '',
       liveLinks: links,
-      bio: $id('bio')?.value.trim() || '',
+      bio: bio?.value.trim() || '',
       tags: state.tags,
-      openToOffers: !!$id('openToOffers')?.checked
+      openToOffers: !!openToOffers?.checked
     };
   }
 
@@ -399,6 +431,7 @@ document.addEventListener('click', (e) => {
     return '유효성 오류';
   }
 
+  /* ---------- submit ---------- */
   async function submit(status){
     if(!TOKEN){ location.href='login.html?returnTo='+here; return; }
     const isPublish = status==='published';
@@ -428,7 +461,7 @@ document.addEventListener('click', (e) => {
   $id('saveDraftBtn')?.addEventListener('click', ()=> submit('draft'));
   $id('publishBtn')?.addEventListener('click', ()=> submit('published'));
 
-  // edit load
+  /* ---------- load for edit ---------- */
   async function loadIfEdit(){
     if(!state.id) return;
     try{
@@ -438,17 +471,17 @@ document.addEventListener('click', (e) => {
       if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
       const d = j.data || j;
 
-      $id('nickname').value = d.nickname || '';
-      $id('headline').value = d.headline || '';
-      $id('bio').value = d.bio || '';
-      $id('realName').value = d.realName || '';
-      $id('realNamePublic').checked = !!d.realNamePublic;
-      $id('age').value = d.age || '';
-      $id('agePublic').checked = !!d.agePublic;
-      $id('careerYears').value = d.careerYears || '';
-      $id('primaryLink').value = d.primaryLink || '';
-      $id('visibility').value = d.visibility || 'public';
-      $id('openToOffers').checked = d.openToOffers !== false;
+      nickname.value = d.nickname || '';
+      headline.value = d.headline || '';
+      bio.value = d.bio || '';
+      realName.value = d.realName || '';
+      realNamePublic.checked = !!d.realNamePublic;
+      age.value = d.age || '';
+      agePublic.checked = !!d.agePublic;
+      careerYears.value = d.careerYears || '';
+      primaryLink.value = d.primaryLink || '';
+      visibility.value = d.visibility || 'public';
+      openToOffers.checked = d.openToOffers !== false;
 
       state.mainThumbnailUrl = d.mainThumbnailUrl || '';
       state.coverImageUrl = d.coverImageUrl || '';
@@ -466,11 +499,13 @@ document.addEventListener('click', (e) => {
     }
   }
 
+  /* ---------- boot ---------- */
   (async ()=>{
     if(!TOKEN){ location.href = 'login.html?returnTo='+here; return; }
     const me = await fetchMe();
     if(!me){ location.href = 'login.html?returnTo='+here; return; }
     if(!hasRole(me, 'showhost')){
+      // 폼 비활성화 + 가드
       [...form.querySelectorAll('input,select,textarea,button')].forEach(el=> el.disabled = true);
       guard.show('host'); return;
     }
