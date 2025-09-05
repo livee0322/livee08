@@ -1,7 +1,6 @@
-/* Home — v2.6
-   - recruit-test: 라인업/추천 공고
-   - portfolio-test: 추천 포트폴리오
-   - 외부 JS 파일용: <script> 태그 없음
+/* Home — v2.6.1
+   - recruit-test + portfolio-test
+   - 절대경로/데이터URI 폴백으로 이미지 깨짐 방지
 */
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -11,11 +10,25 @@
   const EP = CFG.endpoints || {};
   const EP_RECRUITS   = EP.recruits      || '/recruit-test?status=published&limit=50';
   const EP_PORTFOLIOS = EP.portfolios    || '/portfolio-test?status=published&limit=24';
-  const PF_BASE       = EP.portfolioBase || '/portfolio-test';
 
-  const placeholder = CFG.placeholderThumb || '';
-  const thumbOr = (src, seed='lv') =>
-    src || placeholder || `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
+  const resolveAsset = (p) => {
+    if (!p) return '';
+    if (/^https?:\/\//i.test(p) || /^data:/i.test(p)) return p;
+    const base = (CFG.BASE_PATH || '').replace(/\/$/, '');
+    return `${base}/${String(p).replace(/^\/+/, '')}`;
+  };
+  const PLACEHOLDER_DATA =
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">
+         <rect width="100%" height="100%" fill="#e9eef3"/>
+         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+               fill="#8a97a6" font-family="sans-serif" font-size="18">이미지 없음</text>
+       </svg>`
+    );
+  const PLACEHOLDER = resolveAsset(CFG.placeholderThumb || 'assets/default.jpg') || PLACEHOLDER_DATA;
+
+  const thumbOr = (src, seed='lv') => src || PLACEHOLDER;
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
@@ -143,7 +156,7 @@
   function tplLineup(items){
     if(!items.length){
       return `<div class="list-vert"><article class="item">
-        <img class="thumb" src="${thumbOr('', 'lineup-empty')}" alt=""/>
+        <img class="thumb" src="${PLACEHOLDER}" alt=""/>
         <div class="item-body">
           <div class="lv-brand">라이브</div>
           <div class="lv-title">등록된 라이브가 없습니다</div>
@@ -153,8 +166,8 @@
     return `<div class="list-vert">${
       items.map(it=>`
         <article class="item">
-          <img class="thumb" src="${thumbOr(it.thumb,it.id)}" alt=""
-               onerror="this.src='${thumbOr('', 'lineup-fallback')}'"/>
+          <img class="thumb" src="${thumbOr(it.thumb,it.id)}" alt="" loading="lazy"
+               onerror="this.src='${PLACEHOLDER}'"/>
           <div class="item-body">
             <div class="lv-brand">${it.brandName}</div>
             <div class="lv-title">${it.title}</div>
@@ -167,7 +180,7 @@
   function tplRecruits(items){
     if(!items.length){
       return `<div class="hscroll"><article class="card-mini">
-        <img class="mini-thumb" src="${thumbOr('', 'recruits-empty')}" alt=""/>
+        <img class="mini-thumb" src="${PLACEHOLDER}" alt=""/>
         <div class="mini-body">
           <div class="lv-brand">라이브</div>
           <div class="lv-title">추천 공고가 없습니다</div>
@@ -177,8 +190,8 @@
     return `<div class="hscroll">${
       items.map(r=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${thumbOr(r.thumb,r.id)}" alt=""
-               onerror="this.src='${thumbOr('', 'recruits-fallback')}'"/>
+          <img class="mini-thumb" src="${thumbOr(r.thumb,r.id)}" alt="" loading="lazy"
+               onerror="this.src='${PLACEHOLDER}'"/>
           <div class="mini-body">
             <div class="lv-brand">${r.brandName}</div>
             <div class="lv-title">${r.title}</div>
@@ -191,7 +204,7 @@
   function tplPortfolios(items){
     if(!items.length){
       return `<div class="hscroll"><article class="card-mini">
-        <img class="mini-thumb" src="${thumbOr('', 'pf-empty')}" alt=""/>
+        <img class="mini-thumb" src="${PLACEHOLDER}" alt=""/>
         <div class="mini-body">
           <div class="lv-brand">포트폴리오</div>
           <div class="lv-title">추천 포트폴리오가 없습니다</div>
@@ -201,8 +214,8 @@
     return `<div class="hscroll">${
       items.map(p=>`
         <article class="card-mini">
-          <img class="mini-thumb" src="${thumbOr(p.thumb,p.id)}" alt=""
-               onerror="this.src='${thumbOr('', 'pf-fallback')}'"/>
+          <img class="mini-thumb" src="${thumbOr(p.thumb,p.id)}" alt="" loading="lazy"
+               onerror="this.src='${PLACEHOLDER}'"/>
           <div class="mini-body">
             <div class="lv-brand">${p.name}</div>
             <div class="lv-title">${p.headline || '소개가 없습니다'}</div>
@@ -269,13 +282,14 @@
           ${tplPortfolios(featuredPF)}
         </div>
       `;
-      console.log('[HOME] recruits:', recruitsAll.length, 'portfolios:', pfsAll.length);
     } catch (e) {
       console.error('[HOME] render error:', e);
-      root.innerHTML = `
-        <div class="section"><div class="section-head"><h2>오늘의 라이브 라인업</h2></div>${tplLineup([])}</div>
-        <div class="section"><div class="section-head"><h2>추천 공고</h2></div>${tplRecruits([])}</div>
-        <div class="section"><div class="section-head"><h2>추천 포트폴리오</h2></div>${tplPortfolios([])}</div>
+      // 폴백 섹션도 비어 보이지 않게
+      const emptyLine = tplLineup([]), emptyRec = tplRecruits([]), emptyPf = tplPortfolios([]);
+      ensureMount().innerHTML = `
+        <div class="section"><div class="section-head"><h2>오늘의 라이브 라인업</h2></div>${emptyLine}</div>
+        <div class="section"><div class="section-head"><h2>추천 공고</h2></div>${emptyRec}</div>
+        <div class="section"><div class="section-head"><h2>추천 포트폴리오</h2></div>${emptyPf}</div>
       `;
     }
   }
