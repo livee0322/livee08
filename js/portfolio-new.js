@@ -1,8 +1,13 @@
-/* Portfolio Create – v2.9.8 (portfolio-test 라우트, 빈값 undefined, 디버그 로그) */
+/* Portfolio Create – v2.9.9
+   - 이미지 픽커 바인딩 보강(click + touchend, capture, passive:false)
+   - 위임 및 직접 바인딩 병행(모바일 오버레이 이슈 회피)
+   - 나머지 로직은 동일
+*/
 (() => {
   const form = document.getElementById('pfForm');
   if (!form) return;
 
+  /* ---------- config ---------- */
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const ENTITY = 'portfolio-test';
@@ -15,12 +20,13 @@
     localStorage.getItem('liveeToken') || '';
   const here = encodeURIComponent(location.pathname + location.search + location.hash);
 
+  /* ---------- utils ---------- */
   const $id = (s)=>document.getElementById(s);
   const say = (t, ok=false) => { const b=$id('pfMsg'); if(!b) return; b.textContent=t; b.classList.add('show'); b.classList.toggle('ok', ok); };
   const headers = (json=true)=>{ const h={}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
   const withTransform = (url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url;} };
 
-  // inputs
+  /* ---------- inputs ---------- */
   const mainFile=$id('mainFile'), coverFile=$id('coverFile'), subsFile=$id('subsFile');
   const mainImgEl=$id('mainPrev'), coverImgEl=$id('coverPrev');
   const mainTrigger=$id('mainTrigger'), coverTrigger=$id('coverTrigger'), subsTrigger=$id('subsTrigger');
@@ -29,23 +35,55 @@
   const realName=$id('realName'), realNamePublic=$id('realNamePublic');
   const age=$id('age'), agePublic=$id('agePublic'), careerYears=$id('careerYears');
   const primaryLink=$id('primaryLink'), visibility=$id('visibility'), openToOffers=$id('openToOffers');
+
   const linksWrap=$id('linksWrap'), addLinkBtn=$id('addLinkBtn');
   const tagInput=$id('tagInput'), tagList=$id('tagList');
   const subsGrid=$id('subsGrid'), namePreview=$id('namePreview'), headlinePreview=$id('headlinePreview');
 
+  /* ---------- state ---------- */
   const state = { id:new URLSearchParams(location.search).get('id')||'', mainThumbnailUrl:'', coverImageUrl:'', subThumbnails:[], tags:[], pending:0 };
   const bump = (n)=>{ state.pending=Math.max(0,state.pending+n); };
 
+  /* ---------- previews ---------- */
   const isImgOk = (f)=>{ if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); return false; } if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; } return true; };
-
   function setPreview(k,u){ if(!u) return; if(k==='main'&&mainImgEl){ mainImgEl.src=u; mainTrigger?.classList.remove('is-empty'); } if(k==='cover'&&coverImgEl){ coverImgEl.src=u; coverTrigger?.classList.remove('is-empty'); } }
   function syncName(){ if(namePreview&&nickname) namePreview.textContent=nickname.value.trim()||'닉네임'; }
   function syncHeadline(){ if(headlinePreview&&headline) headlinePreview.textContent=headline.value.trim()||''; }
   nickname?.addEventListener('input',syncName); headline?.addEventListener('input',syncHeadline); syncName(); syncHeadline();
 
-  const pick = (e)=>{ const el=e.target.closest('#mainTrigger,#coverTrigger,#subsTrigger,#subsTrigger2'); if(!el) return; e.preventDefault(); if(el.id==='mainTrigger') mainFile?.click(); else if(el.id==='coverTrigger') coverFile?.click(); else subsFile?.click(); };
-  document.addEventListener('click', pick, true);
+  /* ---------- picker binding (강화) ---------- */
+  function openPicker(which){
+    const el = which==='main' ? mainFile : which==='cover' ? coverFile : subsFile;
+    if (!el) return;
+    try { el.click(); }
+    catch {
+      try {
+        const ev = new MouseEvent('click',{bubbles:true,cancelable:true,view:window});
+        el.dispatchEvent(ev);
+      } catch {}
+    }
+  }
+  function bindPicker(el, which){
+    if(!el) return;
+    ['click','touchend'].forEach(evt=>{
+      el.addEventListener(evt,(e)=>{ e.preventDefault(); e.stopPropagation(); openPicker(which); }, {capture:true, passive:false});
+    });
+  }
+  // 직접 바인딩
+  bindPicker(mainTrigger,  'main');
+  bindPicker(coverTrigger, 'cover');
+  bindPicker(subsTrigger,  'subs');
+  // 위임(동적으로 생성되는 버튼 포함)
+  ['click','touchend'].forEach(evt=>{
+    document.addEventListener(evt,(e)=>{
+      const t = e.target.closest('[data-pick]');
+      if(!t) return;
+      e.preventDefault(); e.stopPropagation();
+      openPicker(t.getAttribute('data-pick'));
+    }, {capture:true, passive:false});
+  });
 
+  /* ---------- uploads ---------- */
   async function getSignature(){ const r=await fetch(`${API_BASE}/uploads/signature`,{headers:headers(false)}); const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`); return j.data||j; }
   async function uploadImage(file){ const {cloudName,apiKey,timestamp,signature}=await getSignature(); const fd=new FormData(); fd.append('file',file); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature); const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd}); const j=await res.json().catch(()=>({})); if(!res.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${res.status}`); return j.secure_url; }
 
@@ -59,7 +97,7 @@
     catch(err){ console.error('[cover upload]',err); say('업로드 실패: '+err.message); }
     finally{ URL.revokeObjectURL(local); bump(-1); e.target.value=''; } });
 
-  function drawSubs(){ if(!subsGrid) return; const items=state.subThumbnails.map((u,i)=>`<div class="sub"><img src="${u}" alt="sub-${i}"/><button type="button" class="rm" data-i="${i}">×</button></div>`).join(''); subsGrid.innerHTML=`${items}<button type="button" class="pf-addThumb" id="subsTrigger2"><i class="ri-image-add-line"></i></button>`; }
+  function drawSubs(){ if(!subsGrid) return; const items=state.subThumbnails.map((u,i)=>`<div class="sub"><img src="${u}" alt="sub-${i}"/><button type="button" class="rm" data-i="${i}" aria-label="삭제">×</button></div>`).join(''); subsGrid.innerHTML=`${items}<button type="button" class="pf-addThumb" id="subsTrigger2" data-pick="subs" aria-label="서브 이미지 추가"><i class="ri-image-add-line"></i></button>`; }
   subsGrid?.addEventListener('click',(e)=>{ const b=e.target.closest('.rm'); if(!b) return; const i=Number(b.dataset.i); state.subThumbnails.splice(i,1); drawSubs(); });
   subsFile?.addEventListener('change', async (e)=>{ const files=Array.from(e.target.files||[]); if(!files.length) return; const remain=Math.max(0,5-state.subThumbnails.length); const chosen=files.slice(0,remain);
     for(const f of chosen){ if(!isImgOk(f)) continue; const local=URL.createObjectURL(f); const tmp=document.createElement('div'); tmp.className='sub'; tmp.innerHTML=`<img src="${local}" alt="uploading"/>`; subsGrid?.appendChild(tmp); bump(+1);
@@ -68,16 +106,18 @@
       finally{ URL.revokeObjectURL(local); bump(-1); }
     } e.target.value=''; });
 
-  function addLinkRow(v={title:'',url:'',date:''}){ const row=document.createElement('div'); row.className='link-row v'; row.innerHTML=`<input class="input l-title" placeholder="제목" value="${v.title||''}"/><div class="row"><input class="input l-url" type="url" placeholder="https://..." value="${v.url||''}"/><input class="input l-date" type="date" value="${v.date?String(v.date).slice(0,10):''}"/><button class="ic" type="button">✕</button></div>`; linksWrap?.appendChild(row); }
+  /* ---------- links & tags ---------- */
+  function addLinkRow(v={title:'',url:'',date:''}){ const row=document.createElement('div'); row.className='link-row v'; row.innerHTML=`<input class="input l-title" placeholder="제목(예: ◯◯몰 뷰티 라이브)" value="${v.title||''}"/><div class="row"><input class="input l-url" type="url" placeholder="https://..." value="${v.url||''}"/><input class="input l-date" type="date" value="${v.date?String(v.date).slice(0,10):''}"/><button class="ic" type="button" aria-label="삭제">✕</button></div>`; linksWrap?.appendChild(row); }
   addLinkBtn?.addEventListener('click',()=>addLinkRow());
   linksWrap?.addEventListener('click',(e)=>{ const b=e.target.closest('.ic'); if(!b) return; b.closest('.link-row')?.remove(); });
 
-  const tagState=state.tags; const tagList=$id('tagList'), tagInput=$id('tagInput');
+  const tagState=state.tags;
   function drawTags(){ if(!tagList) return; tagList.innerHTML=tagState.map((t,i)=>`<span class="chip">${t}<button type="button" class="x" data-i="${i}">×</button></span>`).join(''); }
   tagList?.addEventListener('click',(e)=>{ const x=e.target.closest('.x'); if(!x) return; tagState.splice(Number(x.dataset.i),1); drawTags(); });
   tagInput?.addEventListener('keydown',(e)=>{ if(e.key==='Enter'||e.key===','){ e.preventDefault(); const raw=(tagInput.value||'').trim().replace(/,$/,''); if(!raw) return; if(tagState.length>=8){ say('태그는 최대 8개'); return; } if(tagState.includes(raw)){ tagInput.value=''; return; } tagState.push(raw); tagInput.value=''; drawTags(); } });
   addLinkRow(); drawTags();
 
+  /* ---------- validate & payload ---------- */
   const strOrU = (v)=> (v && String(v).trim() ? String(v).trim() : undefined);
 
   function validate(isPublish){
@@ -122,7 +162,7 @@
       tags: state.tags,
       openToOffers: !!openToOffers?.checked,
 
-      // 레거시 동시 전송(서버 compatBody 와 짝)
+      // 레거시 동시 전송(서버 compatBody와 짝)
       displayName: strOrU(nickname?.value),
       mainThumbnail: state.mainThumbnailUrl || undefined,
       coverImage: state.coverImageUrl || undefined,
@@ -141,6 +181,7 @@
     }catch{ return '유효성 오류'; }
   }
 
+  /* ---------- submit ---------- */
   async function submit(status){
     if(!TOKEN){ location.href='login.html?returnTo='+here; return; }
     const isPublish = status==='published';
@@ -153,7 +194,7 @@
       const url = state.id ? `${API_BASE}/${ENTITY}/${state.id}` : `${API_BASE}/${ENTITY}`;
       const method = state.id ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(payload) });
-      const text = await res.text(); // <-- 원문도 보자
+      const text = await res.text();
       let data={}; try{ data = JSON.parse(text); }catch{ data = { raw:text }; }
       console.log('[server error raw]', data);
 
@@ -172,6 +213,7 @@
   $id('saveDraftBtn')?.addEventListener('click', ()=> submit('draft'));
   $id('publishBtn')?.addEventListener('click', ()=> submit('published'));
 
+  /* ---------- edit load ---------- */
   async function loadIfEdit(){
     if(!state.id) return;
     try{
