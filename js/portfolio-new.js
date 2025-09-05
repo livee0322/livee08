@@ -1,4 +1,4 @@
-/* Portfolio Create – v2.10.0 (unified schema, mobile-friendly pickers) */
+/* Portfolio Create – v2.11 (unified schema, Cloudinary upload, safe previews) */
 (() => {
   const form = document.getElementById('pfForm');
   if (!form) return;
@@ -6,7 +6,7 @@
   // ---------- config ----------
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const ENTITY = 'portfolio-test'; // ✅ 테스트 라우터 사용
+  const ENTITY = 'portfolio-test'; // 테스트 라우터
   const THUMB = CFG.thumb || {
     square:  "c_fill,g_auto,w_600,h_600,f_auto,q_auto",
     cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto",
@@ -31,11 +31,19 @@
     if(TOKEN) h['Authorization'] = `Bearer ${TOKEN}`;
     return h;
   };
-  const withTransform = (url, t) => {
+  const hasTransform = (url='')=>{
+    const i=url.indexOf('/upload/');
+    if(i<0) return false;
+    const after=url.slice(i+8).split('/')[0]||'';
+    return /^([a-zA-Z]+_[^/]+,?)+$/.test(after);
+  };
+  const displayUrl = (url, preset)=>{
     try{
-      if(!url || !/\/upload\//.test(url)) return url || '';
-      const i = url.indexOf('/upload/');
-      return url.slice(0,i+8) + t + '/' + url.slice(i+8);
+      if(!url) return url;
+      if(!/\/upload\//.test(url)) return url;
+      if(hasTransform(url)) return url;
+      const i=url.indexOf('/upload/');
+      return url.slice(0,i+8)+preset+'/'+url.slice(i+8);
     }catch{ return url; }
   };
   const bind = (el, type, fn, opts)=> el && el.addEventListener(type, fn, opts || false);
@@ -44,7 +52,6 @@
     const open = (e)=>{ e.preventDefault(); trigger.click(); };
     bind(btn,'click',open,{passive:false});
     bind(btn,'keydown',e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); trigger.click(); }});
-    // 일부 모바일에서 pointerdown이 더 안정적
     bind(btn,'pointerdown',e=>{ if(e.pointerType==='touch'){ e.preventDefault(); trigger.click(); } }, {passive:false});
   };
   const strOrU = (v)=> (v && String(v).trim() ? String(v).trim() : undefined);
@@ -87,7 +94,7 @@
     const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
     const j=await res.json().catch(()=>({}));
     if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
-    return j.secure_url;
+    return j.secure_url; // 원본 URL 저장(변환은 표시용으로만)
   }
   const isImgOk = (f)=>{
     if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); return false; }
@@ -144,10 +151,12 @@
   function setPreview(kind, url){
     if(!url) return;
     if(kind==='main' && mainImgEl){
-      mainImgEl.src = url; mainImgEl.style.display = ''; mainTrigger?.classList.remove('is-empty');
+      mainImgEl.src = displayUrl(url, THUMB.square);
+      mainImgEl.style.display = ''; mainTrigger?.classList.remove('is-empty');
     }
     if(kind==='cover' && coverImgEl){
-      coverImgEl.src = url; coverImgEl.style.display = ''; coverTrigger?.classList.remove('is-empty');
+      coverImgEl.src = displayUrl(url, THUMB.cover169);
+      coverImgEl.style.display = ''; coverTrigger?.classList.remove('is-empty');
     }
   }
 
@@ -168,13 +177,13 @@
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)){ e.target.value=''; return; }
     const local = URL.createObjectURL(f);
-    setPreview('main', local);
+    mainImgEl.src = local; mainTrigger?.classList.remove('is-empty');
     bump(+1);
     try{
       say('메인 이미지 업로드 중…');
       const url = await uploadImage(f);
-      state.mainThumbnailUrl = withTransform(url, THUMB.square);
-      setPreview('main', state.mainThumbnailUrl);
+      state.mainThumbnailUrl = url; // 저장은 원본
+      setPreview('main', url);      // 표시만 변환
       say('업로드 완료', true);
     }catch(err){
       console.error('[main upload]', err);
@@ -190,13 +199,13 @@
     const f=e.target.files?.[0]; if(!f) return;
     if(!isImgOk(f)){ e.target.value=''; return; }
     const local = URL.createObjectURL(f);
-    setPreview('cover', local);
+    coverImgEl.src = local; coverTrigger?.classList.remove('is-empty');
     bump(+1);
     try{
       say('배경 이미지 업로드 중…');
       const url = await uploadImage(f);
-      state.coverImageUrl = withTransform(url, THUMB.cover169);
-      setPreview('cover', state.coverImageUrl);
+      state.coverImageUrl = url;
+      setPreview('cover', url);
       say('업로드 완료', true);
     }catch(err){
       console.error('[cover upload]', err);
@@ -212,7 +221,7 @@
     if(!subsGrid) return;
     const items = state.subThumbnails.map((u,i)=>`
       <div class="sub">
-        <img src="${u}" alt="sub-${i}"/>
+        <img src="${displayUrl(u, THUMB.square)}" alt="sub-${i}"/>
         <button type="button" class="rm" data-i="${i}" aria-label="삭제">×</button>
       </div>
     `).join('');
@@ -221,7 +230,6 @@
       <button type="button" class="pf-addThumb" id="subsTrigger2" aria-label="서브 이미지 추가">
         <i class="ri-image-add-line"></i>
       </button>`;
-    // 동적 버튼도 연결
     safeBind(document.getElementById('subsTrigger2'), subsFile);
   }
 
@@ -249,9 +257,8 @@
       try{
         say('서브 이미지 업로드 중…');
         const url = await uploadImage(f);
-        const finalUrl = withTransform(url, THUMB.square);
-        state.subThumbnails.push(finalUrl);
-        drawSubs();
+        state.subThumbnails.push(url); // 저장은 원본
+        drawSubs();                    // 표시만 변환
         say('업로드 완료', true);
       }catch(err){
         console.error('[sub upload]', err);
@@ -337,7 +344,7 @@
       date:  strOrU(row.querySelector('.l-date')?.value)
     })).filter(x=>x.title || x.url);
 
-    const payload = {
+    return {
       type: 'portfolio',
       status,
       visibility: visibility?.value || 'public',
@@ -346,7 +353,7 @@
       headline: strOrU(headline?.value),
       bio:      strOrU(bio?.value),
 
-      mainThumbnailUrl: state.mainThumbnailUrl || undefined,
+      mainThumbnailUrl: state.mainThumbnailUrl || undefined, // 원본 저장
       coverImageUrl:    state.coverImageUrl || undefined,
       subThumbnails:    state.subThumbnails?.filter(Boolean) || [],
 
@@ -361,16 +368,6 @@
       liveLinks: links,
       tags: state.tags,
       openToOffers: !!openToOffers?.checked
-    };
-
-    // 구버전 호환 필드 동시 전송 (서버 compatBody와 짝)
-    return {
-      ...payload,
-      name: payload.nickname,
-      displayName: payload.nickname,
-      mainThumbnail: payload.mainThumbnailUrl,
-      coverImage: payload.coverImageUrl,
-      subImages: payload.subThumbnails,
     };
   }
 
