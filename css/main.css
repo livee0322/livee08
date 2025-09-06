@@ -340,3 +340,44 @@ ul,ol{ list-style:none; padding:0; margin:0; }
   display:inline-block; margin-top:8px; font-size:12px; font-weight:800;
   color:#fff; background:#2B73F6; border-radius:10px; padding:8px 10px;
 }
+
+/* ===== 섹션별 레이아웃 지정 ===== */
+
+/* 1) 오늘의 라이브: 가로 좁게, 정사각 썸네일 + 옆 본문 */
+#home .section:nth-of-type(1) .ed-grid{
+  max-width: 680px; margin: 0 auto; grid-template-columns: 1fr; gap: 10px;
+}
+#home .section:nth-of-type(1) .card-ed{
+  display:grid; grid-template-columns: 96px 1fr; align-items:center;
+  border-radius:16px; box-shadow: 0 1px 0 rgba(16,24,40,.02);
+}
+#home .section:nth-of-type(1) .card-ed--feature{ grid-column:auto; grid-row:auto; }
+#home .section:nth-of-type(1) .card-ed__media{
+  width:96px; height:96px; aspect-ratio:1/1; border-radius:12px;
+}
+#home .section:nth-of-type(1) .card-ed__body{ padding:8px 12px; }
+
+/* 2) 추천 공고: 가로 스크롤 카드 */
+#home .section:nth-of-type(2) .hscroll{ gap:10px; padding:2px 2px 0; }
+#home .section:nth-of-type(2) .card-mini{
+  flex:0 0 72%; display:grid; grid-template-columns: 90px 1fr; gap:10px;
+  border:1px solid #e7eaf0; border-radius:14px; background:#fff;
+  box-shadow: 0 1px 0 rgba(16,24,40,.02);
+}
+@media (min-width:480px){ #home .section:nth-of-type(2) .card-mini{ flex-basis:52%; } }
+#home .section:nth-of-type(2) .mini-thumb{ width:90px; height:90px; border-radius:10px; object-fit:cover; }
+#home .section:nth-of-type(2) .mini-title{ font-weight:800; font-size:14px; color:#0f172a; }
+#home .section:nth-of-type(2) .mini-meta{ font-size:12px; color:#6b7280; }
+
+/* 3) 뉴스: 컴팩트 리스트(정사각 72) */
+#home .section:nth-of-type(3) .ed-grid{ grid-template-columns: 1fr; gap: 10px; }
+#home .section:nth-of-type(3) .card-ed{
+  display:grid; grid-template-columns:72px 1fr; align-items:center;
+}
+#home .section:nth-of-type(3) .card-ed__media{
+  width:72px; height:72px; aspect-ratio:1/1; border-radius:10px;
+}
+#home .section:nth-of-type(3) .card-ed__body{ padding:6px 12px; }
+
+/* 4) 쇼호스트 포트폴리오: 썸네일 정사각 */
+#home .section:nth-of-type(4) .card-ed__media{ aspect-ratio:1/1; }
