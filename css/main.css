@@ -381,3 +381,17 @@ ul,ol{ list-style:none; padding:0; margin:0; }
 
 /* 4) 쇼호스트 포트폴리오: 썸네일 정사각 */
 #home .section:nth-of-type(4) .card-ed__media{ aspect-ratio:1/1; }
+
+/* --- TopTabs 아래 여백 제거 & 배너 밀착 --- */
+.container{ padding-top:0; }                /* 컨테이너 상단 패딩 없앰 */
+.hero-wrap{ margin:0 -18px 20px; }          /* 배너 상단 마진 0, 좌우는 에지-투-에지 유지 */
+
+/* 배너는 연한 파랑 배경 + 텍스트만 */
+.hero-card{ background:#eaf2ff; border-color:#dfe8ff; box-shadow:none; }
+.hero-media, .hero-grad{ display:none; }    /* 이미지/그라데이션 숨김 */
+.hero-body{ color:#0f2b6d; }
+.hero-title{ color:#0f2b6d; }
+.hero-sub{ color:#3556a3; opacity:.95; }
+.hero-btn{
+  color:#0f2b6d; border:1px solid rgba(15,43,109,.18); background:rgba(255,255,255,.55);
+}
