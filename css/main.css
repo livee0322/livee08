@@ -1,37 +1,38 @@
 /* ===============================
-   Livee main.css — Artbook Edition
+   Livee main.css — Refined (drop-in)
    =============================== */
 
 /* ---------- CSS 변수 ---------- */
 :root{
   /* color */
-  --bg:#f7f8fa;
+  --bg:#f6f7f9;
+  --card:#fff;
   --text:#111;
   --sub:#6B7280;
   --border:#E5E7EB;
-  --muted:#F3F4F6;
 
-  /* accent */
-  --primary:#111827;   /* 잉크 블랙 */
-  --accent:#2563eb;    /* 파란 포인트 */
+  /* point */
+  --primary:#2B73F6;     /* 버튼 파랑 */
+  --accent:#111827;      /* 잉크톤 */
 
   /* layout */
   --container-w: 980px;
-  --radius-xl: 28px;
-  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-lg: 18px;
   --radius-md: 14px;
   --radius-sm: 10px;
 
   /* bars */
   --appbar-h: 56px;
-  --topTabs-h: 52px;
+  --topTabs-h: 56px;
   --tabbar-h: 72px;
 
   /* safe area */
   --safe-b: env(safe-area-inset-bottom, 0px);
 
   /* shadow */
-  --soft-shadow: 0 6px 18px rgba(0,0,0,.06);
+  --shadow-0: 0 1px 0 rgba(16,24,40,.02);
+  --shadow-1: 0 4px 14px rgba(2,8,20,.06);
 }
 
 /* ---------- 기본 ---------- */
@@ -41,40 +42,50 @@ body{
   margin:0;
   font-family: SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   line-height:1.55;
-  letter-spacing:.001em;
 }
 a{ color:inherit; text-decoration:none; }
 img{ max-width:100%; display:block; }
 
-/* 컨테이너 */
 .container{
   max-width:var(--container-w);
   margin:0 auto;
-  padding: 8px 18px calc(var(--tabbar-h) + var(--safe-b) + 28px);
+  padding: 10px 16px calc(var(--tabbar-h) + var(--safe-b) + 28px);
 }
-.section{ margin: 22px 0; }
 
-/* ---------- 헤더 ---------- */
+.section{ margin: 18px 0 20px; }
+.section-head{
+  display:flex; align-items:baseline; gap:8px;
+  margin: 6px 2px 12px;
+}
+.section-head h2{
+  margin:0; font-size:16px; font-weight:800; letter-spacing:.02em;
+}
+.section-head .more{
+  margin-left:auto; font-size:12px; color:#98A2B3;
+}
+
+/* ---------- 헤더(AppBar) ---------- */
 .lv-appbar{
   position:sticky; top:0; z-index:30;
   height:var(--appbar-h);
   display:flex; align-items:center; justify-content:space-between;
-  padding:0 18px; background:#fff;
+  padding:0 16px; background:var(--card);
   border-bottom:1px solid var(--border);
 }
-.lv-title{ font-size:18px; font-weight:800; letter-spacing:.02em; }
+.lv-title{ font-size:18px; font-weight:800; letter-spacing:.2px; }
 .lv-actions{ display:flex; align-items:center; gap:10px; }
 .lv-action{
   width:34px; height:34px; border-radius:10px;
   display:grid; place-items:center;
   color:#111; border:1px solid var(--border); background:#fff;
+  box-shadow: var(--shadow-0);
 }
 .lv-action i{ font-size:18px; line-height:1; }
 
 /* ---------- 상단 탭 ---------- */
 .lv-topTabs{
   position:sticky; top:var(--appbar-h); z-index:29;
-  background:#fff; border-bottom:1px solid var(--border);
+  background:var(--card); border-bottom:1px solid var(--border);
 }
 .lv-topTabs__in{
   display:flex; gap:10px; padding:8px 16px; overflow:auto;
@@ -82,112 +93,122 @@ img{ max-width:100%; display:block; }
 }
 .lv-topTabs__in::-webkit-scrollbar{ display:none; }
 .lv-topTabs .tab{
-  padding:8px 14px; border-radius:999px; white-space:nowrap;
-  font-size:13px; font-weight:700;
+  padding:8px 12px; border-radius:999px; white-space:nowrap;
   color:#4b5563; background:transparent; border:0;
+  font-weight:700; font-size:13px;
 }
 .lv-topTabs .tab.is-active{
-  color:#fff; background:#111;
+  color:#fff; background:var(--primary);
 }
 
-/* ---------- 배너(커버) ---------- */
-.banner-wrap{ position:relative; margin:12px 0 22px; }
+/* ====== Banner ====== */
+.banner-wrap{ position: relative; margin: 8px -12px 12px; }
 .banner{
-  display:flex; gap:14px; padding:0 4px; overflow-x:auto;
+  display:flex; gap:10px; padding:0 12px; overflow-x:auto;
   overscroll-behavior-x:contain; scroll-snap-type:x mandatory;
   -webkit-overflow-scrolling:touch;
 }
 .banner::-webkit-scrollbar{ display:none; }
 .banner-card{
-  scroll-snap-align:start; flex:0 0 92%; min-width:92%;
-  border-radius: var(--radius-xl); overflow:hidden;
-  background:#fff; border:1px solid var(--border);
-  box-shadow: var(--soft-shadow);
-  display:flex; flex-direction:column; justify-content:flex-end;
+  scroll-snap-align:start; flex:0 0 94%; min-width:94%;
+  border-radius:16px; overflow:hidden;
+  background:var(--card); color:#111; border:1px solid var(--border);
+  box-shadow: var(--shadow-1);
 }
-.banner-card img{ width:100%; height:100%; object-fit:cover; }
-.banner-card h3{ margin:0; padding:18px; font-size:22px; font-weight:900; color:#111; }
-.banner-card p{ margin:0; padding:0 18px 18px; font-size:14px; color:#374151; }
+.banner-card img{ width:100%; height:148px; object-fit:cover; display:block; }
+.banner-card h3{ margin:0; padding:12px 14px 4px; font-size:18px; font-weight:800; }
+.banner-card p{ margin:0; padding:0 14px 14px; font-size:13px; color:#4b5563; }
 .banner-nav{
-  position:absolute; top:50%; transform:translateY(-50%);
+  position:absolute; top:calc(50% - 6px); transform:translateY(-50%);
   width:36px; height:36px; display:grid; place-items:center;
-  border-radius:50%; border:1px solid rgba(0,0,0,.12);
-  background:rgba(255,255,255,.85); backdrop-filter:blur(6px);
-  cursor:pointer; z-index:2;
+  border-radius:50%; border:1px solid rgba(0,0,0,.06);
+  background:rgba(255,255,255,.9); backdrop-filter:blur(6px); cursor:pointer; z-index:2;
 }
 .banner-nav.prev{ left:6px; } .banner-nav.next{ right:6px; }
 .banner-nav i{ font-size:18px; color:#333; }
 
-/* ---------- 오늘의 라이브 ---------- */
-.list-vert{ display:grid; gap:12px; }
+/* ---------- 오늘의 라이브 라인업 ---------- */
+.list-vert{ display:grid; gap:10px; }
 .list-vert .item{
-  display:grid; grid-template-columns: 80px 1fr; gap:12px;
-  border:1px solid var(--border); border-radius:var(--radius-md);
-  padding:10px; background:#fff;
-  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+  display:grid; grid-template-columns: 80px 1fr; gap:10px;
+  border:1px solid var(--border); border-radius:14px;
+  padding:10px; background:var(--card);
+  box-shadow: var(--shadow-0);
 }
-.list-vert .thumb{ width:80px; height:80px; object-fit:cover; border-radius:12px; background:#eee; }
+.list-vert .thumb{ width:80px; height:80px; object-fit:cover; border-radius:10px; background:#eee; }
 .list-vert .title{ font-weight:800; font-size:14px; margin-top:2px; }
 .list-vert .meta{ font-size:12px; color:var(--sub); margin-top:4px; }
-.list-vert .meta .date{ color:var(--accent); }
+.list-vert .meta .date{ color:var(--primary); }
+.badge-live{
+  display:inline-block; margin-left:6px;
+  font-size:11px; font-weight:800; color:#fff;
+  background:#ef4444; border-radius:999px; padding:2px 6px;
+}
 
-/* ---------- 추천 공고 ---------- */
+/* ---------- 추천 공고(가로 스크롤) ---------- */
 .hscroll{
-  display:flex; gap:12px; overflow-x:auto; padding:4px 2px 2px;
+  display:flex; gap:10px; overflow-x:auto; padding:2px 2px 0;
   scroll-snap-type:x mandatory;
 }
 .hscroll::-webkit-scrollbar{ display:none; }
 .card-mini{
-  flex:0 0 78%; display:grid; grid-template-columns: 92px 1fr; gap:10px;
-  border:1px solid var(--border); background:#fff;
-  border-radius:var(--radius-md); padding:10px;
-  box-shadow: 0 1px 0 rgba(0,0,0,.02);
-  scroll-snap-align:center;
+  flex:0 0 78%; display:grid; grid-template-columns: 90px 1fr; gap:10px;
+  border:1px solid var(--border); background:var(--card);
+  border-radius:14px; padding:10px; scroll-snap-align:center;
+  box-shadow: var(--shadow-0);
 }
-@media (min-width:480px){
-  .card-mini{ flex-basis: 46%; }
+@media (min-width:420px){
+  .card-mini{ flex-basis: 60%; }
 }
-.card-mini .mini-thumb{ width:92px; height:92px; border-radius:12px; object-fit:cover; background:#eee; }
+@media (min-width:560px){
+  .card-mini{ flex-basis: 44%; }
+}
+.card-mini .mini-thumb{ width:90px; height:90px; border-radius:10px; object-fit:cover; background:#eee; }
 .card-mini .mini-title{ font-weight:800; font-size:14px; }
 .card-mini .mini-meta{ font-size:12px; color:var(--sub); margin-top:6px; }
-
-/* ---------- 추천 포트폴리오 ---------- */
-.pf-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
-.pf-card{
-  border:1px solid var(--border); background:#fff;
-  border-radius:var(--radius-md); overflow:hidden;
-  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+.btn-primary{
+  display:inline-block; margin-top:8px;
+  font-size:12px; font-weight:800; color:#fff; background:var(--primary);
+  border-radius:10px; padding:8px 10px;
 }
-.pf-card .pf-thumb{ width:100%; aspect-ratio:16/9; object-fit:cover; background:#eee; display:block; }
+
+/* ---------- 추천 포트폴리오(2열 그리드 카드) ---------- */
+.pf-grid{
+  display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;
+}
+.pf-card{
+  border:1px solid var(--border); background:var(--card);
+  border-radius:14px; overflow:hidden; box-shadow: var(--shadow-0);
+}
+.pf-card .pf-thumb{
+  width:100%; aspect-ratio:16/9; object-fit:cover; background:#eee; display:block;
+}
 .pf-card .pf-body{ padding:10px 12px 12px; }
+.pf-card .pf-nameRow{ display:flex; align-items:baseline; gap:6px; }
 .pf-card .pf-name{ font-weight:800; font-size:14px; }
-.pf-card .pf-intro{ margin-top:6px; font-size:12px; color:#374151; line-height:1.4; }
+.pf-card .pf-career{ font-size:12px; color:var(--primary); font-weight:700; }
+.pf-card .pf-intro{ margin-top:6px; font-size:12px; color:#4b5563; line-height:1.35; }
 
 /* ---------- 하단 탭바 ---------- */
 .lv-tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:40; background:#fff; border-top:1px solid var(--border); }
 .lv-tabbar__in{ height: calc(var(--tabbar-h) + var(--safe-b)); padding-bottom: var(--safe-b); display:grid; grid-template-columns:repeat(5,1fr); }
-.tbi{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:#9aa3ad; font-size:12px; }
+.tbi{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:#98A2B3; font-size:12px; }
 .tbi i{ font-size:22px; line-height:1; }
-.tbi.is-active{ color:var(--accent); }
+.tbi.is-active{ color:var(--primary); }
 
-/* ---------- 공통 타이포 ---------- */
-.section-head{
-  display:flex; align-items:center; gap:8px;
-  margin: 8px 2px 14px;
-}
-.section-head h2{
-  margin:0; font-size: clamp(16px, 3.5vw, 18px); font-weight:800; letter-spacing:.02em;
-}
-.section-head .more{
-  margin-left:auto; font-size:12px; color:var(--sub);
-}
+/* 공통 타이포(카드 안) */
+.lv-brand { font-size:12px; color:#2563eb; font-weight:700; line-height:1.2; }
+.lv-title { font-size:15px; font-weight:800; color:#111; margin-top:2px; line-height:1.35; }
+.lv-when, .lv-meta { margin-top:6px; font-size:12px; color:#6b7280; }
 
 /* 유틸 */
 hr{ border:none; border-top:1px solid var(--border); margin:16px 0; }
 ul,ol{ list-style:none; padding:0; margin:0; }
 ::marker{ content:''; }
 
-/* 반응형 */
+/* 반응형(선택) */
 @media (min-width:720px){
   .list-vert{ grid-template-columns: 1fr 1fr; }
+  /* 포트폴리오를 2열 고정으로 두고 싶으면 아래 줄은 주석처리 */
+  /* .pf-grid{ grid-template-columns: repeat(3, 1fr); } */
 }
