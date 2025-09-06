@@ -278,3 +278,65 @@ ul,ol{ list-style:none; padding:0; margin:0; }
 @media (min-width:720px){
   .list-vert{ grid-template-columns: 1fr 1fr; }
 }
+
+/* ===== Patch: 요구사항 반영 ===== */
+
+/* 1) 배너(히어로): 연한 파랑 배경 + 텍스트만 */
+.hero-card{ background:#eaf2ff; border-color:#dfe8ff; box-shadow: none; }
+.hero-media, .hero-grad{ display:none; }
+.hero-body{ color:#0f2b6d; }
+.hero-title{ color:#0f2b6d; }
+.hero-sub{ color:#3556a3; opacity:.95; }
+.hero-btn{
+  color:#0f2b6d;
+  border:1px solid rgba(15,43,109,.18);
+  background:rgba(255,255,255,.55);
+}
+
+/* 2) 1섹션(TODAY LINEUP): 가로 줄이고, 정사각 썸네일 + 옆 본문 */
+#home .section:nth-of-type(1) .section-head .kicker,
+#home .section:nth-of-type(1) h2{ letter-spacing:.18em; }
+
+#home .section:nth-of-type(1) .ed-grid{
+  max-width: 680px;   /* 가로 좁게 */
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+#home .section:nth-of-type(1) .card-ed{              /* 가로형 카드 */
+  display:grid;
+  grid-template-columns: 96px 1fr;
+  align-items:center;
+  border-radius:16px;
+  box-shadow: 0 1px 0 rgba(16,24,40,.02);
+}
+#home .section:nth-of-type(1) .card-ed--feature{     /* 피처 해제 */
+  grid-column:auto; grid-row:auto;
+}
+#home .section:nth-of-type(1) .card-ed__media{
+  width:96px; height:96px; aspect-ratio:1/1; border-radius:12px;
+}
+#home .section:nth-of-type(1) .card-ed__body{ padding:8px 12px; }
+
+/* 3) 2섹션(추천 공고): 가로 스크롤 카드 톤 */
+#home .section:nth-of-type(2) .hscroll{ gap:10px; padding:2px 2px 0; }
+#home .section:nth-of-type(2) .card-mini{
+  flex:0 0 72%;
+  display:grid; grid-template-columns:90px 1fr; gap:10px;
+  border:1px solid #e7eaf0; border-radius:14px; background:#fff;
+  box-shadow: 0 1px 0 rgba(16,24,40,.02);
+}
+@media (min-width:480px){ #home .section:nth-of-type(2) .card-mini{ flex-basis:52%; } }
+#home .section:nth-of-type(2) .mini-thumb{ width:90px; height:90px; border-radius:10px; object-fit:cover; }
+#home .section:nth-of-type(2) .mini-title{ font-weight:800; font-size:14px; color:#0f172a; }
+#home .section:nth-of-type(2) .mini-meta{ font-size:12px; color:#6b7280; }
+
+/* 4) 3섹션(SPOTLIGHT PORTFOLIOS): 썸네일 정사각 */
+#home .section:nth-of-type(3) .card-ed__media{ aspect-ratio:1/1; }
+
+/* (선택) 버튼 사용 시 */
+#home .section:nth-of-type(2) .btn-primary{
+  display:inline-block; margin-top:8px; font-size:12px; font-weight:800;
+  color:#fff; background:#2B73F6; border-radius:10px; padding:8px 10px;
+}
