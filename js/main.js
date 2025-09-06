@@ -1,4 +1,4 @@
-/* Home main.js — 요구사항 반영 버전 */
+/* Home main.js — 섹션 순서/레이아웃 반영 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -7,6 +7,7 @@
   const EP = CFG.endpoints || {};
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
+  const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10'; // 없으면 자동 폴백
   const FALLBACK_IMG  = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
@@ -16,7 +17,7 @@
     return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
-  const text = v => (v==null ? '' : String(v));
+  const text  = v => (v==null ? '' : String(v));
 
   const pickThumb = (p) =>
     p.mainThumbnailUrl || p.mainThumbnail
@@ -28,7 +29,7 @@
   async function getJSON(url){
     const r = await fetch(url, { headers:{'Accept':'application/json'} });
     const j = await r.json().catch(()=> ({}));
-    if (!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
+    if (!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j;
   }
   const parseItems = j => (Array.isArray(j) ? j : (j.items || j.data?.items || j.docs || j.data?.docs || []));
@@ -47,7 +48,6 @@
       }));
     }catch{ return []; }
   }
-
   async function fetchPortfolios(){
     try{
       const arr = parseItems(await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`));
@@ -59,8 +59,30 @@
       }));
     }catch{ return []; }
   }
+  async function fetchNews(recruitsFallback=[]){
+    try{
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`));
+      if (arr.length) {
+        return arr.map((n,i)=>({
+          id: n.id||n._id||`${i}`,
+          title: text(n.title || n.headline || '뉴스'),
+          thumb: pickThumb(n),
+          date: n.publishedAt || n.createdAt,
+          summary: text(n.summary || n.excerpt || '')
+        }));
+      }
+    }catch{}
+    // 폴백: 리크루트로 뉴스 스타일 구성
+    return recruitsFallback.slice(0,6).map((r,i)=>({
+      id: r.id||`${i}`,
+      title: r.title,
+      thumb: r.thumb,
+      date: r.closeAt,
+      summary: '브랜드 소식'
+    }));
+  }
 
-  /* ========== Hero ========== */
+  /* ---------- Hero: 연한 파랑 배너(텍스트만) ---------- */
   function renderHero(el, firstRecruit){
     const title = firstRecruit?.title || '쇼핑라이브, 쉽게 시작하세요';
     const brand = (firstRecruit?.brand || 'Livee').toUpperCase();
@@ -77,15 +99,10 @@
         </div>
       </article>
     `;
-    // 좌우 버튼 동작은 유지(이미지는 안 씀)
-    const prev=$('.hero-btn.prev'), next=$('.hero-btn.next');
-    if(prev) prev.onclick = ()=>{};
-    if(next) next.onclick = ()=>{};
   }
 
-  /* ========== Section Templates ========== */
-
-  // 1) TODAY LINEUP: 리스트(정사각 썸네일 + 옆 본문)
+  /* ---------- Templates ---------- */
+  // 오늘의 라이브: 가로 좁게, 정사각 썸네일 + 옆 본문
   const tplLineupList = (items) => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -108,7 +125,7 @@
       `).join('')}
     </div>`;
 
-  // 2) 추천 공고: 가로 스크롤 카드
+  // 추천 공고: 가로 스크롤
   const tplRecruitHScroll = (items) => !items.length ? `
     <div class="hscroll">
       <article class="card-mini">
@@ -129,13 +146,31 @@
             <div class="mini-meta">마감 ${r.closeAt ? fmtDate(r.closeAt) : '미정'} · ${
               r.payNegotiable ? '협의' : (r.pay ? `${money(r.pay)}원` : '미정')
             }</div>
-            <!-- 필요하면 버튼 사용: <span class="btn-primary">지원하기</span> -->
           </div>
         </article>
       `).join('')}
     </div>`;
 
-  // 3) 포트폴리오: 기본 그리드 (썸네일은 CSS에서 정사각 처리)
+  // 뉴스: 정사각 썸네일 + 옆 본문(조금 더 컴팩트)
+  const tplNewsList = (items) => !items.length ? `
+    <div class="ed-grid">
+      <article class="card-ed"><div class="card-ed__body">
+        <div class="card-ed__title">표시할 뉴스가 없습니다</div>
+      </div></article>
+    </div>` : `
+    <div class="ed-grid">
+      ${items.map(n=>`
+        <article class="card-ed" onclick="void(0)">
+          <img class="card-ed__media" src="${n.thumb}" alt="">
+          <div class="card-ed__body">
+            <div class="card-ed__title">${n.title}</div>
+            <div class="card-ed__meta">${n.date ? fmtDate(n.date) + ' · ' : ''}${n.summary || '소식'}</div>
+          </div>
+        </article>
+      `).join('')}
+    </div>`;
+
+  // 포트폴리오: 썸네일 정사각 그리드
   const tplPortfolios = (items) => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -159,7 +194,7 @@
     return `
       <div class="section">
         <div class="section-head">
-          <span class="kicker">${title}</span>
+          <h2>${title}</h2>
           <a class="more" href="${moreHref}">더보기</a>
         </div>
         ${innerHTML}
@@ -170,20 +205,24 @@
   async function render(){
     const root = $('#home');
     const heroRoot = $('#hero');
-    const [recruits, portfolios] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
 
-    /* Hero */
+    const [recruits, portfolios] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
+    const news = await fetchNews(recruits);
+
+    // 배너
     renderHero(heroRoot, recruits[0]);
 
-    /* Sections */
-    const lineup = tplLineupList(recruits.slice(0,6));
-    const hscroll = tplRecruitHScroll(recruits.slice(0,8));
-    const pfGrid = tplPortfolios(portfolios);
+    // 섹션(요청 순서)
+    const lineupHTML = tplLineupList(recruits.slice(0,6));
+    const recommendHTML = tplRecruitHScroll(recruits.slice(0,8));
+    const newsHTML = tplNewsList(news.slice(0,6));
+    const pfHTML = tplPortfolios(portfolios);
 
     root.innerHTML = [
-      sectionBlock('TODAY LINEUP', 'recruit-list.html', lineup),
-      sectionBlock('추천 공고', 'recruit-list.html', hscroll),
-      sectionBlock('SPOTLIGHT PORTFOLIOS', 'portfolio-list.html', pfGrid),
+      sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML),
+      sectionBlock('추천 공고', 'recruit-list.html', recommendHTML),
+      sectionBlock('뉴스', '#', newsHTML),
+      sectionBlock('쇼호스트 포트폴리오', 'portfolio-list.html', pfHTML),
     ].join('');
   }
 
