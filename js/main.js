@@ -1,4 +1,4 @@
-/* Home main.js — 섹션 순서/레이아웃 반영 */
+/* Home main.js — 고정 배너 텍스트 & 섹션 순서 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -7,7 +7,7 @@
   const EP = CFG.endpoints || {};
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
-  const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10'; // 없으면 자동 폴백
+  const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
   const FALLBACK_IMG  = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
@@ -18,13 +18,11 @@
   };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v));
-
-  const pickThumb = (p) =>
-    p.mainThumbnailUrl || p.mainThumbnail
-    || (Array.isArray(p.subThumbnails) && p.subThumbnails[0])
-    || (Array.isArray(p.subImages)     && p.subImages[0])
-    || p.coverImageUrl || p.coverImage
-    || FALLBACK_IMG;
+  const pickThumb = p =>
+    p?.mainThumbnailUrl || p?.mainThumbnail ||
+    (Array.isArray(p?.subThumbnails) && p.subThumbnails[0]) ||
+    (Array.isArray(p?.subImages) && p.subImages[0]) ||
+    p?.coverImageUrl || p?.coverImage || FALLBACK_IMG;
 
   async function getJSON(url){
     const r = await fetch(url, { headers:{'Accept':'application/json'} });
@@ -43,8 +41,7 @@
         thumb: c.thumbnailUrl || c.coverImageUrl || FALLBACK_IMG,
         closeAt: c.closeAt,
         pay: c.recruit?.pay,
-        payNegotiable: !!c.recruit?.payNegotiable,
-        brand: c.brandName || c.recruit?.brandName || '브랜드'
+        payNegotiable: !!c.recruit?.payNegotiable
       }));
     }catch{ return []; }
   }
@@ -72,29 +69,21 @@
         }));
       }
     }catch{}
-    // 폴백: 리크루트로 뉴스 스타일 구성
     return recruitsFallback.slice(0,6).map((r,i)=>({
-      id: r.id||`${i}`,
-      title: r.title,
-      thumb: r.thumb,
-      date: r.closeAt,
-      summary: '브랜드 소식'
+      id: r.id||`${i}`, title: r.title, thumb: r.thumb, date: r.closeAt, summary: '브랜드 소식'
     }));
   }
 
-  /* ---------- Hero: 연한 파랑 배너(텍스트만) ---------- */
-  function renderHero(el, firstRecruit){
-    const title = firstRecruit?.title || '쇼핑라이브, 쉽게 시작하세요';
-    const brand = (firstRecruit?.brand || 'Livee').toUpperCase();
-    const deadline = firstRecruit?.closeAt ? `DEADLINE ${fmtDate(firstRecruit.closeAt)}` : '';
+  /* ---------- Hero: 고정 서비스 소개 텍스트 ---------- */
+  function renderHero(el){
     el.innerHTML = `
       <article class="hero-card">
         <div class="hero-body">
           <div class="hero-meta">
-            <span class="kicker">${brand}</span>
-            ${deadline ? `<span class="kicker">${deadline}</span>` : ''}
+            <span class="kicker">LIVEE</span>
+            <span class="kicker">FOR CREATORS & BRANDS</span>
           </div>
-          <h1 class="hero-title">${title}</h1>
+          <h1 class="hero-title">쇼핑라이브, 쉽게 시작하세요</h1>
           <p class="hero-sub">연결 · 제안 · 계약 · 결제까지 한 번에</p>
         </div>
       </article>
@@ -102,8 +91,7 @@
   }
 
   /* ---------- Templates ---------- */
-  // 오늘의 라이브: 가로 좁게, 정사각 썸네일 + 옆 본문
-  const tplLineupList = (items) => !items.length ? `
+  const tplLineupList = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
         <div class="card-ed__title">등록된 라이브가 없습니다</div>
@@ -121,12 +109,10 @@
               r.payNegotiable ? '협의' : (r.pay ? `${money(r.pay)}원` : '출연료 미정')
             }</div>
           </div>
-        </article>
-      `).join('')}
+        </article>`).join('')}
     </div>`;
 
-  // 추천 공고: 가로 스크롤
-  const tplRecruitHScroll = (items) => !items.length ? `
+  const tplRecruitHScroll = items => !items.length ? `
     <div class="hscroll">
       <article class="card-mini">
         <div class="mini-thumb" style="background:#f3f4f6"></div>
@@ -147,12 +133,10 @@
               r.payNegotiable ? '협의' : (r.pay ? `${money(r.pay)}원` : '미정')
             }</div>
           </div>
-        </article>
-      `).join('')}
+        </article>`).join('')}
     </div>`;
 
-  // 뉴스: 정사각 썸네일 + 옆 본문(조금 더 컴팩트)
-  const tplNewsList = (items) => !items.length ? `
+  const tplNewsList = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
         <div class="card-ed__title">표시할 뉴스가 없습니다</div>
@@ -160,18 +144,16 @@
     </div>` : `
     <div class="ed-grid">
       ${items.map(n=>`
-        <article class="card-ed" onclick="void(0)">
+        <article class="card-ed">
           <img class="card-ed__media" src="${n.thumb}" alt="">
           <div class="card-ed__body">
             <div class="card-ed__title">${n.title}</div>
-            <div class="card-ed__meta">${n.date ? fmtDate(n.date) + ' · ' : ''}${n.summary || '소식'}</div>
+            <div class="card-ed__meta">${n.date ? fmtDate(n.date)+' · ' : ''}${n.summary || '소식'}</div>
           </div>
-        </article>
-      `).join('')}
+        </article>`).join('')}
     </div>`;
 
-  // 포트폴리오: 썸네일 정사각 그리드
-  const tplPortfolios = (items) => !items.length ? `
+  const tplPortfolios = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
         <div class="card-ed__title">포트폴리오가 없습니다</div>
@@ -186,8 +168,7 @@
             <div class="card-ed__title">${p.nickname}</div>
             <div class="card-ed__meta">${p.headline || '소개가 없습니다'}</div>
           </div>
-        </article>
-      `).join('')}
+        </article>`).join('')}
     </div>`;
 
   function sectionBlock(title, moreHref, innerHTML){
@@ -198,8 +179,7 @@
           <a class="more" href="${moreHref}">더보기</a>
         </div>
         ${innerHTML}
-      </div>
-    `;
+      </div>`;
   }
 
   async function render(){
@@ -209,14 +189,12 @@
     const [recruits, portfolios] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
     const news = await fetchNews(recruits);
 
-    // 배너
-    renderHero(heroRoot, recruits[0]);
+    renderHero(heroRoot); // 고정 텍스트
 
-    // 섹션(요청 순서)
-    const lineupHTML = tplLineupList(recruits.slice(0,6));
-    const recommendHTML = tplRecruitHScroll(recruits.slice(0,8));
-    const newsHTML = tplNewsList(news.slice(0,6));
-    const pfHTML = tplPortfolios(portfolios);
+    const lineupHTML   = tplLineupList(recruits.slice(0,6));
+    const recommendHTML= tplRecruitHScroll(recruits.slice(0,8));
+    const newsHTML     = tplNewsList(news.slice(0,6));
+    const pfHTML       = tplPortfolios(portfolios);
 
     root.innerHTML = [
       sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML),
