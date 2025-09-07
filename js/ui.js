@@ -1,4 +1,4 @@
-// js/ui.js (drop-in)
+// js/ui.js (drop-in, 뉴스 탭 -> news.html + active sync)
 (() => {
   const ready = (fn) =>
     document.readyState === 'loading'
@@ -7,9 +7,11 @@
 
   ready(() => {
     const getToken = () =>
-      localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+      localStorage.getItem('livee_token') ||
+      localStorage.getItem('liveeToken') ||
+      '';
 
-    // 상단 앱바 (있을 때만)
+    /* ---------- 상단 앱바 ---------- */
     const appbar = document.getElementById('appbar');
     if (appbar) {
       const isLogin = !!getToken();
@@ -27,22 +29,42 @@
         </div>`;
     }
 
-    // 상단 탭 (있을 때만)
+    /* ---------- 상단 탭 ---------- */
     const top = document.getElementById('top-tabs');
     if (top) {
+      const path = location.pathname.replace(/\/+$/, ''); // trailing slash 제거
+
       top.innerHTML = `
         <div class="lv-topTabs">
           <div class="lv-topTabs__in">
-            <a class="tab is-active" href="#/home">숏클립</a>
-            <a class="tab" href="#/live">쇼핑라이브</a>
-            <a class="tab" href="#/news">뉴스</a>
-            <a class="tab" href="#/event">이벤트</a>
-            <a class="tab" href="#/service">서비스</a>
+            <a class="tab" data-tab="home" href="index.html#/">숏클립</a>
+            <a class="tab" data-tab="live" href="index.html#/live">쇼핑라이브</a>
+            <a class="tab" data-tab="news" href="news.html">뉴스</a>   <!-- ← 루트 news.html 로 이동 -->
+            <a class="tab" data-tab="event" href="index.html#/event">이벤트</a>
+            <a class="tab" data-tab="service" href="index.html#/service">서비스</a>
           </div>
         </div>`;
+
+      // 활성 탭 동기화
+      const setActive = (name) => {
+        top.querySelectorAll('.tab').forEach(el =>
+          el.classList.toggle('is-active', el.dataset.tab === name)
+        );
+      };
+      if (/\/news\.html$/.test(path)) {
+        setActive('news');
+      } else if (location.hash.startsWith('#/live')) {
+        setActive('live');
+      } else if (location.hash.startsWith('#/event')) {
+        setActive('event');
+      } else if (location.hash.startsWith('#/service')) {
+        setActive('service');
+      } else {
+        setActive('home');
+      }
     }
 
-    // 하단 탭 (항상 생성)
+    /* ---------- 하단 탭 ---------- */
     const ensure = (id) => {
       let el = document.getElementById(id);
       if (!el) { el = document.createElement('div'); el.id = id; document.body.appendChild(el); }
