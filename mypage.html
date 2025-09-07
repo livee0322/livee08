@@ -10,17 +10,15 @@
   <link rel="stylesheet" href="css/main.css" />
 
   <!-- 아이콘 -->
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 
   <!-- 이 페이지 전용 -->
   <link rel="stylesheet" href="css/mypage.css" />
 </head>
 <body>
-  <!-- 상단 앱바 -->
-  <header class="lv-appbar">
-    <div class="lv-title">마이페이지</div>
-    <div class="lv-actions"></div>
-  </header>
+  <!-- ui.js가 그려줄 영역들 -->
+  <header id="appbar"></header>
+  <nav id="top-tabs"></nav>
 
   <main class="container mypage">
     <!-- 프로필 카드 -->
@@ -87,7 +85,7 @@
       </ul>
     </section>
 
-    <!-- 브랜드 메뉴 (항상 노출, 클릭 시 권한 가드) -->
+    <!-- 브랜드 메뉴 -->
     <section class="mp-block">
       <div class="mp-block-head">
         <h3>브랜드 메뉴</h3>
@@ -176,7 +174,7 @@
       </ul>
     </section>
 
-    <!-- 권한 가드(로그인/호스트/브랜드 권한 필요 시 노출) -->
+    <!-- 권한 가드 -->
     <div class="guard" id="mpGuard" aria-hidden="true">
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="guardTitle">
         <h3 id="guardTitle">권한이 필요합니다</h3>
@@ -189,8 +187,12 @@
     </div>
   </main>
 
-  <!-- 전역 설정 -->
+  <!-- 하단 탭 영역 -->
+  <footer id="bottom-tabs"></footer>
+
+  <!-- 전역 설정 & UI & 페이지 스크립트 -->
   <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
 
   <script>
   (() => {
@@ -199,6 +201,21 @@
     const token =
       localStorage.getItem('livee_token') ||
       localStorage.getItem('liveeToken') || '';
+
+    // ===== ui.js로 상/하단 장착 =====
+    try {
+      if (window.LIVEE_UI?.mountHeader) {
+        LIVEE_UI.mountHeader({ title: '마이페이지' });
+      }
+      // 상단탭이 있는 레이아웃을 유지하고 싶으면 mountTopTabs 호출
+      if (window.LIVEE_UI?.mountTopTabs) {
+        // 마이페이지는 탭 활성 없음 → 필요 시 다른 값으로 변경
+        LIVEE_UI.mountTopTabs({ active: null });
+      }
+      if (window.LIVEE_UI?.mountTabbar) {
+        LIVEE_UI.mountTabbar({ active: 'mypage' });
+      }
+    } catch (_) {}
 
     const $ = (s)=>document.querySelector(s);
     const $id = (s)=>document.getElementById(s);
@@ -209,7 +226,7 @@
     const authBtn = $id('mpAuthBtn');
 
     // 기본 아바타
-    elAvatar.src = CFG.placeholderThumb || 'default.jpg';
+    elAvatar.src = CFG.placeholderThumb || 'assets/default.jpg';
 
     // 현재 URL (login returnTo용)
     const here = encodeURIComponent(location.pathname + location.search + location.hash);
@@ -218,7 +235,7 @@
     async function fetchMe(){
       if(!token) return null;
       const headers = { 'Authorization': 'Bearer ' + token };
-      const candidates = ['/me','/auth/me','/users/me'].map(p => API_BASE + p);
+      const candidates = ['/users/me','/auth/me','/me'].map(p => API_BASE + p);
       for(const url of candidates){
         try{
           const r = await fetch(url, { headers });
@@ -323,5 +340,8 @@
     })();
   })();
   </script>
+
+  <!-- 하단 탭 mount 대상 -->
+  <footer id="bottom-tabs"></footer>
 </body>
 </html>
