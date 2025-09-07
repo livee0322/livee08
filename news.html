@@ -20,8 +20,8 @@
   <header class="lv-appbar">
     <div class="lv-title">라이비</div>
     <div class="lv-actions">
-      <button class="lv-action" id="btnRequest"><i class="ri-edit-2-line"></i></button>
-      <button class="lv-action"><i class="ri-search-line"></i></button>
+      <button class="lv-action" id="btnRequest" aria-label="등록요청"><i class="ri-edit-2-line"></i></button>
+      <button class="lv-action" aria-label="검색"><i class="ri-search-line"></i></button>
     </div>
   </header>
 
@@ -38,13 +38,15 @@
 
   <main class="container news-container">
     <!-- 필터 -->
-    <section class="news-filter">
-      <button class="chip is-active" data-tag="all">전체</button>
-      <button class="chip" data-tag="notice">공지</button>
-      <button class="chip" data-tag="event">이벤트</button>
-      <button class="chip" data-tag="live">쇼핑라이브</button>
-      <button class="chip" data-tag="pick">추천</button>
-      <button class="chip" data-tag="external">관련기사</button>
+    <section class="news-filter" aria-label="카테고리 필터">
+      <div class="news-filter__scroll">
+        <button class="chip is-active" data-tag="all">전체</button>
+        <button class="chip" data-tag="notice">공지</button>
+        <button class="chip" data-tag="event">이벤트</button>
+        <button class="chip" data-tag="live">쇼핑라이브</button>
+        <button class="chip" data-tag="pick">추천</button>
+        <button class="chip" data-tag="external">관련기사</button>
+      </div>
     </section>
 
     <!-- 리스트 / 상세 뷰 -->
@@ -56,6 +58,14 @@
       <button id="btnMore" class="btn-more"><i class="ri-arrow-down-s-line"></i> 더보기</button>
     </div>
   </main>
+
+  <!-- 작성하기 FAB (누구나 테스트용) -->
+  <button id="btnWrite" class="fab-write" aria-label="작성하기">
+    <i class="ri-edit-2-line"></i><span>작성하기</span>
+  </button>
+
+  <!-- 하단 탭 (항상 표시) -->
+  <footer id="bottom-tabs"></footer>
 
   <!-- 등록요청 모달 -->
   <div id="requestModal" class="modal" hidden>
@@ -101,7 +111,9 @@
     </div>
   </div>
 
-  <!-- Config & JS -->
+  <!-- 공용 UI(하단탭 생성) -->
+  <script src="js/ui.js"></script>
+  <!-- Config & 페이지 JS -->
   <script src="js/config.js"></script>
   <script src="js/news.js"></script>
 </body>
