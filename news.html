@@ -9,29 +9,16 @@
   <link rel="stylesheet" href="css/news.css" />
 </head>
 <body>
-  <!-- 상단바/탭: ui.js가 있으면 자동 마운트, 없으면 아래 마크업이 그대로 사용됨 -->
-  <header id="appbar" class="lv-appbar">
-    <div class="lv-title">뉴스</div>
-    <div class="lv-actions">
-      <button id="openWrite" class="btn pri">작성하기</button>
-    </div>
-  </header>
-
-  <nav id="topTabs" class="lv-tabs">
-    <a href="index.html">숏클립</a>
-    <a href="shoppinglive.html">쇼핑라이브</a>
-    <a class="active" href="news.html">뉴스</a>
-    <a href="events.html">이벤트</a>
-    <a href="service.html">서비스</a>
-  </nav>
+  <!-- ui.js가 채워 넣을 마운트 포인트 (index.html과 동일) -->
+  <header id="appbar"></header>
+  <nav id="top-tabs"></nav>
 
   <main class="container">
     <section id="newsList" class="news-list"></section>
     <div id="emptyBox" class="empty">등록된 뉴스가 없습니다</div>
   </main>
 
-  <!-- 하단 탭바(없으면 이 마크업이 기본) -->
-  <footer id="tabbar" class="lv-tabbar"></footer>
+  <footer id="bottom-tabs"></footer>
 
   <!-- 작성 모달 -->
   <div id="newsModal" class="modal" aria-hidden="true">
@@ -68,13 +55,10 @@
           <button type="button" id="pickImage" class="btn">파일 선택</button>
           <span id="fileName" class="muted">선택된 파일 없음</span>
         </div>
-        <div class="thumb-prev">
-          <img id="thumbPrev" alt="" />
-        </div>
+        <div class="thumb-prev"><img id="thumbPrev" alt="" /></div>
 
         <label class="agree">
-          <input type="checkbox" id="agree" />
-          저작권/개인정보 수집에 동의합니다.
+          <input type="checkbox" id="agree" /> 저작권/개인정보 수집에 동의합니다.
         </label>
 
         <div class="btns">
@@ -87,6 +71,6 @@
 
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/news.js?v=ref-list-final"></script>
+  <script src="js/news.js?v=artbook-mount"></script>
 </body>
 </html>
