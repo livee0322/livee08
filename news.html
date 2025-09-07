@@ -4,12 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>뉴스</title>
+
+  <!-- 폰트 / 아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
+
+  <!-- 스타일 -->
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/news.css" />
 </head>
 <body>
-  <!-- ui.js가 채워 넣을 마운트 포인트 (index.html과 동일) -->
+  <!-- ui.js 마운트 포인트 (index.html과 동일) -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
@@ -17,6 +22,11 @@
     <section id="newsList" class="news-list"></section>
     <div id="emptyBox" class="empty">등록된 뉴스가 없습니다</div>
   </main>
+
+  <!-- ✅ 항상 보이는 FAB (작성하기) -->
+  <button id="fabWrite" class="fab" aria-label="작성하기">
+    <i class="ri-add-line"></i>
+  </button>
 
   <footer id="bottom-tabs"></footer>
 
@@ -26,7 +36,7 @@
     <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="newsWriteTitle">
       <div class="modal__head">
         <h3 id="newsWriteTitle">뉴스 등록</h3>
-        <button class="icon-btn" data-close aria-label="닫기">✕</button>
+        <button class="icon-btn" data-close aria-label="닫기"><i class="ri-close-line"></i></button>
       </div>
 
       <div id="toast" class="notice" role="status" aria-live="polite"></div>
@@ -71,6 +81,6 @@
 
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/news.js?v=artbook-mount"></script>
+  <script src="js/news.js?v=with-fab-remixicon"></script>
 </body>
 </html>
