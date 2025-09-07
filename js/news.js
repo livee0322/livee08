@@ -1,4 +1,4 @@
-/* News page — list + write modal (Cloudinary upload, unified schema) */
+/* News page — list + write modal (Cloudinary upload, unified schema, publish now) */
 (() => {
   const $ = (s, el=document)=> el.querySelector(s);
   const CFG = window.LIVEE_CONFIG || {};
@@ -37,9 +37,10 @@
   function tplCards(items){
     if(!items.length){ $('#emptyBox').style.display='block'; return ''; }
     $('#emptyBox').style.display='none';
+    const FALLBACK = (CFG.BASE_PATH?CFG.BASE_PATH+'/default.jpg':'default.jpg');
     return items.map(n=>`
       <article class="card">
-        <img class="thumb" src="${n.thumbnailUrl || (CFG.BASE_PATH?CFG.BASE_PATH+'/default.jpg':'default.jpg')}" alt="" />
+        <img class="thumb" src="${n.thumbnailUrl || FALLBACK}" alt="" />
         <div class="body">
           <span class="badge">${n.category}</span>
           <div class="title">${n.title}</div>
@@ -121,17 +122,16 @@
     finally{ URL.revokeObjectURL(local); }
   });
 
-  // ---------- submit ----------
+  // ---------- submit (즉시 발행) ----------
   $('#newsForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const agree = $('#agree').checked;
-    if(!agree){ say('동의가 필요합니다'); return; }
+    if(!$('#agree').checked){ say('동의가 필요합니다'); return; }
     const title = $('#title').value.trim();
     if(!title){ say('제목을 입력해주세요'); return; }
 
     const payload = {
       type:'news',
-      status:'pending',          // 관리자가 승인해 발행
+      status:'published',        // ✅ 즉시 발행
       visibility:'public',
       category: $('#category').value || '공지',
       title,
@@ -142,7 +142,7 @@
     };
 
     try{
-      say('요청 전송 중…');
+      say('등록 중…');
       const r = await fetch(`${API_BASE}/${ENTITY}`, {
         method:'POST',
         headers: { 'Content-Type':'application/json', ...(TOKEN?{Authorization:'Bearer '+TOKEN}:{}) },
@@ -151,9 +151,9 @@
       const j = await r.json().catch(()=>({}));
       if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
 
-      say('등록요청이 접수되었습니다', true);
-      setTimeout(()=>{ closeModal(); renderList(); }, 400);
-    }catch(err){ console.error(err); say('요청 실패: '+(err.message||'네트워크 오류')); }
+      say('등록되었습니다', true);
+      setTimeout(()=>{ closeModal(); renderList(); }, 300);
+    }catch(err){ console.error(err); say('등록 실패: '+(err.message||'네트워크 오류')); }
   });
 
   // boot
