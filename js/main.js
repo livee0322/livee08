@@ -1,8 +1,7 @@
-<script>
 /* Home main.js — v2.8 (Refined UI)
    - 탭/라우팅 그대로 유지
-   - 히어로에 3종 CTA 추가 (공고 올리기 / 쇼호스트 찾기 / 가이드 보기)
-   - 카드 톤 통일 & 포트폴리오를 "원형 썸네일 + 옆 이름 + 제안하기"로 변경
+   - 히어로 3종 CTA
+   - 포트폴리오: 원형 썸네일 + 옆 이름 + 제안하기
 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
@@ -23,7 +22,6 @@
   };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v).trim());
-
   const pickThumb = (o) =>
     o?.mainThumbnailUrl || o?.thumbnailUrl ||
     (Array.isArray(o?.subThumbnails) && o.subThumbnails[0]) ||
@@ -75,13 +73,11 @@
         }));
       }
     }catch{}
-    // 뉴스 없으면 공고 일부로 대체
     return fallback.slice(0,6).map((r,i)=>({
       id: r.id||`${i}`, title: r.title, thumb: r.thumb, date: r.closeAt, summary: '브랜드 소식'
     }));
   }
 
-  /* ---------- Hero(카피+CTA) ---------- */
   const HERO_COPY = [
     { h: '쇼핑라이브, 쉽게 시작하세요', s: '연결 · 제안 · 계약 · 결제까지 한 번에' },
     { h: '브랜드와 쇼호스트를 가장 빠르게', s: '단 5분 설정으로 공고 등록 완료' },
@@ -104,7 +100,6 @@
         </div>
       </article>
     `;
-    // 간단 회전 카피
     let i = 1;
     setInterval(()=>{
       const item = HERO_COPY[i%HERO_COPY.length];
@@ -115,7 +110,6 @@
     }, 6000);
   }
 
-  /* ---------- Templates ---------- */
   const tplLineupList = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -179,7 +173,6 @@
         </article>`).join('')}
     </div>`;
 
-  // ✅ 포트폴리오: 원형 썸네일 + 옆 이름/한줄소개 + 제안하기
   const tplPortfolios = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -257,4 +250,3 @@
     document.addEventListener('DOMContentLoaded', render, { once:true });
   } else { render(); }
 })();
-</script>
