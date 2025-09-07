@@ -22,7 +22,7 @@
 .chip{
   padding:8px 12px; border-radius:999px; border:1px solid var(--border);
   background:#fff; color:#4b5563; font-weight:700; font-size:13px;
-  white-space:nowrap; /* 줄바꿈 방지 */
+  white-space:nowrap;
 }
 .chip.is-active{ background:var(--primary); color:#fff; border-color:transparent; }
 
