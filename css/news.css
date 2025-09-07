@@ -2,19 +2,31 @@
 
 .news-container{ padding-top:8px; }
 
-/* 필터 chips */
+/* ===== 필터: 가로 스크롤 한 줄 ===== */
 .news-filter{
-  display:flex; gap:8px; padding:8px 2px 12px;
-  position:sticky; top:calc(var(--appbar-h) + var(--topTabs-h));
-  background:var(--bg); z-index:10;
+  margin: 2px -18px 8px;   /* 에지-투-에지 느낌 */
+  position: sticky;
+  top: calc(var(--appbar-h) + var(--topTabs-h));
+  background: var(--bg);
+  z-index: 10;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--border);
 }
+.news-filter__scroll{
+  display: flex; gap: 8px; padding: 0 18px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  flex-wrap: nowrap; white-space: nowrap;
+}
+.news-filter__scroll::-webkit-scrollbar{ display:none; }
+
 .chip{
   padding:8px 12px; border-radius:999px; border:1px solid var(--border);
   background:#fff; color:#4b5563; font-weight:700; font-size:13px;
+  white-space:nowrap; /* 줄바꿈 방지 */
 }
 .chip.is-active{ background:var(--primary); color:#fff; border-color:transparent; }
 
-/* 리스트 */
+/* ===== 리스트 ===== */
 .news-list{ border-top:1px solid var(--border); }
 .news-item{
   display:grid; grid-template-columns: 1fr 80px; gap:8px;
@@ -39,7 +51,7 @@
 .prefix.external{ color:#0f766e; background:#ecfeff; border-color:#99f6e4; }
 .prefix.ad{ color:#6b7280; background:#f3f4f6; }
 
-/* 상세 */
+/* ===== 상세 ===== */
 .news-detail{
   max-width:760px; margin: 8px auto 24px; background:#fff; border:1px solid var(--border);
   border-radius:16px; padding:18px; box-shadow: 0 1px 0 rgba(16,24,40,.02);
@@ -49,13 +61,25 @@
 .nd-hero{ width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:12px; background:#eef2f7; margin:12px 0; }
 .nd-body{ margin-top:8px; color:#111; line-height:1.65; }
 
-/* 더보기 */
+/* ===== 더보기 ===== */
 .news-more{ display:grid; place-items:center; padding:16px 0 24px; }
 .btn-more{
   padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:#fff; font-weight:800;
 }
 
-/* 모달 */
+/* ===== 작성하기 FAB ===== */
+.fab-write{
+  position: fixed; right: 16px; bottom: calc(var(--tabbar-h) + var(--safe-b) + 16px);
+  z-index: 60;
+  display:flex; align-items:center; gap:8px;
+  padding:12px 14px; border-radius:999px;
+  background: var(--primary); color:#fff; border:0;
+  box-shadow: 0 12px 30px rgba(16,24,40,.18);
+  font-weight:900;
+}
+.fab-write i{ font-size:18px; line-height:1; }
+
+/* ===== 모달 ===== */
 .modal[hidden]{ display:none; }
 .modal{ position:fixed; inset:0; z-index:100; }
 .modal__backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.4); }
