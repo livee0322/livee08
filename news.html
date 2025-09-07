@@ -1,102 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee — 뉴스</title>
-
-  <!-- 아이콘/폰트 -->
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>뉴스</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-
-  <!-- 글로벌 · 페이지 CSS -->
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/news.css" />
-  <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-  <!-- 홈과 동일한 헤더/탭: ui.js가 주입 -->
-  <header id="appbar"></header>
-  <nav id="top-tabs"></nav>
-
-  <main class="container news-container">
-    <!-- 필터 -->
-    <section class="news-filter" aria-label="뉴스 말머리 필터">
-      <div class="news-filter__in">
-        <button class="chip is-active" data-tag="all">전체</button>
-        <button class="chip" data-tag="notice">공지</button>
-        <button class="chip" data-tag="event">이벤트</button>
-        <button class="chip" data-tag="live">쇼핑라이브</button>
-        <button class="chip" data-tag="pick">추천</button>
-        <button class="chip" data-tag="external">관련기사</button>
-      </div>
-    </section>
-
-    <!-- 리스트 / 상세 -->
-    <section id="view-list" class="news-list" aria-live="polite"></section>
-    <section id="view-detail" class="news-detail" hidden></section>
-
-    <!-- 더보기 -->
-    <div class="news-more">
-      <button id="btnMore" class="btn-more"><i class="ri-arrow-down-s-line"></i> 더보기</button>
+  <header class="lv-appbar">
+    <div class="lv-title">뉴스</div>
+    <div class="lv-actions">
+      <button id="openWrite" class="btn pri">작성하기</button>
     </div>
+  </header>
+
+  <main class="container">
+    <section id="newsList" class="news-grid"></section>
+    <div id="emptyBox" class="empty" style="display:none;">등록된 뉴스가 없습니다</div>
   </main>
 
-  <!-- 하단탭 항상 유지 (ui.js가 생성/유지) -->
-  <footer id="bottom-tabs"></footer>
+  <!-- 작성 모달 -->
+  <div id="newsModal" class="modal" aria-hidden="true">
+    <div class="modal__overlay" data-close></div>
+    <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="newsWriteTitle">
+      <div class="modal__head">
+        <h3 id="newsWriteTitle">뉴스 등록요청</h3>
+        <button class="icon-btn" data-close aria-label="닫기">✕</button>
+      </div>
 
-  <!-- 등록요청 모달 -->
-  <div id="requestModal" class="modal" hidden>
-    <div class="modal__backdrop" data-close></div>
-    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="reqTitle">
-      <header class="modal__head">
-        <h3 id="reqTitle">뉴스 등록요청</h3>
-        <button class="icon-btn" data-close aria-label="닫기"><i class="ri-close-line"></i></button>
-      </header>
-      <form id="requestForm" class="modal__body">
-        <label class="fld">
-          <span>말머리</span>
-          <select name="tag" required>
-            <option value="notice">공지</option>
-            <option value="event">이벤트</option>
-            <option value="live">쇼핑라이브</option>
-            <option value="pick">추천</option>
-            <option value="external">관련기사</option>
-          </select>
+      <div id="toast" class="notice" role="status" aria-live="polite"></div>
+
+      <form id="newsForm" class="form">
+        <label class="label">말머리</label>
+        <select id="category" class="input">
+          <option value="공지">공지</option>
+          <option value="업데이트">업데이트</option>
+          <option value="이벤트">이벤트</option>
+          <option value="기타">기타</option>
+        </select>
+
+        <label class="label">제목 (최대 60자) <span class="req">*</span></label>
+        <input id="title" class="input" maxlength="60" placeholder="제목(최대 60자)" required />
+
+        <label class="label">요약 (선택)</label>
+        <textarea id="summary" class="input" rows="3" placeholder="간단 소개(선택)"></textarea>
+
+        <label class="label">내용 (선택)</label>
+        <textarea id="content" class="input" rows="8" placeholder="상세 내용(선택) — 간단한 텍스트/HTML 허용"></textarea>
+
+        <label class="label">이미지</label>
+        <div class="file-row">
+          <input id="imageFile" type="file" accept="image/*" hidden />
+          <button type="button" id="pickImage" class="btn">파일 선택</button>
+          <span id="fileName" class="muted">선택된 파일 없음</span>
+        </div>
+        <div class="thumb-prev">
+          <img id="thumbPrev" alt="" />
+        </div>
+
+        <label class="agree">
+          <input type="checkbox" id="agree" />
+          저작권/개인정보 수집에 동의합니다.
         </label>
-        <label class="fld"><span>제목</span>
-          <input name="title" type="text" maxlength="60" required placeholder="제목(최대 60자)" />
-        </label>
-        <label class="fld"><span>요약</span>
-          <textarea name="summary" maxlength="120" rows="3" placeholder="간단 소개(선택)"></textarea>
-        </label>
-        <label class="fld" data-when="external"><span>출처 URL</span>
-          <input name="sourceUrl" type="url" placeholder="관련기사 링크" />
-        </label>
-        <label class="fld"><span>이미지</span>
-          <input id="fileInput" type="file" accept="image/*" />
-          <div class="upload-hint" id="uploadHint">이미지 선택 시 자동 업로드됩니다.</div>
-        </label>
-        <label class="chk">
-          <input type="checkbox" name="agree" required />
-          <span>저작권/개인정보 수집에 동의합니다.</span>
-        </label>
-        <footer class="modal__foot">
-          <button type="button" class="btn ghost" data-close>취소</button>
-          <button type="submit" class="btn primary">요청 보내기</button>
-        </footer>
+
+        <div class="btns">
+          <button type="button" class="btn" data-close>취소</button>
+          <button type="submit" id="submitBtn" class="btn pri">요청 보내기</button>
+        </div>
       </form>
     </div>
   </div>
 
-  <!-- 작성하기 FAB -->
-  <button id="fabWrite" class="fab-write" aria-label="뉴스 작성하기">
-    <i class="ri-edit-2-line"></i><span>작성하기</span>
-  </button>
-
-  <!-- Config & JS -->
   <script src="js/config.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/news.js"></script>
+  <script src="js/news.js?v=final"></script>
 </body>
 </html>
