@@ -1,4 +1,4 @@
-// Livee News page + Hash Router
+// Livee News page + Hash Router (full)
 (() => {
   const $  = (s, el=document) => el.querySelector(s);
   const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
@@ -106,15 +106,21 @@
   function openModal(){ $('#requestModal').hidden=false; location.hash = '#/news/request'; }
   function closeModal(){ $('#requestModal').hidden=true; if (location.hash.startsWith('#/news/request')) history.back(); }
   function attachModal(){
-    $('#btnRequest').addEventListener('click', openModal);
+    // 상단 아이콘 & FAB 둘 다 모달 오픈
+    const btnReq = $('#btnRequest');
+    if (btnReq) btnReq.addEventListener('click', openModal);
+    const fab = $('#btnWrite');
+    if (fab) fab.addEventListener('click', openModal);
+
     $$('.modal [data-close]').forEach(b=> b.addEventListener('click', closeModal));
+
     // tag 조건부 필드
     const tagSel = $('#requestForm select[name="tag"]');
     const srcFld = $('#requestForm [data-when="external"]');
     const syncFields = () => { srcFld.style.display = (tagSel.value==='external') ? 'block' : 'none'; };
     tagSel.addEventListener('change', syncFields); syncFields();
 
-    // Cloudinary upload
+    // Cloudinary 업로드
     const fileInput = $('#fileInput');
     fileInput.addEventListener('change', async (e)=>{
       const f = e.target.files?.[0]; if (!f) return;
@@ -139,7 +145,7 @@
       }
     });
 
-    // submit
+    // 제출
     $('#requestForm').addEventListener('submit', async (e)=>{
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
@@ -165,14 +171,8 @@
   }
 
   /* --------- router --------- */
-  function renderListView(){
-    $('#view-detail').hidden = true;
-    $('#view-list').hidden = false;
-  }
-  function renderDetailView(){
-    $('#view-list').hidden = true;
-    $('#view-detail').hidden = false;
-  }
+  function renderListView(){ $('#view-detail').hidden = true;  $('#view-list').hidden = false; }
+  function renderDetailView(){ $('#view-list').hidden = true;  $('#view-detail').hidden = false; }
 
   async function router(){
     const hash = location.hash || '#/news';
@@ -195,7 +195,7 @@
 
   /* --------- events --------- */
   function init(){
-    // filters
+    // 필터
     $$('.news-filter .chip').forEach(chip=>{
       chip.addEventListener('click', async ()=>{
         $$('.news-filter .chip').forEach(c=>c.classList.remove('is-active'));
@@ -204,11 +204,14 @@
         await loadList({reset:true});
       });
     });
-    // more
+
+    // 더보기
     $('#btnMore').addEventListener('click', ()=> loadList({reset:false}));
-    // modal
+
+    // 모달
     attachModal();
-    // initial route
+
+    // 라우터
     window.addEventListener('hashchange', router);
   }
 
