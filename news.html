@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/news.css" />
 </head>
 <body>
+  <!-- 상단/하단 공용 UI가 ui.js에서 자동 마운트되는 경우를 고려해 그대로 둠 -->
   <header class="lv-appbar">
     <div class="lv-title">뉴스</div>
     <div class="lv-actions">
@@ -16,17 +17,27 @@
     </div>
   </header>
 
+  <nav class="lv-tabs">
+    <a href="index.html">숏클립</a>
+    <a href="shoppinglive.html">쇼핑라이브</a>
+    <a class="active" href="news.html">뉴스</a>
+    <a href="events.html">이벤트</a>
+    <a href="service.html">서비스</a>
+  </nav>
+
   <main class="container">
     <section id="newsList" class="news-grid"></section>
     <div id="emptyBox" class="empty" style="display:none;">등록된 뉴스가 없습니다</div>
   </main>
+
+  <footer class="lv-tabbar"><!-- 기존 하단 탭이 main.css/ui.js로 스타일됨 --></footer>
 
   <!-- 작성 모달 -->
   <div id="newsModal" class="modal" aria-hidden="true">
     <div class="modal__overlay" data-close></div>
     <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="newsWriteTitle">
       <div class="modal__head">
-        <h3 id="newsWriteTitle">뉴스 등록요청</h3>
+        <h3 id="newsWriteTitle">뉴스 등록</h3>
         <button class="icon-btn" data-close aria-label="닫기">✕</button>
       </div>
 
@@ -67,13 +78,14 @@
 
         <div class="btns">
           <button type="button" class="btn" data-close>취소</button>
-          <button type="submit" id="submitBtn" class="btn pri">요청 보내기</button>
+          <button type="submit" id="submitBtn" class="btn pri">등록하기</button>
         </div>
       </form>
     </div>
   </div>
 
   <script src="js/config.js"></script>
-  <script src="js/news.js?v=final"></script>
+  <script src="js/ui.js"></script> <!-- 상단/하단 탭 유지 -->
+  <script src="js/news.js?v=final-publish"></script>
 </body>
 </html>
