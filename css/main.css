@@ -210,3 +210,56 @@ img{ max-width:100%; display:block; }
 hr{ border:none; border-top:1px solid var(--border); margin:16px 0; }
 ul,ol{ list-style:none; padding:0; margin:0; }
 :focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+/* ======== Add-on styles for Refined UI (v2.8) ======== */
+
+/* 버튼 공통 */
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+  background:#fff; color:var(--ink); font-weight:800; font-size:14px;
+  box-shadow: var(--shadow-0);
+}
+.btn i{ font-size:18px; }
+.btn--primary{ background:var(--primary); color:#fff; border-color:transparent; }
+.btn--ghost{ background:#fff; color:#0f2b6d; border-color:#dfe8ff; }
+.btn--sm{ padding:8px 12px; border-radius:10px; font-size:13px; }
+
+/* 히어로 CTA 라인 */
+.hero-cta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+@media (max-width:360px){
+  .hero-cta .btn{ flex:1 1 100%; justify-content:center; }
+}
+
+/* 가로 스크롤 카드에서 북마크 아이콘 */
+.card-mini{ position:relative; }
+.card-mini .mini-bookmark{
+  position:absolute; right:8px; top:8px; width:28px; height:28px;
+  display:grid; place-items:center; border:1px solid var(--border);
+  border-radius:8px; background:#fff; color:#98A2B3;
+}
+
+/* 포트폴리오: 원형 썸네일 + 옆 정보 + 액션 */
+.pf-hlist{ display:grid; gap:12px; }
+.pf-hcard{
+  display:grid; grid-template-columns:64px 1fr; gap:12px;
+  padding:10px; border:1px solid var(--border); border-radius:14px;
+  background:#fff; box-shadow: var(--shadow-0);
+}
+.pf-avatar{
+  width:64px; height:64px; border-radius:50%; object-fit:cover; background:#eee;
+}
+.pf-info{ display:flex; flex-direction:column; gap:6px; }
+.pf-name{ font-weight:900; color:var(--text); }
+.pf-intro{ font-size:12px; color:#6b7280; line-height:1.35; }
+.pf-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+
+/* 퀵 CTA 배너 */
+.cta-banner{
+  display:flex; flex-direction:column; gap:10px;
+  border:1px solid #dfe8ff; background:#eaf2ff; border-radius:18px; padding:14px;
+}
+.cta-copy .cta-kicker{ font-size:12px; letter-spacing:.12em; color:#4b6cd8; text-transform:uppercase; }
+.cta-copy .cta-title{ font-weight:900; color:#0f2b6d; margin-top:2px; }
+.cta-copy .cta-sub{ color:#3556a3; font-size:13px; margin-top:4px; }
+.cta-actions{ display:flex; gap:8px; flex-wrap:wrap; }
