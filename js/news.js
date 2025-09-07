@@ -8,7 +8,7 @@
     localStorage.getItem('livee_token') ||
     localStorage.getItem('liveeToken') || '';
 
-  // === ui.js 헤더/탭/하단 마운트 (index.html 동일 포인트) ====================
+  // ── ui.js 마운트 (index.html과 동일) ─────────────────────────────────────
   (function mountUI(){
     const UI = window.LIVEE_UI || {};
     if (UI.mountHeader) {
@@ -18,38 +18,16 @@
         right: [{ id: 'openWrite', label: '작성하기', kind: 'primary' }],
       });
     } else {
-      // 폴백 헤더
       $('#appbar').innerHTML =
         `<div class="lv-appbar"><div class="lv-title">뉴스</div>
           <div class="lv-actions"><button id="openWrite" class="btn pri">작성하기</button></div></div>`;
     }
-
-    if (UI.mountTopTabs) {
-      UI.mountTopTabs({ target:'#top-tabs', active:'news' });
-    } else {
-      $('#top-tabs').innerHTML =
-        `<nav class="lv-tabs">
-          <a href="index.html">숏클립</a>
-          <a href="shoppinglive.html">쇼핑라이브</a>
-          <a class="active" href="news.html">뉴스</a>
-          <a href="events.html">이벤트</a>
-          <a href="service.html">서비스</a>
-        </nav>`;
-    }
-
-    if (UI.mountTabbar) {
-      UI.mountTabbar({ target:'#bottom-tabs', active:'home' });
-    } else {
-      $('#bottom-tabs').innerHTML =
-        `<div class="lv-tabbar">
-           <a class="active">홈</a><a>모집캠페인</a><a>라이브러리</a><a>인플루언서</a><a>마이페이지</a>
-         </div>`;
-    }
+    if (UI.mountTopTabs) UI.mountTopTabs({ target:'#top-tabs', active:'news' });
+    if (UI.mountTabbar)  UI.mountTabbar({ target:'#bottom-tabs', active:'home' });
   })();
 
-  // === 공통 util ============================================================
+  // ── utils ────────────────────────────────────────────────────────────────
   const FALLBACK_IMG = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
-
   async function getJSON(url){
     const r = await fetch(url, { headers:{ 'Accept':'application/json' }});
     const j = await r.json().catch(()=> ({}));
@@ -57,18 +35,12 @@
     return j;
   }
   const parseList = j => (Array.isArray(j) && j) || j.items || j.data?.items || j.data || [];
-
-  // ✅ 썸네일 필드 폭넓게 매핑 (서버/구버전 혼재 대비)
-  function pickThumb(n){
-    return (
-      n.thumbnailUrl ||
-      n.imageUrl || n.imageURL || n.image ||
-      n.thumbUrl  || n.thumb ||
-      n.coverImageUrl || n.mainThumbnailUrl ||
-      n.media?.thumbnailUrl || n.media?.imageUrl ||
-      ''
-    );
-  }
+  const pickThumb = (n)=>
+    n.thumbnailUrl ||
+    n.imageUrl || n.imageURL || n.image ||
+    n.thumbUrl  || n.thumb ||
+    n.coverImageUrl || n.mainThumbnailUrl ||
+    n.media?.thumbnailUrl || n.media?.imageUrl || '';
 
   function relTime(iso){
     if(!iso) return '';
@@ -81,7 +53,7 @@
     return '방금 전';
   }
 
-  // === 리스트 ===============================================================
+  // ── 리스트 ───────────────────────────────────────────────────────────────
   async function fetchNews(){
     try{
       const j = await getJSON(`${API_BASE}/${ENTITY}?status=published&limit=50`);
@@ -96,7 +68,6 @@
       }));
     }catch(e){ console.error(e); return []; }
   }
-
   function tplRows(items){
     if(!items.length){ $('#emptyBox').style.display='block'; return ''; }
     $('#emptyBox').style.display='none';
@@ -112,35 +83,29 @@
       </article>
     `).join('');
   }
+  async function renderList(){ $('#newsList').innerHTML = tplRows(await fetchNews()); }
 
-  async function renderList(){
-    const items = await fetchNews();
-    $('#newsList').innerHTML = tplRows(items);
-  }
-
-  // === 모달 & 업로드 ========================================================
+  // ── 모달/업로드/등록 ──────────────────────────────────────────────────────
   const modal = $('#newsModal');
   const toast = $('#toast');
   const say = (t, ok=false)=>{ toast.textContent=t; toast.classList.add('show'); toast.classList.toggle('ok', ok); };
-
-  function openModal(){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); }
-  function closeModal(){
+  const openModal = ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); };
+  const closeModal= ()=>{
     modal.classList.remove('show'); modal.setAttribute('aria-hidden','true');
     toast.classList.remove('show','ok');
     $('#newsForm').reset(); $('#fileName').textContent='선택된 파일 없음';
     $('#thumbPrev').style.display='none'; state.thumbnailUrl='';
-  }
+  };
 
-  // 헤더의 작성 버튼( ui.js가 만들든, 폴백이든 ) 캐치
   document.addEventListener('click', (e)=>{
-    if(e.target.closest('#openWrite')){
+    if (e.target.closest('#openWrite') || e.target.closest('#fabWrite')) {
       if(!TOKEN){ location.href='login.html?returnTo='+encodeURIComponent(location.pathname); return; }
       openModal();
     }
-    if(e.target.matches('[data-close]') || e.target.closest('.modal__overlay')) closeModal();
+    if (e.target.matches('[data-close]') || e.target.closest('.modal__overlay')) closeModal();
   });
 
-  // Cloudinary 업로드
+  // 업로드
   const state = { thumbnailUrl:'' };
   const file = $('#imageFile'), pickBtn = $('#pickImage'), fileName = $('#fileName'), prev=$('#thumbPrev');
   pickBtn.addEventListener('click', ()=> file.click());
@@ -154,10 +119,8 @@
   async function uploadImage(f){
     const {cloudName, apiKey, timestamp, signature} = await getSignature();
     const fd=new FormData();
-    fd.append('file',f);
-    fd.append('api_key',apiKey);
-    fd.append('timestamp',timestamp);
-    fd.append('signature',signature);
+    fd.append('file',f); fd.append('api_key',apiKey);
+    fd.append('timestamp',timestamp); fd.append('signature',signature);
     const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
     const j=await res.json().catch(()=>({}));
     if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
@@ -188,24 +151,20 @@
     finally{ URL.revokeObjectURL(local); }
   });
 
-  // 즉시 발행
+  // 등록 (즉시 발행)
   $('#newsForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!$('#agree').checked){ say('동의가 필요합니다'); return; }
-    const title = $('#title').value.trim();
-    if(!title){ say('제목을 입력해주세요'); return; }
-
     const payload = {
-      type:'news',
-      status:'published',
-      visibility:'public',
+      type:'news', status:'published', visibility:'public',
       category: $('#category').value || '공지',
-      title,
+      title: $('#title').value.trim(),
       summary: $('#summary').value.trim() || undefined,
       content: $('#content').value || undefined,
       thumbnailUrl: state.thumbnailUrl || undefined,
       consent: true
     };
+    if(!payload.title){ say('제목을 입력해주세요'); return; }
 
     try{
       say('등록 중…');
