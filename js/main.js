@@ -1,4 +1,4 @@
-/* Home main.js — 고정 배너 텍스트 & 섹션 순서 */
+/* Home main.js — Editorial v2 + Hero CTA + API 호환 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -8,7 +8,7 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
@@ -18,11 +18,12 @@
   };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v));
-  const pickThumb = p =>
-    p?.mainThumbnailUrl || p?.mainThumbnail ||
+
+  const pickThumb = (p) =>
+    p?.mainThumbnailUrl || p?.thumbnailUrl || p?.mainThumbnail ||
     (Array.isArray(p?.subThumbnails) && p.subThumbnails[0]) ||
     (Array.isArray(p?.subImages) && p.subImages[0]) ||
-    p?.coverImageUrl || p?.coverImage || FALLBACK_IMG;
+    p?.coverImageUrl || p?.imageUrl || p?.thumbUrl || FALLBACK_IMG;
 
   async function getJSON(url){
     const r = await fetch(url, { headers:{'Accept':'application/json'} });
@@ -34,12 +35,13 @@
 
   async function fetchRecruits(){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`));
+      const path = EP_RECRUITS.startsWith('/')?EP_RECRUITS:('/'+EP_RECRUITS);
+      const arr = parseItems(await getJSON(`${API_BASE}${path}`));
       return arr.map((c,i)=>({
         id: c.id||c._id||`${i}`,
         title: c.title || c.recruit?.title || '(제목 없음)',
-        thumb: c.thumbnailUrl || c.coverImageUrl || FALLBACK_IMG,
-        closeAt: c.closeAt,
+        thumb: c.thumbnailUrl || c.coverImageUrl || pickThumb(c),
+        closeAt: c.closeAt || c.recruit?.closeAt,
         pay: c.recruit?.pay,
         payNegotiable: !!c.recruit?.payNegotiable
       }));
@@ -47,7 +49,8 @@
   }
   async function fetchPortfolios(){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`));
+      const path = EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:('/'+EP_PORTFOLIOS);
+      const arr = parseItems(await getJSON(`${API_BASE}${path}`));
       return arr.map((p,i)=>({
         id: p.id||p._id||`${i}`,
         nickname: text(p.nickname || p.displayName || p.name || '무명'),
@@ -58,23 +61,25 @@
   }
   async function fetchNews(recruitsFallback=[]){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`));
+      const path = EP_NEWS.startsWith('/')?EP_NEWS:('/'+EP_NEWS);
+      const arr = parseItems(await getJSON(`${API_BASE}${path}`));
       if (arr.length) {
         return arr.map((n,i)=>({
           id: n.id||n._id||`${i}`,
           title: text(n.title || n.headline || '뉴스'),
           thumb: pickThumb(n),
-          date: n.publishedAt || n.createdAt,
+          date: n.publishedAt || n.createdAt || n.updatedAt,
           summary: text(n.summary || n.excerpt || '')
         }));
       }
     }catch{}
+    // 뉴스 없으면 공고 일부로 대체
     return recruitsFallback.slice(0,6).map((r,i)=>({
       id: r.id||`${i}`, title: r.title, thumb: r.thumb, date: r.closeAt, summary: '브랜드 소식'
     }));
   }
 
-  /* ---------- Hero: 고정 서비스 소개 텍스트 ---------- */
+  /* ---------- Hero ---------- */
   function renderHero(el){
     el.innerHTML = `
       <article class="hero-card">
@@ -90,6 +95,25 @@
     `;
   }
 
+  /* Hero CTA mount (히어로 아래 2버튼) */
+  function mountHeroCTA(){
+    const anchor = document.getElementById('hero-cta-anchor') || document.querySelector('.hero-wrap');
+    if (!anchor || document.getElementById('hero-cta')) return;
+    const div = document.createElement('div');
+    div.id = 'hero-cta';
+    div.className = 'hero-cta';
+    div.setAttribute('role','group');
+    div.setAttribute('aria-label','빠른 실행');
+    div.innerHTML = `
+      <a class="btn btn--primary" href="recruit-new.html">
+        <i class="ri-megaphone-line" aria-hidden="true"></i>공고 올리기
+      </a>
+      <a class="btn btn--ghost" href="portfolio-list.html">
+        <i class="ri-user-3-line" aria-hidden="true"></i>쇼호스트 찾기
+      </a>`;
+    anchor.parentNode.insertBefore(div, anchor.nextSibling);
+  }
+
   /* ---------- Templates ---------- */
   const tplLineupList = items => !items.length ? `
     <div class="ed-grid">
@@ -101,7 +125,7 @@
     <div class="ed-grid">
       ${items.map(r=>`
         <article class="card-ed" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
-          <img class="card-ed__media" src="${r.thumb}" alt="">
+          <img class="card-ed__media" src="${r.thumb||FALLBACK_IMG}" alt="">
           <div class="card-ed__body">
             <div class="card-ed__eyebrow">브랜드</div>
             <div class="card-ed__title">${r.title}</div>
@@ -125,7 +149,7 @@
     <div class="hscroll">
       ${items.map(r=>`
         <article class="card-mini" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
-          <img class="mini-thumb" src="${r.thumb}" alt="">
+          <img class="mini-thumb" src="${r.thumb||FALLBACK_IMG}" alt="">
           <div>
             <div class="lv-brand">브랜드</div>
             <div class="mini-title">${r.title}</div>
@@ -145,7 +169,7 @@
     <div class="ed-grid">
       ${items.map(n=>`
         <article class="card-ed">
-          <img class="card-ed__media" src="${n.thumb}" alt="">
+          <img class="card-ed__media" src="${n.thumb||FALLBACK_IMG}" alt="">
           <div class="card-ed__body">
             <div class="card-ed__title">${n.title}</div>
             <div class="card-ed__meta">${n.date ? fmtDate(n.date)+' · ' : ''}${n.summary || '소식'}</div>
@@ -163,7 +187,7 @@
     <div class="ed-grid">
       ${items.slice(0,6).map(p=>`
         <article class="card-ed" onclick="location.href='portfolio-detail.html?id=${encodeURIComponent(p.id)}'">
-          <img class="card-ed__media" src="${p.thumb}" alt="">
+          <img class="card-ed__media" src="${p.thumb||FALLBACK_IMG}" alt="">
           <div class="card-ed__body">
             <div class="card-ed__title">${p.nickname}</div>
             <div class="card-ed__meta">${p.headline || '소개가 없습니다'}</div>
@@ -189,7 +213,8 @@
     const [recruits, portfolios] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
     const news = await fetchNews(recruits);
 
-    renderHero(heroRoot); // 고정 텍스트
+    renderHero(heroRoot);
+    mountHeroCTA();
 
     const lineupHTML   = tplLineupList(recruits.slice(0,6));
     const recommendHTML= tplRecruitHScroll(recruits.slice(0,8));
@@ -199,7 +224,7 @@
     root.innerHTML = [
       sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML),
       sectionBlock('추천 공고', 'recruit-list.html', recommendHTML),
-      sectionBlock('뉴스', '#', newsHTML),
+      sectionBlock('뉴스', 'news.html', newsHTML),
       sectionBlock('쇼호스트 포트폴리오', 'portfolio-list.html', pfHTML),
     ].join('');
   }
