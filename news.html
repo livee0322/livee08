@@ -9,37 +9,20 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
 
-  <!-- 글로벌 -->
+  <!-- 글로벌 · 페이지 CSS -->
   <link rel="stylesheet" href="css/main.css" />
-  <!-- 뉴스 전용 -->
   <link rel="stylesheet" href="css/news.css" />
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-  <!-- AppBar -->
-  <header class="lv-appbar">
-    <div class="lv-title">라이비</div>
-    <div class="lv-actions">
-      <button class="lv-action" id="btnRequest" aria-label="등록요청"><i class="ri-edit-2-line"></i></button>
-      <button class="lv-action" aria-label="검색"><i class="ri-search-line"></i></button>
-    </div>
-  </header>
-
-  <!-- 상단 탭 -->
-  <nav class="lv-topTabs">
-    <div class="lv-topTabs__in">
-      <a href="index.html" class="tab">숏클립</a>
-      <a href="index.html#recruits" class="tab">쇼핑라이브</a>
-      <a href="news.html" class="tab is-active">뉴스</a>
-      <a href="index.html#events" class="tab">이벤트</a>
-      <a href="portfolio-list.html" class="tab">서비스</a>
-    </div>
-  </nav>
+  <!-- 홈과 동일한 헤더/탭: ui.js가 주입 -->
+  <header id="appbar"></header>
+  <nav id="top-tabs"></nav>
 
   <main class="container news-container">
     <!-- 필터 -->
-    <section class="news-filter" aria-label="카테고리 필터">
-      <div class="news-filter__scroll">
+    <section class="news-filter" aria-label="뉴스 말머리 필터">
+      <div class="news-filter__in">
         <button class="chip is-active" data-tag="all">전체</button>
         <button class="chip" data-tag="notice">공지</button>
         <button class="chip" data-tag="event">이벤트</button>
@@ -49,8 +32,8 @@
       </div>
     </section>
 
-    <!-- 리스트 / 상세 뷰 -->
-    <section id="view-list" class="news-list"></section>
+    <!-- 리스트 / 상세 -->
+    <section id="view-list" class="news-list" aria-live="polite"></section>
     <section id="view-detail" class="news-detail" hidden></section>
 
     <!-- 더보기 -->
@@ -59,12 +42,7 @@
     </div>
   </main>
 
-  <!-- 작성하기 FAB (누구나 테스트용) -->
-  <button id="btnWrite" class="fab-write" aria-label="작성하기">
-    <i class="ri-edit-2-line"></i><span>작성하기</span>
-  </button>
-
-  <!-- 하단 탭 (항상 표시) -->
+  <!-- 하단탭 항상 유지 (ui.js가 생성/유지) -->
   <footer id="bottom-tabs"></footer>
 
   <!-- 등록요청 모달 -->
@@ -111,10 +89,14 @@
     </div>
   </div>
 
-  <!-- 공용 UI(하단탭 생성) -->
-  <script src="js/ui.js"></script>
-  <!-- Config & 페이지 JS -->
+  <!-- 작성하기 FAB -->
+  <button id="fabWrite" class="fab-write" aria-label="뉴스 작성하기">
+    <i class="ri-edit-2-line"></i><span>작성하기</span>
+  </button>
+
+  <!-- Config & JS -->
   <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
   <script src="js/news.js"></script>
 </body>
 </html>
