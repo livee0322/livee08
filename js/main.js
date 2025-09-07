@@ -1,4 +1,9 @@
-/* Home main.js — Editorial v2 + Hero CTA + API 호환 */
+<script>
+/* Home main.js — v2.8 (Refined UI)
+   - 탭/라우팅 그대로 유지
+   - 히어로에 3종 CTA 추가 (공고 올리기 / 쇼호스트 찾기 / 가이드 보기)
+   - 카드 톤 통일 & 포트폴리오를 "원형 썸네일 + 옆 이름 + 제안하기"로 변경
+*/
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -8,7 +13,7 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'default.jpg');
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
@@ -17,13 +22,13 @@
     return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
-  const text  = v => (v==null ? '' : String(v));
+  const text  = v => (v==null ? '' : String(v).trim());
 
-  const pickThumb = (p) =>
-    p?.mainThumbnailUrl || p?.thumbnailUrl || p?.mainThumbnail ||
-    (Array.isArray(p?.subThumbnails) && p.subThumbnails[0]) ||
-    (Array.isArray(p?.subImages) && p.subImages[0]) ||
-    p?.coverImageUrl || p?.imageUrl || p?.thumbUrl || FALLBACK_IMG;
+  const pickThumb = (o) =>
+    o?.mainThumbnailUrl || o?.thumbnailUrl ||
+    (Array.isArray(o?.subThumbnails) && o.subThumbnails[0]) ||
+    (Array.isArray(o?.subImages) && o.subImages[0]) ||
+    o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || FALLBACK_IMG;
 
   async function getJSON(url){
     const r = await fetch(url, { headers:{'Accept':'application/json'} });
@@ -35,12 +40,11 @@
 
   async function fetchRecruits(){
     try{
-      const path = EP_RECRUITS.startsWith('/')?EP_RECRUITS:('/'+EP_RECRUITS);
-      const arr = parseItems(await getJSON(`${API_BASE}${path}`));
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`));
       return arr.map((c,i)=>({
         id: c.id||c._id||`${i}`,
-        title: c.title || c.recruit?.title || '(제목 없음)',
-        thumb: c.thumbnailUrl || c.coverImageUrl || pickThumb(c),
+        title: c.title || c.recruit?.title || '제목 없음',
+        thumb: pickThumb(c),
         closeAt: c.closeAt || c.recruit?.closeAt,
         pay: c.recruit?.pay,
         payNegotiable: !!c.recruit?.payNegotiable
@@ -49,20 +53,18 @@
   }
   async function fetchPortfolios(){
     try{
-      const path = EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:('/'+EP_PORTFOLIOS);
-      const arr = parseItems(await getJSON(`${API_BASE}${path}`));
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`));
       return arr.map((p,i)=>({
         id: p.id||p._id||`${i}`,
-        nickname: text(p.nickname || p.displayName || p.name || '무명'),
+        nickname: text(p.nickname || p.displayName || p.name || '쇼호스트'),
         headline: text(p.headline || ''),
         thumb: pickThumb(p)
       }));
     }catch{ return []; }
   }
-  async function fetchNews(recruitsFallback=[]){
+  async function fetchNews(fallback=[]){
     try{
-      const path = EP_NEWS.startsWith('/')?EP_NEWS:('/'+EP_NEWS);
-      const arr = parseItems(await getJSON(`${API_BASE}${path}`));
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`));
       if (arr.length) {
         return arr.map((n,i)=>({
           id: n.id||n._id||`${i}`,
@@ -74,44 +76,43 @@
       }
     }catch{}
     // 뉴스 없으면 공고 일부로 대체
-    return recruitsFallback.slice(0,6).map((r,i)=>({
+    return fallback.slice(0,6).map((r,i)=>({
       id: r.id||`${i}`, title: r.title, thumb: r.thumb, date: r.closeAt, summary: '브랜드 소식'
     }));
   }
 
-  /* ---------- Hero ---------- */
+  /* ---------- Hero(카피+CTA) ---------- */
+  const HERO_COPY = [
+    { h: '쇼핑라이브, 쉽게 시작하세요', s: '연결 · 제안 · 계약 · 결제까지 한 번에' },
+    { h: '브랜드와 쇼호스트를 가장 빠르게', s: '단 5분 설정으로 공고 등록 완료' },
+    { h: '검증된 쇼호스트를 바로 찾기', s: '경력/리뷰/미디어로 한눈에 비교' },
+  ];
+
   function renderHero(el){
+    const first = HERO_COPY[0];
     el.innerHTML = `
       <article class="hero-card">
         <div class="hero-body">
-          <div class="hero-meta">
-            <span class="kicker">LIVEE</span>
-            <span class="kicker">FOR CREATORS & BRANDS</span>
+          <div class="hero-meta"><span class="kicker">LIVEE</span><span class="kicker">FOR CREATORS & BRANDS</span></div>
+          <h1 class="hero-title" id="heroH">${first.h}</h1>
+          <p class="hero-sub" id="heroS">${first.s}</p>
+          <div class="hero-cta">
+            <a class="btn btn--primary" href="recruit-new.html"><i class="ri-megaphone-line"></i> 공고 올리기</a>
+            <a class="btn btn--ghost" href="portfolio-list.html"><i class="ri-user-search-line"></i> 쇼호스트 찾기</a>
+            <a class="btn btn--ghost" href="help.html#guide"><i class="ri-compass-3-line"></i> 가이드 보기</a>
           </div>
-          <h1 class="hero-title">쇼핑라이브, 쉽게 시작하세요</h1>
-          <p class="hero-sub">연결 · 제안 · 계약 · 결제까지 한 번에</p>
         </div>
       </article>
     `;
-  }
-
-  /* Hero CTA mount (히어로 아래 2버튼) */
-  function mountHeroCTA(){
-    const anchor = document.getElementById('hero-cta-anchor') || document.querySelector('.hero-wrap');
-    if (!anchor || document.getElementById('hero-cta')) return;
-    const div = document.createElement('div');
-    div.id = 'hero-cta';
-    div.className = 'hero-cta';
-    div.setAttribute('role','group');
-    div.setAttribute('aria-label','빠른 실행');
-    div.innerHTML = `
-      <a class="btn btn--primary" href="recruit-new.html">
-        <i class="ri-megaphone-line" aria-hidden="true"></i>공고 올리기
-      </a>
-      <a class="btn btn--ghost" href="portfolio-list.html">
-        <i class="ri-user-3-line" aria-hidden="true"></i>쇼호스트 찾기
-      </a>`;
-    anchor.parentNode.insertBefore(div, anchor.nextSibling);
+    // 간단 회전 카피
+    let i = 1;
+    setInterval(()=>{
+      const item = HERO_COPY[i%HERO_COPY.length];
+      const H = $('#heroH'), S = $('#heroS');
+      if(H) H.textContent = item.h;
+      if(S) S.textContent = item.s;
+      i++;
+    }, 6000);
   }
 
   /* ---------- Templates ---------- */
@@ -125,7 +126,7 @@
     <div class="ed-grid">
       ${items.map(r=>`
         <article class="card-ed" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
-          <img class="card-ed__media" src="${r.thumb||FALLBACK_IMG}" alt="">
+          <img class="card-ed__media" src="${r.thumb}" alt="" loading="lazy">
           <div class="card-ed__body">
             <div class="card-ed__eyebrow">브랜드</div>
             <div class="card-ed__title">${r.title}</div>
@@ -149,7 +150,7 @@
     <div class="hscroll">
       ${items.map(r=>`
         <article class="card-mini" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
-          <img class="mini-thumb" src="${r.thumb||FALLBACK_IMG}" alt="">
+          <img class="mini-thumb" src="${r.thumb}" alt="" loading="lazy">
           <div>
             <div class="lv-brand">브랜드</div>
             <div class="mini-title">${r.title}</div>
@@ -157,6 +158,7 @@
               r.payNegotiable ? '협의' : (r.pay ? `${money(r.pay)}원` : '미정')
             }</div>
           </div>
+          <button class="mini-bookmark" aria-label="북마크"><i class="ri-bookmark-line"></i></button>
         </article>`).join('')}
     </div>`;
 
@@ -168,8 +170,8 @@
     </div>` : `
     <div class="ed-grid">
       ${items.map(n=>`
-        <article class="card-ed">
-          <img class="card-ed__media" src="${n.thumb||FALLBACK_IMG}" alt="">
+        <article class="card-ed" onclick="location.href='news.html#/${encodeURIComponent(n.id)}'">
+          <img class="card-ed__media" src="${n.thumb}" alt="" loading="lazy">
           <div class="card-ed__body">
             <div class="card-ed__title">${n.title}</div>
             <div class="card-ed__meta">${n.date ? fmtDate(n.date)+' · ' : ''}${n.summary || '소식'}</div>
@@ -177,6 +179,7 @@
         </article>`).join('')}
     </div>`;
 
+  // ✅ 포트폴리오: 원형 썸네일 + 옆 이름/한줄소개 + 제안하기
   const tplPortfolios = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -184,15 +187,36 @@
         <div class="card-ed__meta">첫 포트폴리오를 등록해보세요</div>
       </div></article>
     </div>` : `
-    <div class="ed-grid">
+    <div class="pf-hlist">
       ${items.slice(0,6).map(p=>`
-        <article class="card-ed" onclick="location.href='portfolio-detail.html?id=${encodeURIComponent(p.id)}'">
-          <img class="card-ed__media" src="${p.thumb||FALLBACK_IMG}" alt="">
-          <div class="card-ed__body">
-            <div class="card-ed__title">${p.nickname}</div>
-            <div class="card-ed__meta">${p.headline || '소개가 없습니다'}</div>
+        <article class="pf-hcard">
+          <img class="pf-avatar" src="${p.thumb}" alt="" loading="lazy">
+          <div class="pf-info">
+            <div class="pf-name">${p.nickname}</div>
+            <div class="pf-intro">${p.headline || '소개 준비 중'}</div>
+            <div class="pf-actions">
+              <a class="btn btn--sm btn--primary" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}">
+                <i class="ri-mail-send-line"></i> 제안하기
+              </a>
+              <a class="btn btn--sm btn--ghost" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}">
+                <i class="ri-user-line"></i> 프로필 보기
+              </a>
+            </div>
           </div>
         </article>`).join('')}
+    </div>`;
+
+  const tplCtaBanner = () => `
+    <div class="cta-banner">
+      <div class="cta-copy">
+        <div class="cta-kicker">무료 상담</div>
+        <div class="cta-title">지금 바로 라이브 커머스 시작해보세요</div>
+        <div class="cta-sub">기획 · 섭외 · 계약 · 결제까지 도와드립니다</div>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--primary" href="recruit-new.html"><i class="ri-megaphone-line"></i> 공고 올리기</a>
+        <a class="btn btn--ghost" href="help.html#contact"><i class="ri-chat-1-line"></i> 빠른 문의</a>
+      </div>
     </div>`;
 
   function sectionBlock(title, moreHref, innerHTML){
@@ -214,7 +238,6 @@
     const news = await fetchNews(recruits);
 
     renderHero(heroRoot);
-    mountHeroCTA();
 
     const lineupHTML   = tplLineupList(recruits.slice(0,6));
     const recommendHTML= tplRecruitHScroll(recruits.slice(0,8));
@@ -224,8 +247,9 @@
     root.innerHTML = [
       sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML),
       sectionBlock('추천 공고', 'recruit-list.html', recommendHTML),
-      sectionBlock('뉴스', 'news.html', newsHTML),
-      sectionBlock('쇼호스트 포트폴리오', 'portfolio-list.html', pfHTML),
+      sectionBlock('오늘의 리브', 'news.html', newsHTML),
+      sectionBlock('추천 인플루언서', 'portfolio-list.html', pfHTML),
+      `<div class="section">${tplCtaBanner()}</div>`
     ].join('');
   }
 
@@ -233,3 +257,4 @@
     document.addEventListener('DOMContentLoaded', render, { once:true });
   } else { render(); }
 })();
+</script>
