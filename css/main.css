@@ -1,7 +1,7 @@
 /* =========================================
-   Livee main.css — Artbook Hybrid (final v2.8)
-   - Full-bleed Hero under top tabs (no radius)
-   - Unified spacing & type hierarchy
+   Livee main.css — Artbook Hybrid (final v2.8.1)
+   - Mobile full-bleed hero, Desktop contained
+   - Unified spacing & type
    - Gallery tone for 20–30s women audience
    ========================================= */
 
@@ -37,7 +37,7 @@
 
 /* ---------- 기본 ---------- */
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body{ height:100%; background:var(--bg); color:var(--text); }
+html, body{ height:100%; background:var(--bg); color:var(--text); overflow-x:hidden; }
 body{
   margin:0;
   font-family: SUIT, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -96,8 +96,8 @@ img{ max-width:100%; display:block; }
 }
 .lv-topTabs .tab.is-active{ color:#fff; background:var(--primary); }
 
-/* ---------- 히어로(배너) : 풀블리드, 라운드 없음 ---------- */
-/* 상단 탭 바로 아래 전체 너비로 붙이기 */
+/* ---------- 히어로(배너) ---------- */
+/* 모바일: 상단 탭 바로 아래 전체 너비로 붙이기(라운드 없음) */
 .hero-wrap{
   position:relative;
   width:100vw;
@@ -108,8 +108,7 @@ img{ max-width:100%; display:block; }
 }
 .hero-card{
   position:relative; border-radius:0; overflow:hidden; isolation:isolate;
-  min-height:180px;             /* 모바일 배너 높이 */
-  background:#eaf2ff; border:0; box-shadow:none;
+  min-height:180px; background:#eaf2ff; border:0; box-shadow:none;
 }
 .hero-media, .hero-grad{ display:none; }     /* 텍스트형 기본 */
 .hero-body{
@@ -220,7 +219,7 @@ img{ max-width:100%; display:block; }
 }
 .pf-avatar{ width:64px; height:64px; border-radius:50%; object-fit:cover; background:#eee; }
 .pf-info{ display:flex; flex-direction:column; gap:6px; align-self:center; }
-.pf-name{ font-weight:900; color:var(--text); font-size:14.5px; }
+.pf-name{ font-weight:900; color:#var(--text); font-size:14.5px; }
 .pf-intro{ font-size:12.5px; color:#6b7280; line-height:1.35; }
 .pf-metrics{ display:flex; gap:8px; }
 .badge-kpi{
@@ -253,6 +252,37 @@ img{ max-width:100%; display:block; }
 .tbi{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:#98A2B3; font-size:12px; }
 .tbi i{ font-size:22px; line-height:1; }
 .tbi.is-active{ color:var(--primary); }
+
+/* ---------- Desktop 튜닝 (정렬 보정) ---------- */
+@media (min-width: 992px){
+  /* 배너는 컨테이너 안으로 복귀 + 라운드 복원 */
+  .hero-wrap{ width:100%; margin:0; transform:none; }
+  .hero-card{ border-radius: var(--radius-xl); min-height:260px; }
+
+  /* 섹션 타이포 스케일 */
+  .section-head h2{ font-size:20px; }
+  .card-ed__title, .news-row .title, .pf-name{ font-size:16px; }
+  .card-ed__meta, .news-row .meta, .pf-intro{ font-size:13.5px; }
+
+  /* 오늘의 라이브: 2열 그리드 + 큰 썸네일 */
+  #home .section:nth-of-type(1) .ed-grid{
+    max-width:var(--container-w); grid-template-columns: 1fr 1fr; gap:16px;
+  }
+  #home .section:nth-of-type(1) .card-ed{ grid-template-columns:132px 1fr; }
+  #home .section:nth-of-type(1) .card-ed__media{ width:132px; height:132px; border-radius:14px; }
+
+  /* 추천 공고: 카드 고정 폭으로 정렬 안정화 */
+  .card-mini{ flex:0 0 360px; grid-template-columns:160px 1fr; }
+  .card-mini .mini-thumb{ width:160px; }
+
+  /* 뉴스: 더 넓은 썸네일 */
+  .news-row{ grid-template-columns:200px 1fr; }
+  .news-row .thumb{ width:200px; }
+
+  /* 포트폴리오: 더 큰 아바타 */
+  .pf-hcard{ grid-template-columns:80px 1fr; }
+  .pf-avatar{ width:80px; height:80px; }
+}
 
 /* ---------- 유틸 ---------- */
 hr{ border:none; border-top:1px solid var(--border); margin:16px 0; }
