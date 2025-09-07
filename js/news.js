@@ -1,223 +1,161 @@
-// Livee News page + Hash Router (full)
+/* News page — list + write modal (Cloudinary upload, unified schema) */
 (() => {
-  const $  = (s, el=document) => el.querySelector(s);
-  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
-
+  const $ = (s, el=document)=> el.querySelector(s);
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP = Object.assign({
-    news: '/news?status=published&limit=20',
-    newsById: (id) => `/news/${id}`,
-    newsRequest: '/news-requests',
-    sign: '/uploads/signature', // Cloudinary signature
-  }, CFG.endpoints || {});
+  const ENTITY = 'news-test';
+  const THUMB = CFG.thumb || { cover169:"c_fill,g_auto,w_1280,h_720,f_auto,q_auto" };
 
-  const CLOUD = CFG.cloudinary || { cloudName:'', apiKey:'' }; // config.js에서 세팅 권장
-  let cursor = null;
-  let currentTag = 'all';
+  const TOKEN =
+    localStorage.getItem('livee_token') ||
+    localStorage.getItem('liveeToken') || '';
 
-  /* --------- utils --------- */
-  const pad2 = n => String(n).padStart(2,'0');
-  const fmtDate = iso => {
-    if (!iso) return '';
-    const d = new Date(iso); if (isNaN(d)) return '';
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  };
-  const esc = s => (s==null ? '' : String(s))
-      .replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const prefixMap = { notice:'공지', event:'이벤트', live:'쇼핑라이브', pick:'추천', external:'관련기사', ad:'광고' };
-  const thumb = n => n.image?.url || n.thumb || '';
-
+  // ---------- list ----------
   async function getJSON(url){
-    const r = await fetch(url, { headers:{'Accept':'application/json'} });
+    const r = await fetch(url, { headers:{ 'Accept':'application/json' }});
     const j = await r.json().catch(()=> ({}));
-    if (!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+    if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
     return j;
   }
-  async function postJSON(url, body){
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'}, body: JSON.stringify(body) });
-    const j = await r.json().catch(()=> ({}));
-    if (!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-    return j;
+  const parseList = j => (Array.isArray(j) && j) || j.items || j.data?.items || [];
+
+  async function fetchNews(){
+    try{
+      const j = await getJSON(`${API_BASE}/${ENTITY}?status=published&limit=30`);
+      const arr = parseList(j);
+      return arr.map((n,i)=>({
+        id: n._id || n.id || `${i}`,
+        category: n.category || '공지',
+        title: n.title || '(제목 없음)',
+        summary: n.summary || '',
+        thumbnailUrl: n.thumbnailUrl || '',
+        createdAt: n.createdAt
+      }));
+    }catch(e){ console.error(e); return []; }
   }
 
-  const parseList  = j => {
-    const arr = Array.isArray(j)? j : (j.items || j.data?.items || j.docs || j.data?.docs || []);
-    cursor = j.cursor || j.nextCursor || null;
-    return arr;
-  };
-  const itemURL = id => `#/news/${encodeURIComponent(id)}`;
-
-  /* --------- render list --------- */
-  function tagClass(tag){ return ['notice','event','live','pick','external','ad'].includes(tag) ? tag : 'notice'; }
-  function renderItem(n){
-    const showThumb = !!thumb(n);
-    const tag = n.tag || 'notice';
-    return `
-      <article class="news-item" onclick="location.hash='${itemURL(n.id).slice(1)}'">
-        <div>
-          <div class="news-meta">
-            <span class="prefix ${tagClass(tag)}">[${prefixMap[tag]||'공지'}]</span>
-            <span>${fmtDate(n.publishedAt || n.createdAt) || ''}</span>
-            ${n.sponsored?.enabled ? `<span class="prefix ad">[광고]</span>` : ''}
-            ${n.priority>0 ? `<span class="prefix pick">추천</span>` : ''}
-          </div>
-          <div class="news-title">${esc(n.title || '제목 없음')}</div>
+  function tplCards(items){
+    if(!items.length){ $('#emptyBox').style.display='block'; return ''; }
+    $('#emptyBox').style.display='none';
+    return items.map(n=>`
+      <article class="card">
+        <img class="thumb" src="${n.thumbnailUrl || (CFG.BASE_PATH?CFG.BASE_PATH+'/default.jpg':'default.jpg')}" alt="" />
+        <div class="body">
+          <span class="badge">${n.category}</span>
+          <div class="title">${n.title}</div>
+          <div class="sum">${n.summary || ''}</div>
         </div>
-        ${ showThumb ? `<img class="news-thumb" src="${thumb(n)}" alt="">` : `<div></div>` }
       </article>
-    `;
+    `).join('');
   }
 
-  async function loadList({reset=false}={}){
-    const listEl = $('#view-list');
-    if (reset){ listEl.innerHTML=''; cursor=null; }
-    const qs = new URLSearchParams();
-    if (currentTag !== 'all') qs.set('tag', currentTag);
-    if (cursor) qs.set('cursor', cursor);
-    const j = await getJSON(`${API_BASE}${EP.news}${EP.news.includes('?')?'&':'?'}${qs.toString()}`);
-    const arr = parseList(j);
-    listEl.insertAdjacentHTML('beforeend', arr.map(renderItem).join('') || `<div class="news-empty">표시할 뉴스가 없습니다.</div>`);
-    $('#btnMore').hidden = !cursor;
+  async function renderList(){
+    const list = await fetchNews();
+    $('#newsList').innerHTML = tplCards(list);
   }
 
-  /* --------- detail --------- */
-  async function renderDetail(id){
-    const j  = await getJSON(`${API_BASE}${EP.newsById(id)}`);
-    const n  = j.data || j || {};
-    const el = $('#view-detail');
-    const tag = n.tag || 'notice';
-    el.innerHTML = `
-      <div class="news-detail__in">
-        <h1 class="nd-title">${esc(n.title || '')}</h1>
-        <div class="nd-meta">
-          <span class="prefix ${tagClass(tag)}">[${prefixMap[tag]||'공지'}]</span>
-          <span>${fmtDate(n.publishedAt || n.createdAt)}</span>
-          ${n.sponsored?.enabled ? `<span class="prefix ad">[광고]</span>` : ''}
-        </div>
-        ${ thumb(n) ? `<img class="nd-hero" src="${thumb(n)}" alt="">` : '' }
-        <div class="nd-body">${esc(n.summary || '')}</div>
-        ${ n.sourceUrl ? `<p class="nd-meta"><a href="${esc(n.sourceUrl)}" target="_blank" rel="noopener">원문 보기</a></p>` : '' }
-      </div>
-    `;
-  }
+  // ---------- modal ----------
+  const modal = $('#newsModal');
+  const toast = $('#toast');
+  const say = (t, ok=false)=>{ toast.textContent=t; toast.classList.add('show'); toast.classList.toggle('ok', ok); };
 
-  /* --------- modal (request) --------- */
-  function openModal(){ $('#requestModal').hidden=false; location.hash = '#/news/request'; }
-  function closeModal(){ $('#requestModal').hidden=true; if (location.hash.startsWith('#/news/request')) history.back(); }
-  function attachModal(){
-    // 상단 아이콘 & FAB 둘 다 모달 오픈
-    const btnReq = $('#btnRequest');
-    if (btnReq) btnReq.addEventListener('click', openModal);
-    const fab = $('#btnWrite');
-    if (fab) fab.addEventListener('click', openModal);
+  function openModal(){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); }
+  function closeModal(){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); toast.classList.remove('show','ok'); $('#newsForm').reset(); $('#fileName').textContent='선택된 파일 없음'; $('#thumbPrev').style.display='none'; state.thumbnailUrl=''; }
 
-    $$('.modal [data-close]').forEach(b=> b.addEventListener('click', closeModal));
-
-    // tag 조건부 필드
-    const tagSel = $('#requestForm select[name="tag"]');
-    const srcFld = $('#requestForm [data-when="external"]');
-    const syncFields = () => { srcFld.style.display = (tagSel.value==='external') ? 'block' : 'none'; };
-    tagSel.addEventListener('change', syncFields); syncFields();
-
-    // Cloudinary 업로드
-    const fileInput = $('#fileInput');
-    fileInput.addEventListener('change', async (e)=>{
-      const f = e.target.files?.[0]; if (!f) return;
-      $('#uploadHint').textContent = '업로드 준비 중...';
-      try{
-        const sig = await postJSON(`${API_BASE}${EP.sign}`, { folder:'livee/news' });
-        const fd = new FormData();
-        fd.append('file', f);
-        fd.append('api_key', sig.apiKey || CLOUD.apiKey);
-        fd.append('timestamp', sig.timestamp);
-        fd.append('signature', sig.signature);
-        fd.append('folder', sig.folder || 'livee/news');
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName || CLOUD.cloudName}/image/upload`, { method:'POST', body: fd });
-        const j = await res.json();
-        if(!j.secure_url) throw new Error('업로드 실패');
-        fileInput.dataset.url = j.secure_url;
-        fileInput.dataset.publicId = j.public_id;
-        $('#uploadHint').textContent = '업로드 완료 ✅';
-      }catch(err){
-        console.error(err);
-        $('#uploadHint').textContent = '업로드 실패. 다시 시도해주세요.';
-      }
-    });
-
-    // 제출
-    $('#requestForm').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const fd = new FormData(e.currentTarget);
-      if (fd.get('tag')==='external' && !fd.get('sourceUrl')) {
-        alert('관련기사 말머리에는 출처 URL이 필요합니다.'); return;
-      }
-      const payload = {
-        tag: fd.get('tag'),
-        title: fd.get('title'),
-        summary: fd.get('summary') || '',
-        sourceUrl: fd.get('sourceUrl') || '',
-        image: fileInput.dataset.url ? { url:fileInput.dataset.url, publicId:fileInput.dataset.publicId } : null
-      };
-      try{
-        await postJSON(`${API_BASE}${EP.newsRequest}`, payload);
-        closeModal();
-        alert('요청이 접수되었습니다. 검수 후 노출됩니다.');
-      }catch(err){
-        console.error(err);
-        alert('요청 실패: ' + (err.message||'서버 오류'));
-      }
-    });
-  }
-
-  /* --------- router --------- */
-  function renderListView(){ $('#view-detail').hidden = true;  $('#view-list').hidden = false; }
-  function renderDetailView(){ $('#view-list').hidden = true;  $('#view-detail').hidden = false; }
-
-  async function router(){
-    const hash = location.hash || '#/news';
-    const [_, base, idOrAction] = hash.split('/'); // ["#","news","123"| "request" | ""]
-    if (base !== 'news'){
-      location.hash = '#/news'; return;
+  document.body.addEventListener('click', (e)=>{
+    if(e.target.matches('#openWrite')){ 
+      if(!TOKEN){ location.href='login.html?returnTo='+encodeURIComponent(location.pathname); return; }
+      openModal();
     }
-    if (!idOrAction || idOrAction === ''){ // list
-      renderListView();
-      await loadList({reset:true});
-      return;
-    }
-    if (idOrAction === 'request'){
-      openModal(); return;
-    }
-    // detail
-    renderDetailView();
-    await renderDetail(decodeURIComponent(idOrAction));
+    if(e.target.matches('[data-close]')) closeModal();
+    if(e.target.closest('.modal__overlay')) closeModal();
+  });
+
+  // ---------- upload ----------
+  const state = { thumbnailUrl:'' };
+  const pickBtn = $('#pickImage'), file = $('#imageFile'), fileName = $('#fileName'), prev=$('#thumbPrev');
+  pickBtn.addEventListener('click', ()=> file.click());
+
+  const withTransform = (url, t) => {
+    try{
+      if(!url || !/\/upload\//.test(url)) return url || '';
+      const i = url.indexOf('/upload/');
+      return url.slice(0,i+8) + t + '/' + url.slice(i+8);
+    }catch{ return url; }
+  };
+
+  async function getSignature(){
+    const r = await fetch(`${API_BASE}/uploads/signature`, { headers: { 'Accept':'application/json' }});
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
+    return j.data || j;
   }
 
-  /* --------- events --------- */
-  function init(){
-    // 필터
-    $$('.news-filter .chip').forEach(chip=>{
-      chip.addEventListener('click', async ()=>{
-        $$('.news-filter .chip').forEach(c=>c.classList.remove('is-active'));
-        chip.classList.add('is-active');
-        currentTag = chip.dataset.tag;
-        await loadList({reset:true});
+  async function uploadImage(file){
+    const {cloudName, apiKey, timestamp, signature} = await getSignature();
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('api_key',apiKey);
+    fd.append('timestamp',timestamp);
+    fd.append('signature',signature);
+    const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
+    return j.secure_url;
+  }
+
+  file.addEventListener('change', async (e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); file.value=''; return; }
+    if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); file.value=''; return; }
+    fileName.textContent = f.name;
+    const local = URL.createObjectURL(f);
+    prev.src = local; prev.style.display='block';
+    try{
+      say('이미지 업로드 중…');
+      const url = await uploadImage(f);
+      state.thumbnailUrl = withTransform(url, THUMB.cover169);
+      prev.src = state.thumbnailUrl;
+      say('업로드 완료', true);
+    }catch(err){ console.error(err); say('업로드 실패: '+err.message); }
+    finally{ URL.revokeObjectURL(local); }
+  });
+
+  // ---------- submit ----------
+  $('#newsForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const agree = $('#agree').checked;
+    if(!agree){ say('동의가 필요합니다'); return; }
+    const title = $('#title').value.trim();
+    if(!title){ say('제목을 입력해주세요'); return; }
+
+    const payload = {
+      type:'news',
+      status:'pending',          // 관리자가 승인해 발행
+      visibility:'public',
+      category: $('#category').value || '공지',
+      title,
+      summary: $('#summary').value.trim() || undefined,
+      content: $('#content').value || undefined,
+      thumbnailUrl: state.thumbnailUrl || undefined,
+      consent: true
+    };
+
+    try{
+      say('요청 전송 중…');
+      const r = await fetch(`${API_BASE}/${ENTITY}`, {
+        method:'POST',
+        headers: { 'Content-Type':'application/json', ...(TOKEN?{Authorization:'Bearer '+TOKEN}:{}) },
+        body: JSON.stringify(payload)
       });
-    });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
 
-    // 더보기
-    $('#btnMore').addEventListener('click', ()=> loadList({reset:false}));
+      say('등록요청이 접수되었습니다', true);
+      setTimeout(()=>{ closeModal(); renderList(); }, 400);
+    }catch(err){ console.error(err); say('요청 실패: '+(err.message||'네트워크 오류')); }
+  });
 
-    // 모달
-    attachModal();
-
-    // 라우터
-    window.addEventListener('hashchange', router);
-  }
-
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', ()=>{ init(); router(); }, {once:true});
-  }else{
-    init(); router();
-  }
+  // boot
+  renderList();
 })();
