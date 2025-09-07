@@ -9,15 +9,15 @@
   <link rel="stylesheet" href="css/news.css" />
 </head>
 <body>
-  <!-- 상단/하단 공용 UI가 ui.js에서 자동 마운트되는 경우를 고려해 그대로 둠 -->
-  <header class="lv-appbar">
+  <!-- 상단바/탭: ui.js가 있으면 자동 마운트, 없으면 아래 마크업이 그대로 사용됨 -->
+  <header id="appbar" class="lv-appbar">
     <div class="lv-title">뉴스</div>
     <div class="lv-actions">
       <button id="openWrite" class="btn pri">작성하기</button>
     </div>
   </header>
 
-  <nav class="lv-tabs">
+  <nav id="topTabs" class="lv-tabs">
     <a href="index.html">숏클립</a>
     <a href="shoppinglive.html">쇼핑라이브</a>
     <a class="active" href="news.html">뉴스</a>
@@ -26,11 +26,12 @@
   </nav>
 
   <main class="container">
-    <section id="newsList" class="news-grid"></section>
-    <div id="emptyBox" class="empty" style="display:none;">등록된 뉴스가 없습니다</div>
+    <section id="newsList" class="news-list"></section>
+    <div id="emptyBox" class="empty">등록된 뉴스가 없습니다</div>
   </main>
 
-  <footer class="lv-tabbar"><!-- 기존 하단 탭이 main.css/ui.js로 스타일됨 --></footer>
+  <!-- 하단 탭바(없으면 이 마크업이 기본) -->
+  <footer id="tabbar" class="lv-tabbar"></footer>
 
   <!-- 작성 모달 -->
   <div id="newsModal" class="modal" aria-hidden="true">
@@ -59,7 +60,7 @@
         <textarea id="summary" class="input" rows="3" placeholder="간단 소개(선택)"></textarea>
 
         <label class="label">내용 (선택)</label>
-        <textarea id="content" class="input" rows="8" placeholder="상세 내용(선택) — 간단한 텍스트/HTML 허용"></textarea>
+        <textarea id="content" class="input" rows="7" placeholder="상세 내용(선택) — 간단한 텍스트/HTML 허용"></textarea>
 
         <label class="label">이미지</label>
         <div class="file-row">
@@ -85,7 +86,7 @@
   </div>
 
   <script src="js/config.js"></script>
-  <script src="js/ui.js"></script> <!-- 상단/하단 탭 유지 -->
-  <script src="js/news.js?v=final-publish"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/news.js?v=ref-list-final"></script>
 </body>
 </html>
