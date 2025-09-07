@@ -8,20 +8,46 @@
     localStorage.getItem('livee_token') ||
     localStorage.getItem('liveeToken') || '';
 
-  // ui.js가 있으면 상단/하단을 그쪽으로 렌더 (없어도 동작)
-  try{
-    if (window.LIVEE_UI?.mountHeader) {
-      LIVEE_UI.mountHeader({ title:'뉴스', right:[{id:'openWrite', label:'작성하기', kind:'primary'}] });
+  // === ui.js 헤더/탭/하단 마운트 (index.html 동일 포인트) ====================
+  (function mountUI(){
+    const UI = window.LIVEE_UI || {};
+    if (UI.mountHeader) {
+      UI.mountHeader({
+        target: '#appbar',
+        title: '뉴스',
+        right: [{ id: 'openWrite', label: '작성하기', kind: 'primary' }],
+      });
+    } else {
+      // 폴백 헤더
+      $('#appbar').innerHTML =
+        `<div class="lv-appbar"><div class="lv-title">뉴스</div>
+          <div class="lv-actions"><button id="openWrite" class="btn pri">작성하기</button></div></div>`;
     }
-    if (window.LIVEE_UI?.mountTopTabs) {
-      LIVEE_UI.mountTopTabs({ active:'news' });
-    }
-    if (window.LIVEE_UI?.mountTabbar) {
-      LIVEE_UI.mountTabbar({ active:'home' }); // 바텀탭 유지(홈 강조 그대로)
-    }
-  }catch(_){}
 
-  // ---------- utils ----------
+    if (UI.mountTopTabs) {
+      UI.mountTopTabs({ target:'#top-tabs', active:'news' });
+    } else {
+      $('#top-tabs').innerHTML =
+        `<nav class="lv-tabs">
+          <a href="index.html">숏클립</a>
+          <a href="shoppinglive.html">쇼핑라이브</a>
+          <a class="active" href="news.html">뉴스</a>
+          <a href="events.html">이벤트</a>
+          <a href="service.html">서비스</a>
+        </nav>`;
+    }
+
+    if (UI.mountTabbar) {
+      UI.mountTabbar({ target:'#bottom-tabs', active:'home' });
+    } else {
+      $('#bottom-tabs').innerHTML =
+        `<div class="lv-tabbar">
+           <a class="active">홈</a><a>모집캠페인</a><a>라이브러리</a><a>인플루언서</a><a>마이페이지</a>
+         </div>`;
+    }
+  })();
+
+  // === 공통 util ============================================================
   const FALLBACK_IMG = (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   async function getJSON(url){
@@ -30,12 +56,20 @@
     if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
     return j;
   }
-  const parseList = j => (Array.isArray(j) && j) || j.items || j.data?.items || [];
+  const parseList = j => (Array.isArray(j) && j) || j.items || j.data?.items || j.data || [];
 
-  const pickThumb = (n) =>
-    n.thumbnailUrl || n.imageUrl || n.thumbUrl || n.thumb || n.coverImageUrl || '';
+  // ✅ 썸네일 필드 폭넓게 매핑 (서버/구버전 혼재 대비)
+  function pickThumb(n){
+    return (
+      n.thumbnailUrl ||
+      n.imageUrl || n.imageURL || n.image ||
+      n.thumbUrl  || n.thumb ||
+      n.coverImageUrl || n.mainThumbnailUrl ||
+      n.media?.thumbnailUrl || n.media?.imageUrl ||
+      ''
+    );
+  }
 
-  const pad2 = n => String(n).padStart(2,'0');
   function relTime(iso){
     if(!iso) return '';
     const d = new Date(iso), now = new Date();
@@ -47,7 +81,7 @@
     return '방금 전';
   }
 
-  // ---------- list ----------
+  // === 리스트 ===============================================================
   async function fetchNews(){
     try{
       const j = await getJSON(`${API_BASE}/${ENTITY}?status=published&limit=50`);
@@ -73,7 +107,8 @@
           <div class="title">${n.title}</div>
           <div class="sum">${n.summary || ''}</div>
         </div>
-        <img class="thumb" src="${n.thumb || FALLBACK_IMG}" alt="" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"/>
+        <img class="thumb" src="${n.thumb || FALLBACK_IMG}" alt=""
+             onerror="this.onerror=null;this.src='${FALLBACK_IMG}'" />
       </article>
     `).join('');
   }
@@ -83,7 +118,7 @@
     $('#newsList').innerHTML = tplRows(items);
   }
 
-  // ---------- modal ----------
+  // === 모달 & 업로드 ========================================================
   const modal = $('#newsModal');
   const toast = $('#toast');
   const say = (t, ok=false)=>{ toast.textContent=t; toast.classList.add('show'); toast.classList.toggle('ok', ok); };
@@ -96,18 +131,18 @@
     $('#thumbPrev').style.display='none'; state.thumbnailUrl='';
   }
 
-  document.body.addEventListener('click', (e)=>{
-    if(e.target.matches('#openWrite')){ 
+  // 헤더의 작성 버튼( ui.js가 만들든, 폴백이든 ) 캐치
+  document.addEventListener('click', (e)=>{
+    if(e.target.closest('#openWrite')){
       if(!TOKEN){ location.href='login.html?returnTo='+encodeURIComponent(location.pathname); return; }
       openModal();
     }
-    if(e.target.matches('[data-close]')) closeModal();
-    if(e.target.closest('.modal__overlay')) closeModal();
+    if(e.target.matches('[data-close]') || e.target.closest('.modal__overlay')) closeModal();
   });
 
-  // ---------- upload (Cloudinary) ----------
+  // Cloudinary 업로드
   const state = { thumbnailUrl:'' };
-  const pickBtn = $('#pickImage'), file = $('#imageFile'), fileName = $('#fileName'), prev=$('#thumbPrev');
+  const file = $('#imageFile'), pickBtn = $('#pickImage'), fileName = $('#fileName'), prev=$('#thumbPrev');
   pickBtn.addEventListener('click', ()=> file.click());
 
   async function getSignature(){
@@ -153,7 +188,7 @@
     finally{ URL.revokeObjectURL(local); }
   });
 
-  // ---------- submit (즉시 발행) ----------
+  // 즉시 발행
   $('#newsForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!$('#agree').checked){ say('동의가 필요합니다'); return; }
@@ -162,7 +197,7 @@
 
     const payload = {
       type:'news',
-      status:'published',     // 즉시 발행
+      status:'published',
       visibility:'public',
       category: $('#category').value || '공지',
       title,
@@ -182,7 +217,7 @@
       const j = await r.json().catch(()=>({}));
       if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
       say('등록되었습니다', true);
-      setTimeout(()=>{ closeModal(); renderList(); }, 300);
+      setTimeout(()=>{ closeModal(); renderList(); }, 250);
     }catch(err){ console.error(err); say('등록 실패: '+(err.message||'네트워크 오류')); }
   });
 
