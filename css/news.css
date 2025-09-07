@@ -10,7 +10,7 @@
 .badge{display:inline-block;font-size:12px;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:2px 8px}
 .card .title{font-weight:800;margin:6px 0 4px}
 .card .sum{color:#555;font-size:14px;line-height:1.45}
-.empty{margin:40px 0;text-align:center;color:#777}
+.empty{margin:40px 0;text-align:center;color:#9aa2af}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -19,7 +19,7 @@
 .icon-btn{width:36px;height:36px;border:1px solid var(--line,#e5e7eb);border-radius:10px;background:#fff}
 
 /* Modal */
-.modal{position:fixed;inset:0;display:none}
+.modal{position:fixed;inset:0;display:none;z-index:50}
 .modal.show{display:block}
 .modal__overlay{position:absolute;inset:0;background:rgba(0,0,0,.35)}
 .modal__sheet{
