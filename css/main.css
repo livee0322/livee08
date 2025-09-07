@@ -263,3 +263,101 @@ ul,ol{ list-style:none; padding:0; margin:0; }
 .cta-copy .cta-title{ font-weight:900; color:#0f2b6d; margin-top:2px; }
 .cta-copy .cta-sub{ color:#3556a3; font-size:13px; margin-top:4px; }
 .cta-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ===== Livee v2.8 — Visual Refresh (append) ========================= */
+
+/* 컬러 오버라이드 */
+:root{
+  --primary: #3b82f6;    /* 파란 CTA */
+  --accent:  #8b5cf6;    /* 보라 포인트 */
+  --text:    #0f172a;
+  --sub:     #6b7280;
+  --border:  #e7eaf0;
+  --bg:      #f6f7f9;
+}
+
+/* 공통 버튼 */
+.btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:12px; font-weight:800;
+  border:1px solid var(--border); background:#fff; color:var(--text);
+  line-height:1; font-size:14px; box-shadow:0 1px 0 rgba(16,24,40,.02);
+}
+.btn i{ font-size:18px; line-height:1; }
+.btn:active{ transform:translateY(1px); }
+.btn--primary{ background:var(--primary); border-color:var(--primary); color:#fff; }
+.btn--ghost{ background:#fff; border-color:var(--border); color:var(--text); }
+.btn--sm{ padding:8px 12px; font-size:13px; border-radius:10px; }
+
+/* 히어로 CTA 영역 */
+.hero-cta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.hero-card{ background:#eaf2ff; border-color:#dfe8ff; box-shadow:none; }
+.hero-media, .hero-grad{ display:none; }
+.hero-body{ color:#0f2b6d; }
+.hero-title{ color:#0f2b6d; }
+.hero-sub{ color:#3556a3; opacity:.95; }
+
+/* 추천 공고: 가로 스크롤 카드(1.2~1.5개 노출) */
+.hscroll{ scroll-snap-type:x mandatory; }
+.card-mini{
+  position:relative; scroll-snap-align:center;
+  flex:0 0 80%; /* ≈ 1.25개 보임 */
+  display:grid; grid-template-columns: 112px 1fr; gap:10px;
+  border:1px solid var(--border); border-radius:14px; background:#fff;
+  padding:10px; box-shadow:0 1px 0 rgba(16,24,40,.02);
+}
+@media (min-width:480px){ .card-mini{ flex-basis:60%; } }
+.card-mini .mini-thumb{ width:112px; height:63px; border-radius:10px; object-fit:cover; background:#eee; }
+.card-mini .mini-title{ font-weight:800; font-size:14px; color:var(--text); }
+.card-mini .mini-meta{ font-size:12px; color:var(--sub); margin-top:6px; }
+.card-mini .lv-brand{ font-size:12px; font-weight:700; color:#111; }
+.mini-bookmark{
+  position:absolute; right:8px; bottom:8px; width:32px; height:32px;
+  border-radius:10px; border:1px solid var(--border); background:#fff;
+  display:grid; place-items:center; color:#64748b;
+}
+
+/* 뉴스: 왼쪽 16:9 썸넬 + 오른쪽 텍스트 (home/news 공용) */
+.news-row{
+  display:grid; grid-template-columns: 132px 1fr; gap:12px;
+  border:1px solid var(--border); background:#fff; border-radius:14px;
+  padding:10px; box-shadow:0 1px 0 rgba(16,24,40,.02);
+}
+.news-row .thumb{ width:132px; aspect-ratio:16/9; object-fit:cover; border-radius:10px; background:#eee; }
+.news-row .txt{ display:flex; flex-direction:column; gap:4px; }
+.news-row .title{ font-weight:800; color:var(--text); line-height:1.3; }
+.news-row .meta{ font-size:12px; color:var(--sub); display:flex; gap:8px; align-items:center; }
+.news-row .badge{ font-size:11px; font-weight:800; color:#1f2937; background:#eef2ff; border:1px solid #c7d2fe; padding:2px 8px; border-radius:999px; }
+
+/* 포트폴리오: 원형 아바타 + 정보 + 버튼 */
+.pf-hlist{ display:grid; gap:10px; }
+.pf-hcard{
+  display:grid; grid-template-columns: 64px 1fr; gap:12px;
+  border:1px solid var(--border); border-radius:14px; background:#fff;
+  padding:10px; box-shadow:0 1px 0 rgba(16,24,40,.02);
+}
+.pf-avatar{ width:64px; height:64px; border-radius:50%; object-fit:cover; background:#eee; }
+.pf-info{ display:flex; flex-direction:column; gap:6px; }
+.pf-name{ font-weight:800; color:var(--text); }
+.pf-intro{ font-size:13px; color:#475569; line-height:1.35; }
+.pf-metrics{ display:flex; gap:8px; }
+.badge-kpi{
+  font-size:12px; border:1px solid var(--border); border-radius:999px;
+  padding:2px 8px; color:#111; background:#f8fafc;
+}
+.pf-actions{ display:flex; gap:8px; }
+
+/* 하단 CTA 배너 */
+.cta-banner{
+  display:grid; gap:10px; padding:14px; border-radius:16px;
+  background:linear-gradient(180deg,#f8fbff 0%, #f4f7ff 100%);
+  border:1px solid #e3ebff;
+}
+.cta-kicker{ font-size:12px; font-weight:800; letter-spacing:.08em; color:#4f46e5; text-transform:uppercase; }
+.cta-title{ font-weight:900; color:#0f172a; }
+.cta-sub{ color:#475569; font-size:13px; }
+.cta-actions{ display:flex; gap:8px; }
+
+/* 섹션 헤더 간격 보정(일관성) */
+.section{ margin:20px 0; }
+.section .section-head{ margin: 6px 2px 12px; }
