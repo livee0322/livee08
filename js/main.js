@@ -1,4 +1,4 @@
-/* Home main.js — v2.9.7 (brand/pay 정규화 반영) */
+/* Home main.js — v2.9.8 (brand/pay 호환키 확장) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -8,7 +8,7 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = CFG.placeholderThumb || 'default.jpg'; // 루트 기본이미지
+  const FALLBACK_IMG  = CFG.placeholderThumb || 'default.jpg';
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
@@ -25,55 +25,55 @@
     (Array.isArray(o?.subImages) && o.subImages[0]) ||
     o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || FALLBACK_IMG;
 
-  // ====== 공통 파서 ======
   async function getJSON(url){
-    const r = await fetch(url, { headers:{'Accept':'application/json'} });
+    const r = await fetch(url, { headers:{Accept:'application/json'} });
     const j = await r.json().catch(()=> ({}));
     if (!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j;
   }
-  const parseItems = j =>
-    (Array.isArray(j) ? j :
-      (j.items || j.data?.items || j.docs || j.data?.docs || []));
+  const parseItems = j => (Array.isArray(j) ? j : (j.items || j.data?.items || j.docs || j.data?.docs || []));
 
-  // ====== 안전 추출기 (브랜드/출연료) ======
-  const pickBrand = (o) =>
-    (o?.brandName ||
-     o?.recruit?.brandName ||
-     o?.brand?.name ||
-     o?.brand ||
-     '').toString().trim() || '브랜드';
-
-  const pickPay = (o) => {
-    const raw =
-      o?.recruit?.pay ??
-      o?.pay ??
-      o?.recruit?.payment ??
-      o?.payment ??
-      null;
-
-    const payNegotiable =
-      !!(o?.recruit?.payNegotiable ??
-         o?.payNegotiable ??
-         o?.recruit?.negotiable ??
-         o?.negotiable);
-
-    const num = raw==null || raw===''
-      ? null
-      : Number(String(raw).replace(/[^\d.-]/g,''));
-
-    return {
-      pay: Number.isFinite(num) && num > 0 ? num : null,
-      payNegotiable
-    };
+  /* ---------------- 브랜드/페이 추출 강화 ---------------- */
+  const pickBrand = (o) => {
+    const cands = [
+      o?.brandName, o?.brandname,
+      o?.recruit?.brandName, o?.recruit?.brandname,
+      o?.brand?.brandName, o?.brand?.name, o?.brand,
+      o?.owner?.brandName, o?.owner?.name,
+      o?.user?.companyName, o?.user?.brandName
+    ];
+    const v = cands.find(v => v!=null && String(v).trim()!=='');
+    return (v ? String(v).trim() : '브랜드');
   };
 
-  // ====== 데이터 호출 ======
+  const truthy = v => (v===true || v==='true' || v==='1' || v===1 || v==='협의');
+  const pickPay = (o) => {
+    // 다양한 키 & 문자열 케이스 처리
+    const rawCand = [
+      o?.recruit?.pay, o?.pay,
+      o?.recruit?.payment, o?.payment,
+      o?.recruit?.payAmount, o?.payAmount,
+      o?.recruit?.price, o?.price
+    ];
+    const raw = rawCand.find(v => v!=null && String(v).trim()!=='');
+    const negoCand = [
+      o?.recruit?.payNegotiable, o?.payNegotiable,
+      o?.recruit?.negotiable,    o?.negotiable
+    ];
+    const payNegotiable = truthy(negoCand.find(v => v!==undefined) ?? false);
+
+    // 문자열 '협의', '미정' 등은 금액 제거 + 협의 처리
+    if (typeof raw === 'string' && /협의|미정/i.test(raw)) {
+      return { pay: null, payNegotiable: true };
+    }
+    const num = raw==null ? null : Number(String(raw).replace(/[^\d.-]/g,''));
+    return { pay: (Number.isFinite(num) && num>0) ? num : null, payNegotiable };
+  };
+  /* --------------------------------------------------- */
+
   async function fetchRecruits(){
     try{
-      const arr = parseItems(
-        await getJSON(`${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`)
-      );
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`));
       return arr.map((c,i)=>{
         const { pay, payNegotiable } = pickPay(c);
         return {
@@ -82,8 +82,7 @@
           thumb: pickThumb(c),
           closeAt: c.closeAt || c.recruit?.closeAt || c.deadline || c.recruit?.deadline,
           brandName: pickBrand(c),
-          pay,
-          payNegotiable
+          pay, payNegotiable
         };
       });
     }catch{ return []; }
@@ -91,9 +90,7 @@
 
   async function fetchPortfolios(){
     try{
-      const arr = parseItems(
-        await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`)
-      );
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`));
       return arr.map((p,i)=>({
         id: p.id||p._id||`${i}`,
         nickname: text(p.nickname || p.displayName || p.name || '쇼호스트'),
@@ -105,9 +102,7 @@
 
   async function fetchNews(fallback=[]){
     try{
-      const arr = parseItems(
-        await getJSON(`${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`)
-      );
+      const arr = parseItems(await getJSON(`${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`));
       if (arr.length) {
         return arr.map((n,i)=>({
           id: n.id||n._id||`${i}`,
@@ -117,13 +112,10 @@
         }));
       }
     }catch{}
-    // 뉴스 없으면 공고 일부를 소식처럼
-    return fallback.slice(0,6).map((r,i)=>({
-      id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식'
-    }));
+    return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  // ====== 히어로(단일 배너) ======
+  /* ===== 히어로 (루트 bannertest.jpg) ===== */
   function renderHero(el){
     const heroSrc = 'bannertest.jpg';
     el.innerHTML = `
@@ -138,12 +130,12 @@
     const media = el.querySelector('.hero-media');
     if (media) {
       media.style.backgroundImage =
-        `linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('${heroSrc}')`;
+        \`linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('\${heroSrc}')\`;
     }
     const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
   }
 
-  // ====== 템플릿 ======
+  /* ===== 템플릿 ===== */
   const tplLineupList = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -219,12 +211,8 @@
             <div class="pf-name">${p.nickname}</div>
             <div class="pf-intro">${p.headline || '소개 준비 중'}</div>
             <div class="pf-actions">
-              <a class="btn btn--sm btn--chip" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}">
-                <i class="ri-mail-send-line"></i> 제안하기
-              </a>
-              <a class="btn btn--sm btn--chip" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}">
-                <i class="ri-user-line"></i> 프로필 보기
-              </a>
+              <a class="btn btn--sm btn--chip" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}"><i class="ri-mail-send-line"></i> 제안하기</a>
+              <a class="btn btn--sm btn--chip" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}"><i class="ri-user-line"></i> 프로필 보기</a>
             </div>
           </div>
         </article>`).join('')}
@@ -254,7 +242,6 @@
       </div>`;
   }
 
-  // ====== 렌더 ======
   async function render(){
     const root = $('#home');
     const heroRoot = $('#hero');
