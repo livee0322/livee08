@@ -1,7 +1,7 @@
-/* Home main.js — v2.8.4
-   - 히어로 카피 순환(접근성 고려)
+/* Home main.js — v2.9.0
+   - 이미지형 히어로(CTA 제거, 인덱스 표시)
+   - 섹션 네이밍: 지금 뜨는 라이브 / 브랜드 픽 / 라이비 뉴스 / 인기 쇼호스트
    - 뉴스: 텍스트 리스트, 제목 1줄
-   - 버튼 새 스타일 클래스 사용
 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
@@ -71,38 +71,51 @@
     return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  /* ---------- Hero ---------- */
-  const HERO_COPY = [
-    { h: '쇼핑라이브, 쉽게 시작하세요', s: '연결 · 제안 · 계약 · 결제까지 한 번에' },
-    { h: '브랜드와 쇼호스트를 가장 빠르게', s: '단 5분 설정으로 공고 등록 완료' },
-    { h: '검증된 쇼호스트를 바로 찾기', s: '경력/리뷰/미디어로 한눈에 비교' },
+  /* ---------- Hero(이미지) ---------- */
+  const HERO_SLIDES = [
+    { h:'추석 라이브 준비는 지금', s:'선물/푸드/뷰티 기획전', img:'assets/hero_01.jpg' },
+    { h:'신제품 론칭 LIVE', s:'브랜드와 호스트를 가장 빠르게', img:'assets/hero_02.jpg' },
+    { h:'오늘 밤 특가 라이브', s:'놓치면 아까운 혜택', img:'assets/hero_03.jpg' },
   ];
   function renderHero(el){
-    const first = HERO_COPY[0];
+    const first = HERO_SLIDES[0];
     el.innerHTML = `
-      <article class="hero-card" role="region" aria-roledescription="배너">
+      <article class="hero-card">
+        <div class="hero-media" style="--hero-img:url('${first.img||''}')"></div>
         <div class="hero-body">
-          <div class="hero-meta"><span>LIVEE</span><span>FOR CREATORS & BRANDS</span></div>
+          <div class="hero-kicker">LIVEE</div>
           <h1 class="hero-title" id="heroH">${first.h}</h1>
           <p class="hero-sub" id="heroS">${first.s}</p>
-          <div class="hero-cta">
-            <a class="btn btn--primary" href="recruit-new.html"><i class="ri-megaphone-line"></i> 공고 올리기</a>
-            <a class="btn btn--ghost" href="portfolio-list.html"><i class="ri-user-search-line"></i> 쇼호스트 찾기</a>
-            <a class="btn btn--ghost" href="help.html#guide"><i class="ri-compass-3-line"></i> 가이드 보기</a>
-          </div>
+          <div class="hero-index" id="heroN">1/${HERO_SLIDES.length}</div>
         </div>
       </article>
     `;
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      let i = 1;
-      setInterval(()=>{
-        const item = HERO_COPY[i%HERO_COPY.length];
-        const H = $('#heroH'), S = $('#heroS');
-        if(H) H.textContent = item.h;
-        if(S) S.textContent = item.s;
-        i++;
-      }, 6000);
-    }
+
+    // 슬라이드 순환
+    let i = 0, timer;
+    const apply = (n) => {
+      const item = HERO_SLIDES[n];
+      const media = el.querySelector('.hero-media');
+      const H = $('#heroH', el), S = $('#heroS', el), N = $('#heroN', el);
+      if (media) media.style.setProperty('--hero-img', `url('${item.img||''}')`);
+      if (H) H.textContent = item.h;
+      if (S) S.textContent = item.s;
+      if (N) N.textContent = `${n+1}/${HERO_SLIDES.length}`;
+    };
+    const next = () => { i = (i+1) % HERO_SLIDES.length; apply(i); };
+    const prev = () => { i = (i-1+HERO_SLIDES.length) % HERO_SLIDES.length; apply(i); };
+
+    const wrap = el.closest('.hero-wrap');
+    wrap?.querySelector('.hero-btn.next')?.addEventListener('click', () => { next(); restart(); });
+    wrap?.querySelector('.hero-btn.prev')?.addEventListener('click', () => { prev(); restart(); });
+
+    const start = () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      timer = setInterval(next, 5500);
+    };
+    const restart = () => { if (timer) clearInterval(timer); start(); };
+
+    start();
   }
 
   /* ---------- Templates ---------- */
@@ -179,12 +192,8 @@
             <div class="pf-name">${p.nickname}</div>
             <div class="pf-intro">${p.headline || '소개 준비 중'}</div>
             <div class="pf-actions">
-              <a class="btn btn--sm btn--primary" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}">
-                <i class="ri-mail-send-line"></i> 제안하기
-              </a>
-              <a class="btn btn--sm btn--ghost" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}">
-                <i class="ri-user-line"></i> 프로필 보기
-              </a>
+              <a class="btn btn--sm" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}"><i class="ri-mail-send-line"></i> 제안하기</a>
+              <a class="btn btn--sm" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}"><i class="ri-user-line"></i> 프로필 보기</a>
             </div>
           </div>
         </article>`).join('')}
@@ -198,8 +207,8 @@
         <div class="cta-sub">기획 · 섭외 · 계약 · 결제까지 도와드립니다</div>
       </div>
       <div class="cta-actions">
-        <a class="btn btn--primary" href="recruit-new.html"><i class="ri-megaphone-line"></i> 공고 올리기</a>
-        <a class="btn btn--ghost" href="help.html#contact"><i class="ri-chat-1-line"></i> 빠른 문의</a>
+        <a class="btn" href="recruit-new.html"><i class="ri-megaphone-line"></i> 공고 올리기</a>
+        <a class="btn" href="help.html#contact"><i class="ri-chat-1-line"></i> 빠른 문의</a>
       </div>
     </div>`;
 
@@ -229,10 +238,10 @@
     const pfHTML       = tplPortfolios(portfolios);
 
     root.innerHTML = [
-      sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML, 'lineup'),
-      sectionBlock('추천 공고', 'recruit-list.html', recommendHTML, 'recruits'),
-      sectionBlock('뉴스', 'news.html', newsHTML, 'news'),
-      sectionBlock('추천 인플루언서', 'portfolio-list.html', pfHTML, 'pf'),
+      sectionBlock('지금 뜨는 라이브', 'recruit-list.html', lineupHTML, 'lineup'),
+      sectionBlock('브랜드 픽', 'recruit-list.html', recommendHTML, 'recruits'),
+      sectionBlock('라이비 뉴스', 'news.html', newsHTML, 'news'),
+      sectionBlock('인기 쇼호스트', 'portfolio-list.html', pfHTML, 'pf'),
       `<div class="section">${tplCtaBanner()}</div>`
     ].join('');
   }
