@@ -1,4 +1,4 @@
-/* Home main.js — v2.9.2 */
+/* Home main.js — v2.9.3 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -67,8 +67,9 @@
     return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  /* ===== 배너(단일 이미지) ===== */
+  /* ===== 히어로(단일 이미지) — bannertest.jpg를 JS로 주입 ===== */
   function renderHero(el){
+    const heroSrc = 'bannertest.jpg'; // 루트/동일폴더에 파일 존재
     el.innerHTML = `
       <article class="hero-card">
         <div class="hero-media"></div>
@@ -78,7 +79,11 @@
           <p class="hero-sub">브랜드와 호스트를 가장 빠르게</p>
         </div>
       </article>`;
-    // 단일 이미지이므로 네비 숨김
+    const media = el.querySelector('.hero-media');
+    if (media) {
+      media.style.backgroundImage =
+        `linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('${heroSrc}')`;
+    }
     const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
   }
 
@@ -202,10 +207,10 @@
     const pfHTML       = tplPortfolios(portfolios);
 
     root.innerHTML = [
-      sectionBlock('지금 뜨는 쇼핑라이브 공고', 'recruit-list.html', lineupHTML, 'lineup'),
-      sectionBlock('브랜드 픽', 'recruit-list.html', recommendHTML, 'recruits'),
-      sectionBlock('라이브 뉴스', 'news.html', newsHTML, 'news'),
-      sectionBlock('이런 쇼호스트는 어떠세요?', 'portfolio-list.html', pfHTML, 'pf'),
+      sectionBlock('<span class="hl">지금 뜨는</span> 쇼핑라이브 공고', 'recruit-list.html', lineupHTML, 'lineup'),
+      sectionBlock('브랜드 <span class="hl">pick</span>', 'recruit-list.html', recommendHTML, 'recruits'),
+      sectionBlock('<span class="hl">라이비</span> 뉴스', 'news.html', newsHTML, 'news'),
+      sectionBlock('<span class="hl">이런 쇼호스트</span>는 어떠세요?', 'portfolio-list.html', pfHTML, 'pf'),
       `<div class="section">${tplCtaBanner()}</div>`
     ].join('');
   }
