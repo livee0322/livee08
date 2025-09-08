@@ -1,4 +1,4 @@
-/* Home main.js — v2.9.11 (brand/fee + headline fallback) */
+/* Home main.js — v2.9.12 (portfolio headline hydrate) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -15,14 +15,13 @@
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v).trim());
   const strip = (html='') => String(html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+  const coalesce = (...vals) => vals.find(v => v !== undefined && v !== null && v !== '');
 
   const pickThumb = (o) =>
     o?.mainThumbnailUrl || o?.thumbnailUrl ||
     (Array.isArray(o?.subThumbnails) && o.subThumbnails[0]) ||
     (Array.isArray(o?.subImages) && o.subImages[0]) ||
     o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || FALLBACK_IMG;
-
-  const coalesce = (...vals) => vals.find(v => v !== undefined && v !== null && v !== '');
 
   async function getJSON(url){
     const r = await fetch(url, { headers:{'Accept':'application/json'} });
@@ -32,21 +31,11 @@
   }
   const parseItems = j => (Array.isArray(j) ? j : (j.items || j.data?.items || j.docs || j.data?.docs || []));
 
-  /* ====== Brand & Fee robust mapping ====== */
+  /* ===== recruits: brand/fee 폴백 유지 ===== */
   const getBrandName = (c) => text(coalesce(
-    c.brandName,
-    c.brand,                         // string
-    c.recruit?.brandName,
-    c.brand?.name,                   // object
-    c.owner?.brandName,
-    c.user?.brandName
+    c.brandName, c.brand, c.recruit?.brandName, c.brand?.name, c.owner?.brandName, c.user?.brandName
   )) || '브랜드';
-
-  const getFee = (c) => {
-    const raw = coalesce(c.fee, c.recruit?.pay, c.pay);
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : undefined;
-  };
+  const getFee = (c) => { const raw = coalesce(c.fee, c.recruit?.pay, c.pay); const n = Number(raw); return Number.isFinite(n) ? n : undefined; };
   const isFeeNegotiable = (c) => !!coalesce(c.feeNegotiable, c.recruit?.payNegotiable, c.payNegotiable);
 
   async function fetchRecruits(){
@@ -64,20 +53,45 @@
     }catch{ return []; }
   }
 
+  /* ===== portfolios: 목록 + 부족한 필드 상세로 하이드레이션 ===== */
   async function fetchPortfolios(){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`));
-      return arr.map((p,i)=>({
+      const listJ = await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`);
+      const arr = parseItems(listJ);
+
+      // 1차 매핑(목록에 온 정보로만)
+      const items = arr.map((p,i)=>({
         id: p.id||p._id||`${i}`,
         nickname: text(p.nickname || p.displayName || p.name || '쇼호스트'),
-        // headline 폴백: intro/introduction/oneLiner/summary → bio 스니펫 → ''
         headline: text(coalesce(
-          p.headline, p.intro, p.introduction, p.oneLiner, p.summary,
-          p.bio ? strip(p.bio).slice(0,60) : ''
-        )),
+          p.headline, p.intro, p.introduction, p.oneLiner, p.summary
+        )) || '',                    // 아직 비면 상세에서 보강
         thumb: pickThumb(p)
       }));
-    }catch{ return []; }
+
+      // 2차: headline 비어있는 것만 최대 8개 상세 호출
+      const needs = items.filter(x => !x.headline).slice(0,8);
+      if (needs.length) {
+        const details = await Promise.all(needs.map(x =>
+          getJSON(`${API_BASE}/portfolio-test/${encodeURIComponent(x.id)}`).catch(()=>null)
+        ));
+        details.forEach(dj => {
+          const d = dj && (dj.data || dj);
+          if (!d) return;
+          const t = items.find(x => x.id === String(d.id || d._id || ''));
+          if (!t) return;
+          t.headline = text(coalesce(
+            d.headline, d.intro, d.introduction, d.oneLiner, d.summary,
+            d.bio ? strip(d.bio).slice(0,60) : ''
+          )) || '';
+          if (!t.thumb) t.thumb = pickThumb(d);
+          if (!t.nickname) t.nickname = text(d.nickname || d.displayName || d.name || '쇼호스트');
+        });
+      }
+      return items;
+    }catch{
+      return [];
+    }
   }
 
   async function fetchNews(fallback=[]){
@@ -95,7 +109,7 @@
     return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  /* ===== 히어로 ===== */
+  /* ===== Hero/템플릿/렌더 (동일) ===== */
   function renderHero(el){
     const heroSrc = 'bannertest.jpg';
     el.innerHTML = `
@@ -108,14 +122,11 @@
         </div>
       </article>`;
     const media = el.querySelector('.hero-media');
-    if (media) {
-      media.style.backgroundImage =
-        `linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('${heroSrc}')`;
-    }
+    if (media) media.style.backgroundImage =
+      `linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('${heroSrc}')`;
     const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
   }
 
-  /* ===== 템플릿 ===== */
   const feeText = (fee, nego) => nego ? '협의' : (fee!=null ? `${money(fee)}원` : '출연료 미정');
 
   const tplLineupList = items => !items.length ? `
