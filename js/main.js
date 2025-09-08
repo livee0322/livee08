@@ -1,18 +1,18 @@
-/* Home main.js — v2.9.0
-   - 이미지형 히어로(CTA 제거, 인덱스 표시)
-   - 섹션 네이밍: 지금 뜨는 라이브 / 브랜드 픽 / 라이비 뉴스 / 인기 쇼호스트
-   - 뉴스: 텍스트 리스트, 제목 1줄
+/* Home main.js — v2.9.1
+   - 배너: 루트 bannertest.jpg 단일 이미지(네비/인덱스 자동 숨김)
+   - 섹션명 업데이트
+   - 뉴스 리스트(제목 1줄), 쇼호스트 칩 버튼 적용
 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP = CFG.endpoints || {};
+  const EP = (CFG.endpoints || {});
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
@@ -25,7 +25,7 @@
     o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || FALLBACK_IMG;
 
   async function getJSON(url){
-    const r = await fetch(url, { headers:{'Accept':'application/json'} });
+    const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
     const j = await r.json().catch(()=> ({}));
     if (!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j;
@@ -71,51 +71,20 @@
     return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  /* ---------- Hero(이미지) ---------- */
-  const HERO_SLIDES = [
-    { h:'추석 라이브 준비는 지금', s:'선물/푸드/뷰티 기획전', img:'assets/hero_01.jpg' },
-    { h:'신제품 론칭 LIVE', s:'브랜드와 호스트를 가장 빠르게', img:'assets/hero_02.jpg' },
-    { h:'오늘 밤 특가 라이브', s:'놓치면 아까운 혜택', img:'assets/hero_03.jpg' },
-  ];
+  /* ---------- Hero(단일 이미지) ---------- */
   function renderHero(el){
-    const first = HERO_SLIDES[0];
     el.innerHTML = `
       <article class="hero-card">
-        <div class="hero-media" style="--hero-img:url('${first.img||''}')"></div>
+        <div class="hero-media"></div>
         <div class="hero-body">
           <div class="hero-kicker">LIVEE</div>
-          <h1 class="hero-title" id="heroH">${first.h}</h1>
-          <p class="hero-sub" id="heroS">${first.s}</p>
-          <div class="hero-index" id="heroN">1/${HERO_SLIDES.length}</div>
+          <h1 class="hero-title">신제품 론칭 LIVE</h1>
+          <p class="hero-sub">브랜드와 호스트를 가장 빠르게</p>
         </div>
-      </article>
-    `;
-
-    // 슬라이드 순환
-    let i = 0, timer;
-    const apply = (n) => {
-      const item = HERO_SLIDES[n];
-      const media = el.querySelector('.hero-media');
-      const H = $('#heroH', el), S = $('#heroS', el), N = $('#heroN', el);
-      if (media) media.style.setProperty('--hero-img', `url('${item.img||''}')`);
-      if (H) H.textContent = item.h;
-      if (S) S.textContent = item.s;
-      if (N) N.textContent = `${n+1}/${HERO_SLIDES.length}`;
-    };
-    const next = () => { i = (i+1) % HERO_SLIDES.length; apply(i); };
-    const prev = () => { i = (i-1+HERO_SLIDES.length) % HERO_SLIDES.length; apply(i); };
-
-    const wrap = el.closest('.hero-wrap');
-    wrap?.querySelector('.hero-btn.next')?.addEventListener('click', () => { next(); restart(); });
-    wrap?.querySelector('.hero-btn.prev')?.addEventListener('click', () => { prev(); restart(); });
-
-    const start = () => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      timer = setInterval(next, 5500);
-    };
-    const restart = () => { if (timer) clearInterval(timer); start(); };
-
-    start();
+      </article>`;
+    // 슬라이드가 없으니 네비/인덱스 숨김
+    const nav = document.querySelector('.hero-nav');
+    if (nav) nav.style.display = 'none';
   }
 
   /* ---------- Templates ---------- */
@@ -192,8 +161,12 @@
             <div class="pf-name">${p.nickname}</div>
             <div class="pf-intro">${p.headline || '소개 준비 중'}</div>
             <div class="pf-actions">
-              <a class="btn btn--sm" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}"><i class="ri-mail-send-line"></i> 제안하기</a>
-              <a class="btn btn--sm" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}"><i class="ri-user-line"></i> 프로필 보기</a>
+              <a class="btn btn--sm btn--chip" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}">
+                <i class="ri-mail-send-line"></i> 제안하기
+              </a>
+              <a class="btn btn--sm btn--chip" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}">
+                <i class="ri-user-line"></i> 프로필 보기
+              </a>
             </div>
           </div>
         </article>`).join('')}
@@ -238,10 +211,10 @@
     const pfHTML       = tplPortfolios(portfolios);
 
     root.innerHTML = [
-      sectionBlock('지금 뜨는 라이브', 'recruit-list.html', lineupHTML, 'lineup'),
+      sectionBlock('지금 뜨는 쇼핑라이브 공고', 'recruit-list.html', lineupHTML, 'lineup'),
       sectionBlock('브랜드 픽', 'recruit-list.html', recommendHTML, 'recruits'),
-      sectionBlock('라이비 뉴스', 'news.html', newsHTML, 'news'),
-      sectionBlock('인기 쇼호스트', 'portfolio-list.html', pfHTML, 'pf'),
+      sectionBlock('라이브 뉴스', 'news.html', newsHTML, 'news'),
+      sectionBlock('이런 쇼호스트는 어떠세요?', 'portfolio-list.html', pfHTML, 'pf'),
       `<div class="section">${tplCtaBanner()}</div>`
     ].join('');
   }
