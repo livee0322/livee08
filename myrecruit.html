@@ -1,46 +1,60 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-  <title>내 모집공고 | LIVEE</title>
-  <link rel="stylesheet" href="css/myrecruit.css">
-  <link rel="stylesheet" href="css/ui.css"> <!-- 기존 공통이 있다면 유지 -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>내 모집공고 - Livee</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+
+  <style>
+    .chips { display:flex; gap:10px; padding:12px 16px; }
+    .chip { padding:8px 14px; border:1px solid #e5e7eb; border-radius:999px; font-weight:600; color:#374151; background:#fff; }
+    .chip.is-active { border-color:#a78bfa; color:#6d28d9; background:#f5f3ff; }
+    .empty { text-align:center; padding:64px 16px; color:#6b7280; }
+    .empty h3 { color:#111827; margin-bottom:8px; }
+    .list { padding:4px 16px 90px; }
+    .card { display:flex; gap:12px; padding:14px; border:1px solid #e5e7eb; border-radius:16px; background:#fff; margin:12px 0; }
+    .thumb { width:88px; height:88px; border-radius:12px; object-fit:cover; background:#f3f4f6; }
+    .meta { color:#6b7280; font-size:14px; margin-top:4px; }
+    .title { font-weight:800; font-size:18px; color:#111827; }
+    .btn-ghost { padding:8px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#fff; }
+    .row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  </style>
 </head>
 <body>
-  <header class="appbar">
-    <button class="ico back" onclick="history.back()" aria-label="뒤로">←</button>
-    <h1>내 모집공고</h1>
-    <a class="ico" href="recruit-new.html" aria-label="공고 올리기">＋</a>
-  </header>
+  <header id="appbar"></header>
 
-  <nav class="seg">
-    <button class="on" data-filter="all">전체</button>
-    <button data-filter="ongoing">진행중</button>
-    <button data-filter="closed">마감</button>
-    <button data-filter="draft">임시저장</button>
-  </nav>
+  <main id="root">
+    <div class="chips" id="chips">
+      <button class="chip is-active" data-status="all">전체</button>
+      <button class="chip" data-status="published">진행중</button>
+      <button class="chip" data-status="closed">마감</button>
+      <button class="chip" data-status="draft">임시저장</button>
+    </div>
 
-  <main id="root" class="container">
-    <section id="guard" class="guard" hidden>
-      <h2>접근 권한이 필요합니다</h2>
+    <section id="guard" class="empty" style="display:none">
+      <h3>접근 권한이 필요합니다</h3>
       <p>브랜드 또는 관리자 계정으로 로그인해주세요.</p>
-      <div class="actions">
-        <a class="btn" href="login.html">로그인</a>
-      </div>
+      <p style="margin-top:16px;">
+        <a class="btn-ghost" id="loginBtn" href="login.html">로그인</a>
+      </p>
     </section>
 
-    <section id="empty" class="empty" hidden>
-      <img alt="" src="default.jpg">
-      <h2>등록한 공고가 없습니다</h2>
-      <p>첫 공고를 올리고 쇼호스트를 만나보세요.</p>
-      <a class="btn" href="recruit-new.html">공고 올리기</a>
+    <section id="empty" class="empty" style="display:none">
+      <h3>등록한 공고가 없습니다</h3>
+      <p>오른쪽 상단 [+] 버튼으로 공고를 등록해보세요.</p>
     </section>
 
-    <section id="list" class="list" aria-live="polite"></section>
+    <section id="list" class="list"></section>
   </main>
 
-  <script src="js/myrecruit.js" defer></script>
+  <footer id="bottom-tabs"></footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/myrecruit.js"></script>
 </body>
 </html>
