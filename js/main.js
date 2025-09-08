@@ -1,7 +1,9 @@
-/* Home main.js — v2.8 (Refined UI)
-   - 탭/라우팅 그대로 유지
-   - 히어로 3종 CTA
-   - 포트폴리오: 원형 썸네일 + 옆 이름 + 제안하기
+/* Home main.js — v2.8.3
+   - 카피 순환 히어로(단색 배경)
+   - 오늘의 라이브: 정사각 리스트
+   - 추천 공고: 가로 스크롤
+   - 뉴스: 텍스트형 리스트
+   - 인플루언서: 원형 썸네일 + 제안하기
 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
@@ -67,29 +69,29 @@
         return arr.map((n,i)=>({
           id: n.id||n._id||`${i}`,
           title: text(n.title || n.headline || '뉴스'),
-          thumb: pickThumb(n),
           date: n.publishedAt || n.createdAt || n.updatedAt,
           summary: text(n.summary || n.excerpt || '')
         }));
       }
     }catch{}
+    // 데이터 없으면 ‘오늘의 라이브’를 뉴스 자리 채움(문구만)
     return fallback.slice(0,6).map((r,i)=>({
-      id: r.id||`${i}`, title: r.title, thumb: r.thumb, date: r.closeAt, summary: '브랜드 소식'
+      id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식'
     }));
   }
 
+  /* ---------- Hero ---------- */
   const HERO_COPY = [
     { h: '쇼핑라이브, 쉽게 시작하세요', s: '연결 · 제안 · 계약 · 결제까지 한 번에' },
     { h: '브랜드와 쇼호스트를 가장 빠르게', s: '단 5분 설정으로 공고 등록 완료' },
     { h: '검증된 쇼호스트를 바로 찾기', s: '경력/리뷰/미디어로 한눈에 비교' },
   ];
-
   function renderHero(el){
     const first = HERO_COPY[0];
     el.innerHTML = `
-      <article class="hero-card">
+      <article class="hero-card" role="region" aria-roledescription="배너">
         <div class="hero-body">
-          <div class="hero-meta"><span class="kicker">LIVEE</span><span class="kicker">FOR CREATORS & BRANDS</span></div>
+          <div class="hero-meta"><span>LIVEE</span><span>FOR CREATORS & BRANDS</span></div>
           <h1 class="hero-title" id="heroH">${first.h}</h1>
           <p class="hero-sub" id="heroS">${first.s}</p>
           <div class="hero-cta">
@@ -100,16 +102,20 @@
         </div>
       </article>
     `;
-    let i = 1;
-    setInterval(()=>{
-      const item = HERO_COPY[i%HERO_COPY.length];
-      const H = $('#heroH'), S = $('#heroS');
-      if(H) H.textContent = item.h;
-      if(S) S.textContent = item.s;
-      i++;
-    }, 6000);
+    // 카피 자동 순환 (motion 선호 사용 시만)
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      let i = 1;
+      setInterval(()=>{
+        const item = HERO_COPY[i%HERO_COPY.length];
+        const H = $('#heroH'), S = $('#heroS');
+        if(H) H.textContent = item.h;
+        if(S) S.textContent = item.s;
+        i++;
+      }, 6000);
+    }
   }
 
+  /* ---------- Templates ---------- */
   const tplLineupList = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -120,7 +126,7 @@
     <div class="ed-grid">
       ${items.map(r=>`
         <article class="card-ed" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
-          <img class="card-ed__media" src="${r.thumb}" alt="" loading="lazy">
+          <img class="card-ed__media" src="${r.thumb}" alt="" loading="lazy" decoding="async">
           <div class="card-ed__body">
             <div class="card-ed__eyebrow">브랜드</div>
             <div class="card-ed__title">${r.title}</div>
@@ -133,7 +139,7 @@
 
   const tplRecruitHScroll = items => !items.length ? `
     <div class="hscroll">
-      <article class="card-mini">
+      <article class="card-mini" aria-disabled="true">
         <div class="mini-thumb" style="background:#f3f4f6"></div>
         <div>
           <div class="mini-title">공고가 없습니다</div>
@@ -144,7 +150,7 @@
     <div class="hscroll">
       ${items.map(r=>`
         <article class="card-mini" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
-          <img class="mini-thumb" src="${r.thumb}" alt="" loading="lazy">
+          <img class="mini-thumb" src="${r.thumb}" alt="" loading="lazy" decoding="async">
           <div>
             <div class="lv-brand">브랜드</div>
             <div class="mini-title">${r.title}</div>
@@ -165,7 +171,6 @@
     <div class="ed-grid">
       ${items.map(n=>`
         <article class="card-ed" onclick="location.href='news.html#/${encodeURIComponent(n.id)}'">
-          <img class="card-ed__media" src="${n.thumb}" alt="" loading="lazy">
           <div class="card-ed__body">
             <div class="card-ed__title">${n.title}</div>
             <div class="card-ed__meta">${n.date ? fmtDate(n.date)+' · ' : ''}${n.summary || '소식'}</div>
@@ -183,7 +188,7 @@
     <div class="pf-hlist">
       ${items.slice(0,6).map(p=>`
         <article class="pf-hcard">
-          <img class="pf-avatar" src="${p.thumb}" alt="" loading="lazy">
+          <img class="pf-avatar" src="${p.thumb}" alt="" loading="lazy" decoding="async">
           <div class="pf-info">
             <div class="pf-name">${p.nickname}</div>
             <div class="pf-intro">${p.headline || '소개 준비 중'}</div>
@@ -200,7 +205,7 @@
     </div>`;
 
   const tplCtaBanner = () => `
-    <div class="cta-banner">
+    <div class="cta-banner" role="region" aria-label="상담 배너">
       <div class="cta-copy">
         <div class="cta-kicker">무료 상담</div>
         <div class="cta-title">지금 바로 라이브 커머스 시작해보세요</div>
