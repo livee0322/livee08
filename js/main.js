@@ -1,4 +1,4 @@
-/* Home main.js — v2.9.3 */
+/* Home main.js — v2.9.4 (Schema-aligned) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -8,14 +8,23 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'default.jpg');
+
+  // ✅ 기본 썸네일 경로 복구
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
-  const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+  const fmtDate = iso => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return String(iso).slice(0,10);
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v).trim());
+
+  // ✅ 썸네일 우선순위: 공고(thumbnailUrl), 포폴(mainThumbnailUrl)
   const pickThumb = (o) =>
-    o?.mainThumbnailUrl || o?.thumbnailUrl ||
+    o?.thumbnailUrl || o?.mainThumbnailUrl ||
     (Array.isArray(o?.subThumbnails) && o.subThumbnails[0]) ||
     (Array.isArray(o?.subImages) && o.subImages[0]) ||
     o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || FALLBACK_IMG;
@@ -28,48 +37,69 @@
   }
   const parseItems = j => (Array.isArray(j) ? j : (j.items || j.data?.items || j.docs || j.data?.docs || []));
 
+  /* =========================
+     1) 공고 — schema mapping
+     top:   title, closeAt, (thumbnailUrl/coverImageUrl)
+     nest:  recruit.pay, recruit.payNegotiable, recruit.brandName
+     ========================= */
   async function fetchRecruits(){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`));
+      const url = `${API_BASE}${EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS}`;
+      const arr = parseItems(await getJSON(url));
       return arr.map((c,i)=>({
-        id: c.id||c._id||`${i}`,
-        title: c.title || c.recruit?.title || '제목 없음',
-        thumb: pickThumb(c),
-        closeAt: c.closeAt || c.recruit?.closeAt,
-        pay: c.recruit?.pay,
-        payNegotiable: !!c.recruit?.payNegotiable
+        id:   c.id || c._id || `${i}`,
+        title: c.title || '제목 없음',                     // ✅ 상위 title
+        brandName: c.recruit?.brandName || c.brandName || '', // ✅ 하위 우선 + 상위 호환
+        thumb: pickThumb(c),                               // ✅ thumbnailUrl/coverImageUrl 호환
+        closeAt: c.closeAt || '',                          // ✅ 상위 closeAt
+        pay: c.recruit?.pay,                               // ✅ 하위 pay
+        payNegotiable: !!c.recruit?.payNegotiable          // ✅ 하위 payNegotiable
       }));
     }catch{ return []; }
   }
+
+  /* =========================
+     2) 포트폴리오 — schema mapping (상위)
+     nickname, headline, mainThumbnailUrl
+     ========================= */
   async function fetchPortfolios(){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`));
+      const url = `${API_BASE}${EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS}`;
+      const arr = parseItems(await getJSON(url));
       return arr.map((p,i)=>({
-        id: p.id||p._id||`${i}`,
+        id: p.id || p._id || `${i}`,
         nickname: text(p.nickname || p.displayName || p.name || '쇼호스트'),
         headline: text(p.headline || ''),
-        thumb: pickThumb(p)
+        thumb: pickThumb(p)  // ✅ mainThumbnailUrl 우선
       }));
     }catch{ return []; }
   }
+
+  /* =========================
+     3) 뉴스 — 상위 title/summary/date
+     ========================= */
   async function fetchNews(fallback=[]){
     try{
-      const arr = parseItems(await getJSON(`${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`));
+      const url = `${API_BASE}${EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS}`;
+      const arr = parseItems(await getJSON(url));
       if (arr.length) {
         return arr.map((n,i)=>({
-          id: n.id||n._id||`${i}`,
-          title: text(n.title || n.headline || '뉴스'),
+          id: n.id || n._id || `${i}`,
+          title: text(n.title || '뉴스'),
           date: n.publishedAt || n.createdAt || n.updatedAt,
           summary: text(n.summary || n.excerpt || '')
         }));
       }
     }catch{}
-    return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
+    // 공고 데이터로 대체 노출 (date=closeAt)
+    return fallback.slice(0,6).map((r,i)=>({
+      id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식'
+    }));
   }
 
-  /* ===== 히어로(단일 이미지) — bannertest.jpg를 JS로 주입 ===== */
+  /* ===== 히어로(단일 이미지) — bannertest.jpg 주입 ===== */
   function renderHero(el){
-    const heroSrc = 'bannertest.jpg'; // 루트/동일폴더에 파일 존재
+    const heroSrc = 'bannertest.jpg'; // 루트/동일폴더 배치
     el.innerHTML = `
       <article class="hero-card">
         <div class="hero-media"></div>
@@ -82,7 +112,7 @@
     const media = el.querySelector('.hero-media');
     if (media) {
       media.style.backgroundImage =
-        `linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('${heroSrc}')`;
+        \`linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('\${heroSrc}')\`;
     }
     const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
   }
@@ -100,7 +130,7 @@
         <article class="card-ed" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
           <img class="card-ed__media" src="${r.thumb}" alt="" loading="lazy" decoding="async">
           <div class="card-ed__body">
-            <div class="card-ed__eyebrow">브랜드</div>
+            <div class="card-ed__eyebrow">${r.brandName || '브랜드'}</div>
             <div class="card-ed__title">${r.title}</div>
             <div class="card-ed__meta">마감 ${r.closeAt ? fmtDate(r.closeAt) : '미정'} · ${
               r.payNegotiable ? '협의' : (r.pay ? `${money(r.pay)}원` : '출연료 미정')
@@ -124,7 +154,7 @@
         <article class="card-mini" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
           <img class="mini-thumb" src="${r.thumb}" alt="" loading="lazy" decoding="async">
           <div>
-            <div class="lv-brand">브랜드</div>
+            <div class="lv-brand">${r.brandName || '브랜드'}</div>
             <div class="mini-title">${r.title}</div>
             <div class="mini-meta">마감 ${r.closeAt ? fmtDate(r.closeAt) : '미정'} · ${
               r.payNegotiable ? '협의' : (r.pay ? `${money(r.pay)}원` : '미정')
