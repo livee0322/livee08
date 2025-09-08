@@ -1,34 +1,30 @@
-/* =========================================
-   Livee main.css — Artbook Hybrid (v2.9.1)
-   - 배너: 루트 bannertest.jpg 고정 이미지
-   - '지금 뜨는 라이브' 썸네일 여백 균등
-   - 뉴스: 왼쪽 컬러 바 제거(텍스트 리스트)
-   - 인기 쇼호스트: 칩 버튼(제안하기/프로필 보기)
-   ========================================= */
+/* Livee main.css — v2.9.2 */
 
 :root{
   --bg:#f7f8fb; --card:#fff; --ink:#0f172a; --text:#111827; --sub:#64748b; --line:#e6e9f0;
   --primary:#3b82f6; --accent:#8b5cf6;
-  --container-w:980px; --appbar-h:56px; --topTabs-h:48px; --tabbar-h:72px;
+  --container-w:980px;
+  --appbar-h:56px; --topTabs-h:48px;
+  --tabbar-h:64px;             /* ↓ 하단탭 표준 높이 */
   --safe-b:env(safe-area-inset-bottom,0px);
   --r-xl:28px; --r-lg:18px; --r-md:14px; --r-sm:10px;
   --shadow-0:0 1px 0 rgba(16,24,40,.02); --shadow-1:0 8px 20px rgba(15,23,42,.08); --shadow-2:0 12px 30px rgba(15,23,42,.12);
 }
 
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow-x:hidden;background:var(--bg);color:var(--text)}
 body{margin:0;font-family:SUIT,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55;letter-spacing:.001em}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 
-/* 컨테이너 */
-.container{max-width:var(--container-w);margin:0 auto;padding:0 18px calc(var(--tabbar-h)+var(--safe-b)+28px)}
+.container{max-width:var(--container-w);margin:0 auto;padding:0 18px calc(var(--tabbar-h) + var(--safe-b) + 24px)}
 .section{margin:18px 0 22px}
+.section:first-of-type{margin-top:10px}        /* 상단 여백 보정 */
 .section-head{display:flex;align-items:baseline;gap:8px;margin:6px 2px 12px}
 .section-head h2{margin:0;font-size:18px;font-weight:900;color:var(--text)}
 .section-head .more{margin-left:auto;font-size:12px;color:#98A2B3}
 
-/* AppBar / TopTabs */
+/* AppBar / Tabs */
 .lv-appbar{position:sticky;top:0;z-index:30;height:var(--appbar-h);display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:var(--card);border-bottom:1px solid var(--line)}
 .lv-title{font-size:18px;font-weight:900;letter-spacing:.02em;color:var(--ink)}
 .lv-actions{display:flex;gap:10px}
@@ -41,31 +37,32 @@ img{max-width:100%;display:block}
 .lv-topTabs .tab.is-active{color:var(--ink)}
 .lv-topTabs .tab.is-active::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;border-radius:2px;background:var(--primary)}
 
-/* ---------- 히어로(이미지 배너: 루트 bannertest.jpg) ---------- */
+/* ===== 배너(전면 이미지) ===== */
 .hero-wrap{position:relative;width:100vw;margin-left:50%;transform:translateX(-50%);margin-bottom:14px}
-.hero-card{position:relative;border-radius:0;overflow:hidden;min-height:220px;border:0;background:#eaf2ff}
+.hero-card{position:relative;border-radius:0;overflow:hidden;min-height:240px;border:0;background:#eaf2ff}
 .hero-media{
-  position:absolute;inset:0;
+  position:absolute; inset:0;
+  /* css 파일 경로와 무관하게 루트의 bannertest.jpg 사용 */
   background:
-    linear-gradient(to top, rgba(0,0,0,.36), rgba(0,0,0,.08)),
-    url('bannertest.jpg');
-  background-size:cover;background-position:center;filter:saturate(1.02);
+    linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)),
+    url('/bannertest.jpg');
+  background-size:cover; background-position:center;
+  filter:saturate(1.02);
 }
-.hero-body{position:relative;z-index:1;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:20px 18px;gap:8px;min-height:220px}
-.hero-kicker{font-size:12px;font-weight:800;letter-spacing:.06em;opacity:.95}
-.hero-title{font-size:22px;font-weight:900;letter-spacing:-.01em;text-shadow:0 2px 12px rgba(0,0,0,.28)}
-.hero-sub{font-size:13.5px;opacity:.95}
-.hero-nav{position:absolute;inset:0;pointer-events:none;display:flex;justify-content:space-between;align-items:center;padding:0 6px}
-.hero-btn{pointer-events:auto;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.5);color:#0f2b6d;display:grid;place-items:center}
-.hero-index{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;padding:4px 8px;border-radius:999px}
+.hero-body{position:relative; z-index:1; color:#fff; display:flex; flex-direction:column; justify-content:flex-end;
+  padding:24px 18px 20px; gap:8px; min-height:240px}
+.hero-kicker{font-size:12px; font-weight:800; letter-spacing:.06em; opacity:.95}
+.hero-title{font-size:22px; font-weight:900; letter-spacing:-.01em; text-shadow:0 2px 12px rgba(0,0,0,.28)}
+.hero-sub{font-size:13.5px; opacity:.95}
+.hero-nav{position:absolute; inset:0; pointer-events:none; display:flex; justify-content:space-between; align-items:center; padding:0 6px}
+.hero-btn{pointer-events:auto; width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.5); color:#0f2b6d; display:grid; place-items:center}
 
-/* 버튼(공통 — 칩 변형에서 활용) */
+/* 버튼(공통) */
 .btn{display:inline-flex;align-items:center;gap:8px;line-height:1;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#0f172a;font-weight:800;font-size:14px;box-shadow:var(--shadow-0)}
-.btn i{font-size:18px;line-height:1}
-.btn:active{transform:translateY(1px)}
+.btn i{font-size:18px}
 .btn--sm{padding:8px 12px;border-radius:10px;font-size:13px}
 
-/* ---------- 에디토리얼 카드 공통 ---------- */
+/* 카드 공통 */
 .section--ed .section-head{margin:6px 2px 14px}
 .section--ed .section-head h2{font-size:clamp(16px,3.6vw,20px)}
 .ed-grid{display:grid;gap:14px;grid-template-columns:1fr 1fr}
@@ -79,14 +76,15 @@ img{max-width:100%;display:block}
 .card-ed__title{margin-top:4px;font-weight:900;line-height:1.28;color:var(--text);font-size:14.5px}
 .card-ed__meta{margin-top:6px;font-size:12.5px;color:var(--sub)}
 
-/* ---------- 1) 지금 뜨는 쇼핑라이브 공고 (여백 균등) ---------- */
+/* ===== 지금 뜨는 쇼핑라이브 공고 — 내부 패딩으로 균등 여백 ===== */
 #home [data-sec="lineup"] .ed-grid{max-width:680px;margin:0 auto;grid-template-columns:1fr;gap:10px}
 #home [data-sec="lineup"] .card-ed{
-  display:grid;grid-template-columns:72px 1fr;align-items:center;border-radius:14px;box-shadow:0 1px 0 rgba(16,24,40,.02);
-  padding:10px;gap:12px; /* ← 좌우 동일 여백 + 이미지/텍스트 간격 */
+  display:grid; grid-template-columns:72px 1fr; align-items:center;
+  border-radius:14px; box-shadow:0 1px 0 rgba(16,24,40,.02);
+  padding:10px; gap:12px;              /* ← 좌/우/상/하 동일 */
 }
-#home [data-sec="lineup"] .card-ed__media{width:72px;height:72px;aspect-ratio:1/1;border-radius:10px}
-#home [data-sec="lineup"] .card-ed__body{padding:0} /* ← 카드 padding으로 통일 */
+#home [data-sec="lineup"] .card-ed__media{width:72px;height:72px;border-radius:10px}
+#home [data-sec="lineup"] .card-ed__body{padding:0}
 @media (min-width:768px){
   #home [data-sec="lineup"] .card-ed{grid-template-columns:84px 1fr}
   #home [data-sec="lineup"] .card-ed__media{width:84px;height:84px}
@@ -97,11 +95,11 @@ img{max-width:100%;display:block}
   #home [data-sec="lineup"] .card-ed__media{width:132px;height:132px;border-radius:14px}
 }
 
-/* ---------- 2) 브랜드 픽(가로 스크롤) ---------- */
+/* ===== 브랜드 픽(가로 스크롤) ===== */
 .hscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .hscroll::-webkit-scrollbar{display:none}
 .card-mini{position:relative;scroll-snap-align:center;flex:0 0 92%;display:grid;grid-template-columns:96px 1fr;gap:10px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px;box-shadow:0 1px 0 rgba(16,24,40,.02)}
-.card-mini .mini-thumb{width:96px;height:96px;aspect-ratio:1/1;border-radius:10px;object-fit:cover;background:#eee}
+.card-mini .mini-thumb{width:96px;height:96px;border-radius:10px;object-fit:cover;background:#eee}
 .card-mini .lv-brand{font-size:12px;font-weight:700;color:#111}
 .card-mini .mini-title{font-weight:900;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-mini .mini-meta{margin-top:6px;font-size:12.5px;color:var(--sub);word-break:keep-all;line-height:1.35;white-space:normal}
@@ -109,14 +107,20 @@ img{max-width:100%;display:block}
 @media (min-width:480px){.card-mini{flex-basis:80%;grid-template-columns:112px 1fr}}
 @media (min-width:992px){.card-mini{flex:0 0 540px;grid-template-columns:160px 1fr}.card-mini .mini-thumb{width:160px;height:160px}}
 
-/* ---------- 3) 라이브 뉴스(왼쪽 바 제거) ---------- */
+/* ===== 라이브 뉴스 — 꽉채우되 넘치지 않음 ===== */
 #home [data-sec="news"] .ed-grid{grid-template-columns:1fr;gap:8px}
 .news-list{display:grid;gap:8px}
-.news-item{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;box-shadow:var(--shadow-0)}
-.news-item__title{font-weight:900;font-size:14.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.news-item__meta{margin-top:4px;font-size:12.5px;color:var(--sub);line-height:1.35}
+.news-item{
+  width:100%; box-sizing:border-box;
+  border:1px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px; box-shadow:var(--shadow-0);
+}
+.news-item__title{
+  font-weight:900; font-size:14.5px; color:var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;  /* 한 줄 말줄임 */
+}
+.news-item__meta{margin-top:4px; font-size:12.5px; color:var(--sub); line-height:1.35}
 
-/* ---------- 4) 이런 쇼호스트는 어떠세요? (칩 버튼) ---------- */
+/* ===== 이런 쇼호스트는 어떠세요? — 칩 버튼 ===== */
 .pf-hlist{display:grid;gap:10px}
 .pf-hcard{display:grid;grid-template-columns:64px 1fr;gap:12px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;box-shadow:0 1px 0 rgba(16,24,40,.02)}
 .pf-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eee}
@@ -127,16 +131,17 @@ img{max-width:100%;display:block}
 .btn--chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:800}
 .btn--chip:hover{background:#f9fafb}
 
-/* CTA 배너 & 하단 탭, 데스크톱 보정/유틸 (동일) */
+/* CTA 배너 */
 .cta-banner{display:grid;gap:10px;padding:14px;border-radius:16px;background:linear-gradient(180deg,#f8fbff 0%, #f4f7ff 100%);border:1px solid #e3ebff}
 .cta-kicker{font-size:12px;font-weight:800;letter-spacing:.08em;color:#4f46e5;text-transform:uppercase}
 .cta-title{font-weight:900;color:#0f172a}
 .cta-sub{color:#475569;font-size:13px}
 .cta-actions{display:flex;gap:8px;flex-wrap:wrap}
 
+/* 하단 탭 — 높이/정렬 고정 */
 .lv-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid var(--line)}
-.lv-tabbar__in{height:calc(var(--tabbar-h)+var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(5,1fr)}
-.tbi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#98A2B3;font-size:12px}
+.lv-tabbar__in{height:calc(var(--tabbar-h) + var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(5,1fr)}
+.tbi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:#98A2B3}
 .tbi i{font-size:22px;line-height:1}
 .tbi.is-active{color:var(--primary)}
 
