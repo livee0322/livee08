@@ -5,87 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>마이페이지 - Livee</title>
 
-  <!-- 폰트 & 공통 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
   <link rel="stylesheet" href="css/main.css" />
-
-  <!-- 아이콘 -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 
-  <!-- 이 페이지 전용(선택) -->
-  <link rel="stylesheet" href="css/mypage.css" />
+  <style>
+    .mp-wrap{max-width:960px;margin:0 auto;padding:12px 16px 96px}
+    .mp-card{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #e5e7eb;border-radius:16px;background:#fff}
+    .mp-avatar{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#f3f4f6}
+    .mp-name{font-weight:800;font-size:18px;color:#111827}
+    .mp-role{margin-top:2px;color:#6b7280}
+    .mp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+    .mp-item{display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:16px;border:1px solid #e5e7eb;border-radius:16px;background:#fff;color:#111827}
+    .mp-item i{font-size:22px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 10px}
+    .section-head h2{font-size:18px;font-weight:900}
+    .guard{position:fixed;inset:0;background:rgba(17,24,39,.38);display:none;place-items:center;padding:20px}
+    .guard.show{display:grid}
+    .sheet{background:#fff;border-radius:16px;padding:18px;max-width:420px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+    .sheet h3{font-size:18px;margin:0 0 6px}
+    .sheet .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+    @media (max-width:560px){ .mp-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  </style>
 </head>
 <body>
-  <!-- ui.js가 그려줄 영역들 -->
   <header id="appbar"></header>
-  <nav id="top-tabs"></nav>
 
-  <main class="container mypage" id="mypage-root">
-    <!-- JS에서 전부 렌더링 (메뉴/링크는 HTML에 중복 정의하지 않음) -->
-    <section class="profile-card" id="mpProfile">
-      <img id="mpAvatar" alt="프로필 이미지" />
-      <div class="profile-info">
-        <div class="name" id="mpName">로그인이 필요합니다</div>
-        <div class="role" id="mpRole">-</div>
-      </div>
-      <div class="profile-actions">
-        <a href="settings.html" class="btn outline">설정</a>
-      </div>
-    </section>
-
-    <!-- 쇼호스트/브랜드 메뉴가 여기에 주입됨 -->
-    <section class="mp-block">
-      <div class="mp-block-head">
-        <h3 id="menuTitle">메뉴</h3>
-        <a href="#" id="menuCta" class="btn outline" style="display:none"></a>
-      </div>
-      <ul class="mp-list" id="menuList"></ul>
-    </section>
-
-    <!-- 설정 -->
-    <section class="mp-block">
-      <div class="mp-block-head"><h3>설정</h3></div>
-      <ul class="mp-list">
-        <li>
-          <a class="mp-item" href="settings-notify.html">
-            <i class="ri-notification-3-line"></i>
-            <div>
-              <div class="title">알림 설정</div>
-              <div class="meta">푸시/이메일 수신 관리</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <button id="mpAuthBtn" class="mp-item" style="width:100%; text-align:left;">
-            <i class="ri-logout-circle-r-line"></i>
-            <div>
-              <div class="title" id="mpAuthTitle">로그아웃 / 로그인</div>
-              <div class="meta">계정 전환 및 로그인</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </button>
-        </li>
-      </ul>
-    </section>
-
-    <!-- 권한 가드 -->
-    <div class="guard" id="mpGuard" aria-hidden="true">
-      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="guardTitle">
-        <h3 id="guardTitle">권한이 필요합니다</h3>
-        <p id="guardDesc">이 메뉴를 이용하려면 로그인 또는 권한이 필요해요.</p>
-        <div class="actions">
-          <button class="btn outline" id="guardClose">닫기</button>
-          <a href="login.html" class="btn" id="guardAction">로그인하기</a>
-        </div>
-      </div>
-    </div>
+  <main class="mp-wrap" id="mypage-root">
+    <!-- JS에서 렌더링 -->
   </main>
 
-  <!-- 하단 탭 영역 -->
   <footer id="bottom-tabs"></footer>
 
-  <!-- 전역 설정 & UI & 페이지 스크립트 -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/mypage.js"></script>
