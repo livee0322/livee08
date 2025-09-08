@@ -10,7 +10,7 @@
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
 
   // ✅ 기본 썸네일 경로 복구
-  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => {
