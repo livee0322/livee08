@@ -1,4 +1,4 @@
-/* Home main.js — v2.9.8 (brand/pay 호환키 확장) */
+/* Home main.js — v2.9.9 (syntax fix + brand/pay 호환키 확장) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -48,7 +48,6 @@
 
   const truthy = v => (v===true || v==='true' || v==='1' || v===1 || v==='협의');
   const pickPay = (o) => {
-    // 다양한 키 & 문자열 케이스 처리
     const rawCand = [
       o?.recruit?.pay, o?.pay,
       o?.recruit?.payment, o?.payment,
@@ -62,7 +61,6 @@
     ];
     const payNegotiable = truthy(negoCand.find(v => v!==undefined) ?? false);
 
-    // 문자열 '협의', '미정' 등은 금액 제거 + 협의 처리
     if (typeof raw === 'string' && /협의|미정/i.test(raw)) {
       return { pay: null, payNegotiable: true };
     }
@@ -130,7 +128,7 @@
     const media = el.querySelector('.hero-media');
     if (media) {
       media.style.backgroundImage =
-        \`linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('\${heroSrc}')\`;
+        `linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url('${heroSrc}')`;
     }
     const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
   }
