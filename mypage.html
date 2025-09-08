@@ -12,7 +12,7 @@
   <!-- 아이콘 -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
 
-  <!-- 이 페이지 전용 -->
+  <!-- 이 페이지 전용(선택) -->
   <link rel="stylesheet" href="css/mypage.css" />
 </head>
 <body>
@@ -20,8 +20,8 @@
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
-  <main class="container mypage">
-    <!-- 프로필 카드 -->
+  <main class="container mypage" id="mypage-root">
+    <!-- JS에서 전부 렌더링 (메뉴/링크는 HTML에 중복 정의하지 않음) -->
     <section class="profile-card" id="mpProfile">
       <img id="mpAvatar" alt="프로필 이미지" />
       <div class="profile-info">
@@ -33,118 +33,13 @@
       </div>
     </section>
 
-    <!-- 쇼호스트 메뉴 -->
+    <!-- 쇼호스트/브랜드 메뉴가 여기에 주입됨 -->
     <section class="mp-block">
       <div class="mp-block-head">
-        <h3>쇼호스트 메뉴</h3>
-        <a href="myportfolio.html" class="btn outline guard-link" data-guard="host" id="goMyPortfolio">
-          <i class="ri-layout-grid-line"></i> 내 포트폴리오
-        </a>
+        <h3 id="menuTitle">메뉴</h3>
+        <a href="#" id="menuCta" class="btn outline" style="display:none"></a>
       </div>
-      <ul class="mp-list">
-        <li>
-          <a class="mp-item guard-link" data-guard="host" href="myportfolio.html">
-            <i class="ri-image-line"></i>
-            <div>
-              <div class="title">내 포트폴리오</div>
-              <div class="meta">프로필/경력/미디어 관리</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="login" href="applications.html">
-            <i class="ri-briefcase-line"></i>
-            <div>
-              <div class="title">내 지원 내역</div>
-              <div class="meta">대기/합격/거절/정산</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="login" href="inbox-proposals.html">
-            <i class="ri-mail-star-line"></i>
-            <div>
-              <div class="title">받은 제안</div>
-              <div class="meta">브랜드가 보낸 제안</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="login" href="bookmarks.html">
-            <i class="ri-heart-3-line"></i>
-            <div>
-              <div class="title">찜한 공고</div>
-              <div class="meta">북마크한 공고 모아보기</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-      </ul>
-    </section>
-
-    <!-- 브랜드 메뉴 -->
-    <section class="mp-block">
-      <div class="mp-block-head">
-        <h3>브랜드 메뉴</h3>
-        <a href="recruit-new.html" class="btn outline guard-link" data-guard="brand">
-          <i class="ri-add-circle-line"></i> 공고 올리기
-        </a>
-      </div>
-      <ul class="mp-list">
-        <li>
-          <a class="mp-item guard-link" data-guard="brand" href="recruit-new.html">
-            <i class="ri-megaphone-line"></i>
-            <div>
-              <div class="title">공고 올리기</div>
-              <div class="meta">라이브 캠페인/출연 공고 등록</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="brand" href="recruit-manage.html">
-            <i class="ri-file-list-2-line"></i>
-            <div>
-              <div class="title">내 공고 관리</div>
-              <div class="meta">진행/마감/정산 상태</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="brand" href="applications-brand.html">
-            <i class="ri-team-line"></i>
-            <div>
-              <div class="title">지원자 관리</div>
-              <div class="meta">대기/합격/계약/결제(에스크로)</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="brand" href="outbox-proposals.html">
-            <i class="ri-mail-send-line"></i>
-            <div>
-              <div class="title">보낸 제안</div>
-              <div class="meta">쇼호스트에게 보낸 제안 내역</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-        <li>
-          <a class="mp-item guard-link" data-guard="login" href="bookmarks-portfolios.html">
-            <i class="ri-star-line"></i>
-            <div>
-              <div class="title">찜한 포트폴리오</div>
-              <div class="meta">관심 쇼호스트 모아보기</div>
-            </div>
-            <i class="ri-arrow-right-s-line arrow"></i>
-          </a>
-        </li>
-      </ul>
+      <ul class="mp-list" id="menuList"></ul>
     </section>
 
     <!-- 설정 -->
@@ -193,155 +88,6 @@
   <!-- 전역 설정 & UI & 페이지 스크립트 -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
-
-  <script>
-  (() => {
-    const CFG = window.LIVEE_CONFIG || {};
-    const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-    const token =
-      localStorage.getItem('livee_token') ||
-      localStorage.getItem('liveeToken') || '';
-
-    // ===== ui.js로 상/하단 장착 =====
-    try {
-      if (window.LIVEE_UI?.mountHeader) {
-        LIVEE_UI.mountHeader({ title: '마이페이지' });
-      }
-      // 상단탭이 있는 레이아웃을 유지하고 싶으면 mountTopTabs 호출
-      if (window.LIVEE_UI?.mountTopTabs) {
-        // 마이페이지는 탭 활성 없음 → 필요 시 다른 값으로 변경
-        LIVEE_UI.mountTopTabs({ active: null });
-      }
-      if (window.LIVEE_UI?.mountTabbar) {
-        LIVEE_UI.mountTabbar({ active: 'mypage' });
-      }
-    } catch (_) {}
-
-    const $ = (s)=>document.querySelector(s);
-    const $id = (s)=>document.getElementById(s);
-
-    const elName = $id('mpName');
-    const elRole = $id('mpRole');
-    const elAvatar = $id('mpAvatar');
-    const authBtn = $id('mpAuthBtn');
-
-    // 기본 아바타
-    elAvatar.src = CFG.placeholderThumb || 'assets/default.jpg';
-
-    // 현재 URL (login returnTo용)
-    const here = encodeURIComponent(location.pathname + location.search + location.hash);
-
-    // 프로필 불러오기(여러 후보 엔드포인트 시도)
-    async function fetchMe(){
-      if(!token) return null;
-      const headers = { 'Authorization': 'Bearer ' + token };
-      const candidates = ['/users/me','/auth/me','/me'].map(p => API_BASE + p);
-      for(const url of candidates){
-        try{
-          const r = await fetch(url, { headers });
-          if(!r.ok) continue;
-          const j = await r.json().catch(()=>null);
-          if(!j) continue;
-          return j.data || j.user || j;
-        }catch(e){}
-      }
-      return null;
-    }
-
-    function renderUser(u){
-      if(!u){
-        elName.textContent = '로그인이 필요합니다';
-        elRole.textContent = '-';
-        $id('mpAuthTitle').textContent = '로그인';
-        return;
-      }
-      elName.textContent = u.name || u.nickname || '사용자';
-      const roles = Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : []);
-      elRole.textContent = roles.length ? roles.join(', ') : '회원';
-      if(u.avatarUrl) elAvatar.src = u.avatarUrl;
-      $id('mpAuthTitle').textContent = '로그아웃';
-    }
-
-    // 로그인/로그아웃 버튼
-    authBtn?.addEventListener('click', ()=>{
-      const hasToken = !!token;
-      if(hasToken){
-        localStorage.removeItem('livee_token');
-        localStorage.removeItem('liveeToken');
-        location.reload();
-      }else{
-        location.href = 'login.html?returnTo=' + here;
-      }
-    });
-
-    // 가드(로그인/호스트/브랜드 권한)
-    const guard = $id('mpGuard');
-    const guardClose = $id('guardClose');
-    const guardTitle = $id('guardTitle');
-    const guardDesc = $id('guardDesc');
-    const guardAction = $id('guardAction');
-
-    guardClose?.addEventListener('click', ()=> guard.classList.remove('show'));
-
-    function hasRole(me, role){
-      if(!me) return false;
-      const roles = (me.roles && Array.isArray(me.roles)) ? me.roles : (me.role ? [me.role] : []);
-      return roles.includes(role) || roles.includes('admin');
-    }
-
-    function needGuard(kind, me){
-      if(kind === 'login') return !me;
-      if(kind === 'host')  return !hasRole(me, 'showhost');
-      if(kind === 'brand') return !hasRole(me, 'brand');
-      return false;
-    }
-
-    function setGuardUI(kind){
-      if(kind === 'login'){
-        guardTitle.textContent = '로그인이 필요합니다';
-        guardDesc.textContent = '로그인 후 이용해 주세요.';
-        guardAction.textContent = '로그인하기';
-        guardAction.href = 'login.html?returnTo=' + here;
-      }else if(kind === 'host'){
-        guardTitle.textContent = '쇼호스트 권한이 필요합니다';
-        guardDesc.textContent = '쇼호스트 인증 후 이용하실 수 있어요.';
-        guardAction.textContent = '권한 문의';
-        guardAction.href = 'help.html#host';
-      }else if(kind === 'brand'){
-        guardTitle.textContent = '브랜드 권한이 필요합니다';
-        guardDesc.textContent = '브랜드 인증 후 이용하실 수 있어요.';
-        guardAction.textContent = '권한 문의';
-        guardAction.href = 'help.html#brand';
-      }else{
-        guardTitle.textContent = '권한이 필요합니다';
-        guardDesc.textContent = '이 메뉴를 이용하려면 권한이 필요해요.';
-        guardAction.textContent = '확인';
-        guardAction.href = '#';
-      }
-    }
-
-    function bindGuards(me){
-      document.querySelectorAll('.guard-link').forEach(a=>{
-        a.addEventListener('click', (e)=>{
-          const kind = a.dataset.guard;
-          if(needGuard(kind, me)){
-            e.preventDefault();
-            setGuardUI(kind);
-            guard.classList.add('show');
-          }
-        });
-      });
-    }
-
-    (async ()=>{
-      const me = await fetchMe();
-      renderUser(me);
-      bindGuards(me);
-    })();
-  })();
-  </script>
-
-  <!-- 하단 탭 mount 대상 -->
-  <footer id="bottom-tabs"></footer>
+  <script src="js/mypage.js"></script>
 </body>
 </html>
