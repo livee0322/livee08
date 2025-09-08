@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>내 모집공고 | LIVEE</title>
+  <link rel="stylesheet" href="css/myrecruit.css">
+  <link rel="stylesheet" href="css/ui.css"> <!-- 기존 공통이 있다면 유지 -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+  <header class="appbar">
+    <button class="ico back" onclick="history.back()" aria-label="뒤로">←</button>
+    <h1>내 모집공고</h1>
+    <a class="ico" href="recruit-new.html" aria-label="공고 올리기">＋</a>
+  </header>
+
+  <nav class="seg">
+    <button class="on" data-filter="all">전체</button>
+    <button data-filter="ongoing">진행중</button>
+    <button data-filter="closed">마감</button>
+    <button data-filter="draft">임시저장</button>
+  </nav>
+
+  <main id="root" class="container">
+    <section id="guard" class="guard" hidden>
+      <h2>접근 권한이 필요합니다</h2>
+      <p>브랜드 또는 관리자 계정으로 로그인해주세요.</p>
+      <div class="actions">
+        <a class="btn" href="login.html">로그인</a>
+      </div>
+    </section>
+
+    <section id="empty" class="empty" hidden>
+      <img alt="" src="default.jpg">
+      <h2>등록한 공고가 없습니다</h2>
+      <p>첫 공고를 올리고 쇼호스트를 만나보세요.</p>
+      <a class="btn" href="recruit-new.html">공고 올리기</a>
+    </section>
+
+    <section id="list" class="list" aria-live="polite"></section>
+  </main>
+
+  <script src="js/myrecruit.js" defer></script>
+</body>
+</html>
