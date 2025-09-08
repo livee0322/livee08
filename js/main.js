@@ -1,18 +1,14 @@
-/* Home main.js — v2.9.1
-   - 배너: 루트 bannertest.jpg 단일 이미지(네비/인덱스 자동 숨김)
-   - 섹션명 업데이트
-   - 뉴스 리스트(제목 1줄), 쇼호스트 칩 버튼 적용
-*/
+/* Home main.js — v2.9.2 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP = (CFG.endpoints || {});
+  const EP = CFG.endpoints || {};
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
@@ -25,7 +21,7 @@
     o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || FALLBACK_IMG;
 
   async function getJSON(url){
-    const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
+    const r = await fetch(url, { headers:{'Accept':'application/json'} });
     const j = await r.json().catch(()=> ({}));
     if (!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j;
@@ -71,7 +67,7 @@
     return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  /* ---------- Hero(단일 이미지) ---------- */
+  /* ===== 배너(단일 이미지) ===== */
   function renderHero(el){
     el.innerHTML = `
       <article class="hero-card">
@@ -82,12 +78,11 @@
           <p class="hero-sub">브랜드와 호스트를 가장 빠르게</p>
         </div>
       </article>`;
-    // 슬라이드가 없으니 네비/인덱스 숨김
-    const nav = document.querySelector('.hero-nav');
-    if (nav) nav.style.display = 'none';
+    // 단일 이미지이므로 네비 숨김
+    const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
   }
 
-  /* ---------- Templates ---------- */
+  /* ===== 템플릿 ===== */
   const tplLineupList = items => !items.length ? `
     <div class="ed-grid">
       <article class="card-ed"><div class="card-ed__body">
@@ -161,12 +156,8 @@
             <div class="pf-name">${p.nickname}</div>
             <div class="pf-intro">${p.headline || '소개 준비 중'}</div>
             <div class="pf-actions">
-              <a class="btn btn--sm btn--chip" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}">
-                <i class="ri-mail-send-line"></i> 제안하기
-              </a>
-              <a class="btn btn--sm btn--chip" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}">
-                <i class="ri-user-line"></i> 프로필 보기
-              </a>
+              <a class="btn btn--sm btn--chip" href="outbox-proposals.html?to=${encodeURIComponent(p.id)}"><i class="ri-mail-send-line"></i> 제안하기</a>
+              <a class="btn btn--sm btn--chip" href="portfolio-detail.html?id=${encodeURIComponent(p.id)}"><i class="ri-user-line"></i> 프로필 보기</a>
             </div>
           </div>
         </article>`).join('')}
