@@ -1,9 +1,7 @@
-/* Home main.js — v2.8.3
-   - 카피 순환 히어로(단색 배경)
-   - 오늘의 라이브: 정사각 리스트
-   - 추천 공고: 가로 스크롤
-   - 뉴스: 텍스트형 리스트
-   - 인플루언서: 원형 썸네일 + 제안하기
+/* Home main.js — v2.8.4
+   - 히어로 카피 순환(접근성 고려)
+   - 뉴스: 텍스트 리스트, 제목 1줄
+   - 버튼 새 스타일 클래스 사용
 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
@@ -17,11 +15,7 @@
   const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
-  const fmtDate = iso => {
-    if (!iso) return '';
-    const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10);
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  };
+  const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v).trim());
   const pickThumb = (o) =>
@@ -74,10 +68,7 @@
         }));
       }
     }catch{}
-    // 데이터 없으면 ‘오늘의 라이브’를 뉴스 자리 채움(문구만)
-    return fallback.slice(0,6).map((r,i)=>({
-      id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식'
-    }));
+    return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
   /* ---------- Hero ---------- */
@@ -102,7 +93,6 @@
         </div>
       </article>
     `;
-    // 카피 자동 순환 (motion 선호 사용 시만)
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       let i = 1;
       setInterval(()=>{
@@ -163,18 +153,14 @@
     </div>`;
 
   const tplNewsList = items => !items.length ? `
-    <div class="ed-grid">
-      <article class="card-ed"><div class="card-ed__body">
-        <div class="card-ed__title">표시할 뉴스가 없습니다</div>
-      </div></article>
+    <div class="news-list">
+      <article class="news-item"><div class="news-item__title">표시할 뉴스가 없습니다</div></article>
     </div>` : `
-    <div class="ed-grid">
+    <div class="news-list">
       ${items.map(n=>`
-        <article class="card-ed" onclick="location.href='news.html#/${encodeURIComponent(n.id)}'">
-          <div class="card-ed__body">
-            <div class="card-ed__title">${n.title}</div>
-            <div class="card-ed__meta">${n.date ? fmtDate(n.date)+' · ' : ''}${n.summary || '소식'}</div>
-          </div>
+        <article class="news-item" onclick="location.href='news.html#/${encodeURIComponent(n.id)}'">
+          <div class="news-item__title">${n.title}</div>
+          <div class="news-item__meta">${n.date ? fmtDate(n.date)+' · ' : ''}${n.summary || '소식'}</div>
         </article>`).join('')}
     </div>`;
 
@@ -217,9 +203,9 @@
       </div>
     </div>`;
 
-  function sectionBlock(title, moreHref, innerHTML){
+  function sectionBlock(title, moreHref, innerHTML, secKey){
     return `
-      <div class="section">
+      <div class="section" data-sec="${secKey||''}">
         <div class="section-head">
           <h2>${title}</h2>
           <a class="more" href="${moreHref}">더보기</a>
@@ -239,14 +225,14 @@
 
     const lineupHTML   = tplLineupList(recruits.slice(0,6));
     const recommendHTML= tplRecruitHScroll(recruits.slice(0,8));
-    const newsHTML     = tplNewsList(news.slice(0,6));
+    const newsHTML     = tplNewsList(news.slice(0,8));
     const pfHTML       = tplPortfolios(portfolios);
 
     root.innerHTML = [
-      sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML),
-      sectionBlock('추천 공고', 'recruit-list.html', recommendHTML),
-      sectionBlock('오늘의 리브', 'news.html', newsHTML),
-      sectionBlock('추천 인플루언서', 'portfolio-list.html', pfHTML),
+      sectionBlock('오늘의 라이브', 'recruit-list.html', lineupHTML, 'lineup'),
+      sectionBlock('추천 공고', 'recruit-list.html', recommendHTML, 'recruits'),
+      sectionBlock('뉴스', 'news.html', newsHTML, 'news'),
+      sectionBlock('추천 인플루언서', 'portfolio-list.html', pfHTML, 'pf'),
       `<div class="section">${tplCtaBanner()}</div>`
     ].join('');
   }
