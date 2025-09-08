@@ -18,7 +18,7 @@
   width:100%;box-sizing:border-box;height:44px;padding:10px 12px;
   border:1px solid var(--line,#e5e7eb);border-radius:12px;background:#fff;color:#111;font:inherit;outline:none
 }
-.pf-form textarea{min-height:120px;resize:vertical}
+.pf-form textarea{min_height:120px;resize:vertical}
 .pf-form input::placeholder,.pf-form textarea::placeholder{color:#9aa2b1}
 .pf-form input:focus,.pf-form textarea:focus,.pf-form select:focus{
   border-color:var(--pri,#4f46e5);box-shadow:0 0 0 3px rgba(79,70,229,.12)
