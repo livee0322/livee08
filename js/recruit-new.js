@@ -78,7 +78,6 @@
 
     if(!brandName){ say('브랜드명을 입력해주세요.'); return; }
     if(!title || title.length<5){ say('제목은 5자 이상 입력해주세요.'); return; }
-    if(desc && desc.length>0 && desc.length<30){ say('내용은 30자 이상 입력해주세요.'); return; }
     if(!categoryEl.value){ say('카테고리를 선택해주세요.'); return; }
     if(!shootDate.value){ say('촬영일을 선택해주세요.'); return; }
     if(!deadline.value){ say('마감일을 선택해주세요.'); return; }
