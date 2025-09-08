@@ -1,5 +1,4 @@
-<!-- /js/main.js -->
-/* Home main.js — v2.9.10 (brand/pay fix) */
+/* Home main.js — v2.9.11 (brand/fee + headline fallback) */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
 
@@ -15,6 +14,8 @@
   const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
   const money = v => v==null ? '' : Number(v).toLocaleString('ko-KR');
   const text  = v => (v==null ? '' : String(v).trim());
+  const strip = (html='') => String(html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+
   const pickThumb = (o) =>
     o?.mainThumbnailUrl || o?.thumbnailUrl ||
     (Array.isArray(o?.subThumbnails) && o.subThumbnails[0]) ||
@@ -31,12 +32,12 @@
   }
   const parseItems = j => (Array.isArray(j) ? j : (j.items || j.data?.items || j.docs || j.data?.docs || []));
 
-  // ====== Brand & Fee robust mapping (서버 스키마 불일치 흡수) ======
+  /* ====== Brand & Fee robust mapping ====== */
   const getBrandName = (c) => text(coalesce(
     c.brandName,
-    c.brand,                         // 모델이 brand 스트링만 주는 경우
+    c.brand,                         // string
     c.recruit?.brandName,
-    c.brand?.name,                   // 객체로 오는 경우
+    c.brand?.name,                   // object
     c.owner?.brandName,
     c.user?.brandName
   )) || '브랜드';
@@ -69,7 +70,11 @@
       return arr.map((p,i)=>({
         id: p.id||p._id||`${i}`,
         nickname: text(p.nickname || p.displayName || p.name || '쇼호스트'),
-        headline: text(p.headline || ''),
+        // headline 폴백: intro/introduction/oneLiner/summary → bio 스니펫 → ''
+        headline: text(coalesce(
+          p.headline, p.intro, p.introduction, p.oneLiner, p.summary,
+          p.bio ? strip(p.bio).slice(0,60) : ''
+        )),
         thumb: pickThumb(p)
       }));
     }catch{ return []; }
@@ -90,9 +95,9 @@
     return fallback.slice(0,6).map((r,i)=>({ id: r.id||`${i}`, title: r.title, date: r.closeAt, summary: '브랜드 소식' }));
   }
 
-  /* ===== 히어로(단일 이미지) — bannertest.jpg를 JS로 주입 ===== */
+  /* ===== 히어로 ===== */
   function renderHero(el){
-    const heroSrc = 'bannertest.jpg'; // 루트/동일폴더
+    const heroSrc = 'bannertest.jpg';
     el.innerHTML = `
       <article class="hero-card">
         <div class="hero-media"></div>
