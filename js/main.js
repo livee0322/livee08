@@ -12,7 +12,7 @@
   const EP_RECRUITS   = EP.recruits   || '/recruit-test?status=published&limit=20';
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
-  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/assets/default.jpg` : 'assets/default.jpg');
+  const FALLBACK_IMG  = CFG.placeholderThumb || (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
 
   const pad2 = n => String(n).padStart(2,'0');
   const fmtDate = iso => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
