@@ -1,199 +1,155 @@
-/* js/mypage.js — v1.1
-   - 모든 이동 경로는 ROUTES 한 곳에서만 관리
-   - HTML에는 실제 링크를 하드코딩하지 않음(중복 제거)
+/* myrecruit.js — v1.2
+   - 서버 응답을 우선 확인(403/401일 때만 가드 노출)
+   - 브랜드/관리자 역할 판별은 대소문자 무시 + roles/role 모두 지원
 */
 (() => {
-  const $  = (s) => document.querySelector(s);
-  const $id= (s) => document.getElementById(s);
-
-  // ====== 중앙 경로 관리 ======
-  const ROUTES = {
-    // 브랜드
-    myRecruit:        'myrecruit.html',     // ✅ 내가 등록한 공고
-    recruitNew:       'recruit-new.html',   // 공고 올리기
-    applicantsBrand:  'applications-brand.html', // 지원자 관리(브랜드)
-    outboxProposals:  'outbox-proposals.html',
-    bookmarksPf:      'bookmarks-portfolios.html',
-
-    // 쇼호스트
-    myPortfolio:      'myportfolio.html',
-    myApplies:        'applications.html',  // 내 지원 내역
-    inboxProposals:   'inbox-proposals.html', // 받은 제안
-    bookmarksJobs:    'bookmarks.html',
-
-    // 공통
-    settings:         'settings.html',
-    notify:           'settings-notify.html',
-    login:            'login.html'
-  };
-
-  // ====== mount header/tabbar ======
-  try {
-    const CFG = window.LIVEE_CONFIG || {};
-    window.LIVEE_UI?.mountHeader?.({ title: '마이페이지' });
-    window.LIVEE_UI?.mountTopTabs?.({ active: null });
-    window.LIVEE_UI?.mountTabbar?.({ active: 'mypage' });
-    // 기본 아바타
-    $id('mpAvatar').src = CFG.placeholderThumb || 'assets/default.jpg';
-  } catch(_) {}
-
-  // ====== auth/me ======
-  const token =
-    localStorage.getItem('livee_token') ||
-    localStorage.getItem('liveeToken') || '';
-
+  const $ = (s, el=document) => el.querySelector(s);
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+
+  // UI 장착
+  try {
+    window.LIVEE_UI?.mountHeader?.({
+      title: '내 모집공고',
+      left: [{ id:'back', icon:'ri-arrow-left-line', href:'mypage.html' }],
+      right:[{ id:'new',  icon:'ri-add-line', href:'recruit-new.html' }]
+    });
+    window.LIVEE_UI?.mountTabbar?.({ active: 'mypage' });
+  } catch(_) {}
+
+  const here = encodeURIComponent(location.pathname + location.search + location.hash);
+  $('#loginBtn').href = `login.html?returnTo=${here}`;
+
+  // 역할 헬퍼
+  function rolesOf(me){
+    if (!me) return [];
+    const a = Array.isArray(me.roles) ? me.roles : (me.role ? [me.role] : []);
+    return a.map(x => String(x||'').toLowerCase());
+  }
+  function isBrandLike(me){
+    const r = rolesOf(me);
+    return r.includes('brand') || r.includes('admin');
+  }
 
   async function fetchMe(){
-    if(!token) return null;
-    const headers = { 'Authorization':'Bearer '+token, 'Accept':'application/json' };
+    if(!TOKEN) return null;
+    const h = { 'Authorization':'Bearer '+TOKEN, 'Accept':'application/json' };
     for (const p of ['/users/me','/auth/me','/me']) {
       try {
-        const r = await fetch(API_BASE + p, { headers });
+        const r = await fetch(API_BASE+p, { headers:h });
         const j = await r.json().catch(()=>null);
         if (r.ok && j) return j.data || j.user || j;
-      } catch(_) {}
+      } catch(_){}
     }
     return null;
   }
 
-  function rolesOf(u){
-    if (!u) return [];
-    return Array.isArray(u.roles) ? u.roles : (u.role ? [u.role] : []);
-  }
-  function hasRole(u, role){
-    const rs = rolesOf(u);
-    return rs.includes(role) || rs.includes('admin');
-  }
-
-  // ====== Guard(modal) ======
-  const guard = $id('mpGuard');
-  const guardClose = $id('guardClose');
-  const guardTitle = $id('guardTitle');
-  const guardDesc  = $id('guardDesc');
-  const guardAction= $id('guardAction');
-  guardClose?.addEventListener('click', ()=> guard.classList.remove('show'));
-
-  const here = encodeURIComponent(location.pathname + location.search + location.hash);
-  function setGuard(kind){
-    if (kind === 'login') {
-      guardTitle.textContent = '로그인이 필요합니다';
-      guardDesc.textContent  = '로그인 후 이용해 주세요.';
-      guardAction.textContent= '로그인하기';
-      guardAction.href       = `${ROUTES.login}?returnTo=${here}`;
-    } else if (kind === 'host') {
-      guardTitle.textContent = '쇼호스트 권한이 필요합니다';
-      guardDesc.textContent  = '쇼호스트 인증 후 이용하실 수 있어요.';
-      guardAction.textContent= '권한 문의';
-      guardAction.href       = 'help.html#host';
-    } else if (kind === 'brand') {
-      guardTitle.textContent = '브랜드 권한이 필요합니다';
-      guardDesc.textContent  = '브랜드 인증 후 이용하실 수 있어요.';
-      guardAction.textContent= '권한 문의';
-      guardAction.href       = 'help.html#brand';
-    }
+  async function getJSON(url, opt={}){
+    const h = { 'Accept':'application/json', ...(TOKEN?{Authorization:'Bearer '+TOKEN}:{}) };
+    const r = await fetch(url, { headers:h, ...opt });
+    if (r.status === 401 || r.status === 403) return { _forbidden:true, status:r.status };
+    const j = await r.json().catch(()=>({}));
+    return { ok:r.ok, status:r.status, data:j };
   }
 
-  // ====== 메뉴 정의 (경로는 ROUTES만 참조) ======
-  const MENUS = {
-    brand: [
-      { icon:'ri-file-list-2-line', title:'내 공고 관리',  sub:'진행/마감/정산 상태', href: ROUTES.myRecruit,      guard:'brand' },
-      { icon:'ri-megaphone-line',   title:'공고 올리기',    sub:'라이브 캠페인/출연 공고 등록', href: ROUTES.recruitNew,     guard:'brand' },
-      { icon:'ri-team-line',        title:'지원자 관리',    sub:'대기/합격/계약/결제(에스크로)', href: ROUTES.applicantsBrand, guard:'brand' },
-      { icon:'ri-mail-send-line',   title:'보낸 제안',      sub:'쇼호스트에게 보낸 제안 내역',  href: ROUTES.outboxProposals, guard:'brand' },
-      { icon:'ri-star-line',        title:'찜한 포트폴리오', sub:'관심 쇼호스트 모아보기',       href: ROUTES.bookmarksPf,    guard:'login' },
-    ],
-    showhost: [
-      { icon:'ri-image-line',       title:'내 포트폴리오',  sub:'프로필/경력/미디어 관리', href: ROUTES.myPortfolio,   guard:'host' },
-      { icon:'ri-briefcase-line',   title:'내 지원 내역',   sub:'대기/합격/거절/정산',     href: ROUTES.myApplies,     guard:'login' },
-      { icon:'ri-mail-star-line',   title:'받은 제안',      sub:'브랜드가 보낸 제안',       href: ROUTES.inboxProposals,guard:'login' },
-      { icon:'ri-heart-3-line',     title:'찜한 공고',      sub:'북마크한 공고 모아보기',   href: ROUTES.bookmarksJobs, guard:'login' },
-    ]
+  // 서버 스키마 → 카드 모델
+  const money = n => (n==null||isNaN(n)) ? '' : Number(n).toLocaleString('ko-KR');
+  const fmtDate = iso => {
+    if (!iso) return '미정';
+    const d = new Date(iso); if (isNaN(d)) return '미정';
+    const p = s => String(s).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
   };
+  const pickThumb = o =>
+    o?.thumbnailUrl || o?.coverImageUrl || o?.imageUrl || CFG.placeholderThumb || 'default.jpg';
 
-  function itemHTML(m){
+  function mapItem(c){
+    return {
+      id: c.id || c._id,
+      title: c.title || '(제목 없음)',
+      thumb: pickThumb(c),
+      closeAt: c.closeAt,
+      // fee/pay 호환 처리
+      fee: c.fee ?? c.recruit?.pay ?? c.pay,
+      feeNegotiable: (c.feeNegotiable ?? c.recruit?.payNegotiable ?? c.payNegotiable) ? true : false,
+      brandName: c.brandName || c.brand || ''
+    };
+  }
+
+  function cardHTML(it){
+    const feeTxt = it.feeNegotiable ? '협의' : (it.fee!=null ? `${money(it.fee)}원` : '출연료 미정');
     return `
-      <li>
-        <a class="mp-item guard-link" data-guard="${m.guard||''}" href="${m.href}">
-          <i class="${m.icon}"></i>
-          <div>
-            <div class="title">${m.title}</div>
-            <div class="meta">${m.sub||''}</div>
+      <article class="card" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(it.id)}'">
+        <img class="thumb" src="${it.thumb}" alt="" loading="lazy" decoding="async">
+        <div style="flex:1">
+          <div class="row">
+            <div class="meta">브랜드</div>
+            <button class="btn-ghost" onclick="event.stopPropagation();location.href='applications-brand.html?rid=${encodeURIComponent(it.id)}'">
+              지원자 현황
+            </button>
           </div>
-          <i class="ri-arrow-right-s-line arrow"></i>
-        </a>
-      </li>`;
+          <div class="title">${it.title}</div>
+          <div class="meta">마감 ${fmtDate(it.closeAt)} · ${feeTxt}</div>
+        </div>
+      </article>`;
   }
 
-  function bindGuards(me){
-    document.querySelectorAll('.guard-link').forEach(a=>{
-      a.addEventListener('click', (e)=>{
-        const kind = a.dataset.guard;
-        const need =
-          (kind==='login' && !me) ||
-          (kind==='host'  && !hasRole(me,'showhost')) ||
-          (kind==='brand' && !hasRole(me,'brand'));
-        if (need){
-          e.preventDefault();
-          setGuard(kind);
-          guard.classList.add('show');
-        }
-      });
-    });
-  }
-
-  function renderUser(u){
-    const nameEl = $id('mpName');
-    const roleEl = $id('mpRole');
-    if(!u){
-      nameEl.textContent = '로그인이 필요합니다';
-      roleEl.textContent = '-';
-      $id('mpAuthTitle').textContent = '로그인';
+  function renderList(items){
+    const list = $('#list');
+    if (!items.length){
+      $('#empty').style.display='block';
+      list.innerHTML = '';
       return;
     }
-    nameEl.textContent = u.name || u.nickname || '사용자';
-    roleEl.textContent = rolesOf(u).join(', ') || '회원';
-    if(u.avatarUrl) $id('mpAvatar').src = u.avatarUrl;
-    $id('mpAuthTitle').textContent = '로그아웃';
+    $('#empty').style.display='none';
+    list.innerHTML = items.map(cardHTML).join('');
   }
 
-  function renderMenu(me){
-    const isBrand = hasRole(me,'brand');
-    const list = isBrand ? MENUS.brand : MENUS.showhost;
-
-    $id('menuTitle').textContent = isBrand ? '브랜드 메뉴' : '쇼호스트 메뉴';
-    const cta = $id('menuCta');
-    if (isBrand){
-      cta.textContent = '내 공고 관리';
-      cta.href = ROUTES.myRecruit;
-      cta.style.display = '';
-      cta.classList.add('guard-link');
-      cta.dataset.guard = 'brand';
-    } else {
-      cta.style.display = 'none';
-    }
-
-    $id('menuList').innerHTML = list.map(itemHTML).join('');
-    bindGuards(me);
-  }
-
-  // 로그인/로그아웃
-  $id('mpAuthBtn')?.addEventListener('click', ()=>{
-    const hasToken = !!token;
-    if(hasToken){
-      localStorage.removeItem('livee_token');
-      localStorage.removeItem('liveeToken');
-      location.reload();
-    }else{
-      location.href = `${ROUTES.login}?returnTo=${here}`;
-    }
+  // 상태 필터
+  let CURRENT = 'all';
+  $('#chips')?.addEventListener('click', (e)=>{
+    const b = e.target.closest('.chip'); if(!b) return;
+    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('is-active'));
+    b.classList.add('is-active');
+    CURRENT = b.dataset.status || 'all';
+    load(); // 다시 로드
   });
 
-  // boot
-  (async ()=>{
+  async function load(){
+    // 1) 우선 me 로컬 판별(UX 빠르게) — 실패해도 서버 응답으로 최종 판단
     const me = await fetchMe();
-    renderUser(me);
-    renderMenu(me);
-  })();
+
+    // 2) 서버 호출 (mine 개념이 없으면 전체 받아서 클라 필터)
+    const qs = new URLSearchParams();
+    if (CURRENT !== 'all') qs.set('status', CURRENT);
+    // NOTE: 서버가 mine 필터를 지원하지 않으므로 전체 조회 후 createdBy가 없을 수 있으니
+    // 일단 전체를 받아 사용자 브랜드 권한만 확인해서 화면 제공
+    const url = `${API_BASE}/recruit-test?${qs.toString()}`;
+
+    const { _forbidden, ok, status, data } = await getJSON(url);
+    if (_forbidden){
+      // 토큰은 있으나 권한 거부 (브랜드가 아님/권한 만료 등)
+      $('#guard').style.display='block';
+      $('#empty').style.display='none';
+      $('#list').innerHTML = '';
+      return;
+    }
+
+    // me가 없고 토큰도 없으면 로그인 유도
+    if (!TOKEN){
+      $('#guard').style.display='block';
+      return;
+    }
+
+    // me가 있는데 브랜드가 아니어도 서버가 허용했으면 그냥 보여줌
+    // (오탐 방지, 최종 권한은 서버가 판단)
+    const rows = (Array.isArray(data?.items) ? data.items : (data?.data?.items || []))
+      .map(mapItem);
+    renderList(rows);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', load, { once:true });
+  } else { load(); }
 })();
