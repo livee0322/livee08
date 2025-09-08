@@ -103,5 +103,106 @@
   <script src="js/config.js"></script>
   <!-- 최신 스크립트(레거시 name 절대 전송 안 함) -->
   <script src="js/portfolio-new.js?v=FINAL_20250905c"></script>
+<script>
+/* mobile debug widget for portfolio-new — paste near </body> */
+(function(){
+  if(!/(\?|&)debug=1(&|$)/.test(location.search)) return;
+
+  const CFG = window.LIVEE_CONFIG || {};
+  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const token = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+
+  const css = `
+  #pfDbg{position:fixed;inset:auto 8px 8px auto;z-index:99999;background:#111;color:#fff;
+    font:12px/1.4 -apple-system,BlinkMacSystemFont,Roboto,SUIT,sans-serif;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.35);}
+  #pfDbg header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #2a2a2a}
+  #pfDbg .body{max-height:52vh;overflow:auto;padding:8px 10px}
+  #pfDbg table{border-collapse:collapse;width:100%} #pfDbg td{padding:4px 6px;border-bottom:1px solid #222;vertical-align:top}
+  #pfDbg .k{opacity:.7;white-space:nowrap} #pfDbg .v{word-break:break-all}
+  #pfDbg button{margin-left:6px;background:#2b6ef6;border:0;color:#fff;padding:6px 8px;border-radius:7px}
+  #pfDbg .ghost{background:#2b2b2b} #pfDbg .ok{background:#20a35b}
+  `;
+  const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
+
+  const el = document.createElement('div');
+  el.id = 'pfDbg';
+  el.innerHTML = `
+    <header>
+      <strong>PF Debug</strong>
+      <div>
+        <button class="ghost" id="pfDbgReload">새로고침</button>
+        <button class="ok" id="pfDbgFix">헤드라인 강제 저장</button>
+        <button class="ghost" id="pfDbgClose">닫기</button>
+      </div>
+    </header>
+    <div class="body"><div>로드 중…</div></div>
+  `;
+  document.body.appendChild(el);
+  const body = el.querySelector('.body');
+
+  const strip = (s='')=> String(s||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+  const pickHeadline = (d)=> (d.headline && String(d.headline).trim())
+                          || d.intro || d.introduction || d.oneLiner || d.summary
+                          || (d.bio ? strip(d.bio).slice(0,60) : '') || '';
+
+  async function load(){
+    if(!id){ body.innerHTML = '<div>쿼리스트링에 id가 없습니다.</div>'; return; }
+    try{
+      const r = await fetch(`${API_BASE}/portfolio-test/${id}`, { headers:{Accept:'application/json'} });
+      const j = await r.json().catch(()=>({}));
+      const d = j.data || j || {};
+      const eff = pickHeadline(d);
+      const rows = [
+        ['raw.headline', d.headline ?? ''],
+        ['fallback.effective', eff],
+        ['bio.length', (d.bio||'').length],
+        ['nickname', d.nickname||''],
+        ['status', d.status||''],
+        ['visibility', d.visibility||''],
+        ['id', d.id || d._id || id]
+      ].map(([k,v])=> `<tr><td class="k">${k}</td><td class="v">${String(v)}</td></tr>`).join('');
+      body.innerHTML = `<table>${rows}</table>`;
+      // 폼 필드가 있으면 즉시 채우기(수정화면에서 빈칸 방지)
+      const fld = document.querySelector('#headline, [name="headline"]');
+      if (fld && !fld.value) fld.value = eff;
+    }catch(e){
+      body.innerHTML = `<div>오류: ${e.message||e}</div>`;
+    }
+  }
+
+  async function fix(){
+    if(!id) return alert('id 없음');
+    if(!token) return alert('로그인 토큰 없음');
+    // 화면에서 보이는 값 우선 → 없으면 폴백 계산
+    const inputVal = document.querySelector('#headline, [name="headline"]')?.value?.trim();
+    let value = inputVal || '';
+    if(!value){
+      // 서버에서 다시 가져와 폴백 계산
+      const r = await fetch(`${API_BASE}/portfolio-test/${id}`, { headers:{Accept:'application/json'} });
+      const j = await r.json().catch(()=>({})); const d = j.data || j || {};
+      value = pickHeadline(d) || '임시 한줄소개';
+    }
+    const res = await fetch(`${API_BASE}/portfolio-test/${id}`, {
+      method:'PUT',
+      headers:{ 'Content-Type':'application/json', 'Accept':'application/json', 'Authorization':`Bearer ${token}` },
+      body: JSON.stringify({ headline: value, status: (document.querySelector('#publishBtn')? 'published' : undefined) })
+    });
+    const jj = await res.json().catch(()=>({}));
+    if(!res.ok || jj.ok===false) return alert('저장 실패: ' + (jj.message||res.status));
+    alert('헤드라인 저장 완료: ' + (jj?.data?.headline || value));
+    await load();
+  }
+
+  el.querySelector('#pfDbgReload').onclick = load;
+  el.querySelector('#pfDbgFix').onclick = fix;
+  el.querySelector('#pfDbgClose').onclick = ()=> el.remove();
+
+  load();
+})();
+</script>
+
+
 </body>
 </html>
