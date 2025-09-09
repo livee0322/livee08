@@ -12,20 +12,26 @@ body{color:var(--ink);background:#fff}
 .only-mobile{display:none}
 .container{max-width:980px;margin:0 auto;padding:0 18px}
 
+/* 헤더/툴바 */
 .rl-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);position:sticky;top:56px;background:#fff;z-index:10}
 .rl-head-right{display:flex;gap:10px;align-items:center}
 .rl-toolbar{display:flex;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .rl-search{display:flex;align-items:center;gap:8px;flex:1;border:1px solid var(--line);border-radius:12px;padding:6px 8px}
 .rl-search input{flex:1;border:0;outline:none;font-size:15px}
 
+/* 레이아웃 */
 .rl-wrap{display:grid;grid-template-columns:280px 1fr;gap:14px;padding:14px 0 24px}
-.rl-filters{border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:112px;height:max-content}
+
+/* 필터 사이드바 */
+.rl-filters{border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:112px;height:max-content;background:#fff}
+.fheadbar{display:none;align-items:center;justify-content:space-between;margin-bottom:8px}
 .fblock{margin:12px 0}
 .fhead{font-weight:900;margin-bottom:8px}
 .fblock .row{display:flex;gap:8px;align-items:center}
 .fblock input[type="number"], .fblock input[type="date"], .fblock input[type="text"]{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px}
 .dash{color:var(--muted)}
 
+/* 리스트/카드 */
 .rl-list{display:grid;gap:12px}
 .rl-card{display:grid;grid-template-columns:120px 1fr;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
 .rl-thumb{width:120px;height:90px;border-radius:10px;object-fit:cover;background:#f3f4f6}
@@ -43,6 +49,7 @@ body{color:var(--ink);background:#fff}
 .bmark{border:1px solid var(--line);background:#fff;border-radius:50%;width:36px;height:36px;display:inline-grid;place-items:center}
 .bmark.active{background:#fff7ed;border-color:#fdba74;color:#f97316}
 
+/* 페이지네이션/칩스 */
 .rl-pager{display:flex;gap:6px;justify-content:center;margin:18px 0}
 .rl-pager button{border:1px solid var(--line);border-radius:10px;background:#fff;min-width:36px;height:36px}
 .rl-pager .cur{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -50,8 +57,31 @@ body{color:var(--ink);background:#fff}
 .chips .chip{border:1px solid var(--line);border-radius:999px;padding:4px 8px;background:#fff}
 .chips .chip button{margin-left:6px}
 
+/* ====== 모바일/태블릿 대응 ====== */
+.rl-dim{display:none}
 @media (max-width: 1024px){
-  .rl-wrap{grid-template-columns:1fr}
-  .rl-filters{display:none}
   .only-mobile{display:inline-flex}
+  .rl-wrap{grid-template-columns:1fr}
+  /* 모바일 드로어 */
+  .rl-filters{
+    position:fixed; top:0; right:0; bottom:0; z-index:60;
+    width:86vw; max-width:360px; border-radius:0; border-left:1px solid var(--line);
+    transform:translateX(100%); transition:transform .25s ease; overflow:auto; padding:14px;
+  }
+  .rl-filters[aria-hidden="false"]{ transform:translateX(0); }
+  .fheadbar{display:flex}
+  .rl-dim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:59;opacity:0;transition:opacity .2s ease;display:block}
+  .rl-dim.on{opacity:1}
+  /* 카드 한열 + 큰 썸네일 */
+  .rl-card{grid-template-columns:1fr}
+  .rl-thumb{width:100%;height:180px}
+  .rl-actions{gap:4px}
+}
+
+/* 더 작은 화면 튜닝 */
+@media (max-width: 420px){
+  .rl-thumb{height:160px}
+  .btn{padding:8px 10px}
+  .bmark{width:34px;height:34px}
+  .rl-header{top:56px}
 }
