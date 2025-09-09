@@ -4,21 +4,29 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>모든 공고 - 라이비</title>
+
+  <!-- 스타일: 페이지 전용 > 공통 -->
   <link rel="stylesheet" href="css/recruit-list.css" />
- <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/main.css" />
+
+  <!-- 아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
+
+  <!-- 설정/공통 UI -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
 </head>
 <body>
+  <!-- 공통 상단바/탭 (ui.js가 채움) -->
   <div id="appbar"></div>
   <div id="top-tabs"></div>
 
   <main class="rl-page">
+    <!-- 상단 타이틀 + 정렬 -->
     <header class="rl-head">
       <h1>모든 공고</h1>
-      <div class="right">
-        <span id="rlTotal" aria-live="polite"></span>
+      <div class="sort">
+        <span id="rlTotal" aria-live="polite">총 0건</span>
         <select id="rlSort" aria-label="정렬">
           <option value="recent">최신 등록순</option>
           <option value="deadline">마감 임박순</option>
@@ -27,56 +35,68 @@
       </div>
     </header>
 
-    <section class="rl-toolbar">
-      <div class="search">
-        <i class="ri-search-line"></i>
+    <!-- 검색/필터 툴바 : 프리미엄 검색바(아이콘 내장) + 필터 버튼 -->
+    <section class="rl-toolbar" aria-label="검색과 필터">
+      <label class="search" aria-label="검색">
+        <i class="ri-search-line lead"></i>
         <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" />
-      </div>
-      <button id="rlBtnSearch" class="btn">검색</button>
-      <button id="rlBtnFilter" class="btn ghost"><i class="ri-equalizer-line"></i> 필터</button>
+        <button id="rlSearchGo" class="sgo" type="button" aria-label="검색 실행">
+          <i class="ri-arrow-right-line"></i>
+        </button>
+      </label>
+
+      <button id="rlBtnFilter" class="btn" type="button">
+        <i class="ri-equalizer-line"></i> 필터
+      </button>
     </section>
 
-    <div id="rlChips" class="rl-chips" hidden></div>
+    <!-- 활성화된 필터 칩 -->
+    <div id="rlChips" hidden></div>
 
-    <section id="rlTopAd" class="rl-topAd" hidden></section>
+    <!-- 상단 스폰서 AD -->
+    <section id="rlTopAd" hidden></section>
 
-    <section id="rlList" class="rl-list" aria-live="polite"></section>
+    <!-- 목록 -->
+    <section id="rlList" aria-live="polite"></section>
 
-    <nav id="rlPager" class="rl-pager" aria-label="페이지 네비게이션"></nav>
+    <!-- 페이지네이션 -->
+    <nav id="rlPager" aria-label="페이지 네비게이션"></nav>
   </main>
 
-  <!-- Filter Drawer -->
+  <!-- 필터 드로어 -->
   <aside id="rlDrawer" class="drawer" aria-hidden="true">
     <div class="sheet">
       <header>
         <strong>필터</strong>
-        <button id="rlFilterClose" class="x" aria-label="닫기">✕</button>
+        <button id="rlFilterClose" class="x" type="button" aria-label="닫기">✕</button>
       </header>
 
-      <div class="fitem">
-        <label>지역</label>
-        <input id="fRegion" placeholder="예: 서울" />
-      </div>
-      <div class="fitem">
-        <label>구/군</label>
-        <input id="fDistrict" placeholder="예: 강남구" />
+      <div class="grid" style="margin-bottom:10px">
+        <div class="field">
+          <label for="fRegion">지역</label>
+          <input id="fRegion" placeholder="예: 서울" />
+        </div>
+        <div class="field">
+          <label for="fDistrict">구/군</label>
+          <input id="fDistrict" placeholder="예: 강남구" />
+        </div>
       </div>
 
-      <div class="fitem">
+      <div class="field">
         <label>출연료 범위(원)</label>
-        <div class="row">
+        <div style="display:flex;gap:8px;align-items:center">
           <input id="fPayMin" type="number" placeholder="최소" />
           <span class="dash">~</span>
           <input id="fPayMax" type="number" placeholder="최대" />
         </div>
       </div>
 
-      <div class="fitem">
+      <div class="field">
         <label class="chk"><input id="fNegotiable" type="checkbox" /> 출연료 협의 포함</label>
       </div>
 
-      <div class="fitem">
-        <label>마감까지</label>
+      <div class="field">
+        <label for="fCloseIn">마감까지</label>
         <select id="fCloseIn">
           <option value="">전체</option>
           <option value="3">3일</option>
@@ -87,14 +107,16 @@
       </div>
 
       <div class="actions">
-        <button id="rlFilterReset" class="btn ghost">초기화</button>
-        <button id="rlFilterApply" class="btn pri">적용</button>
+        <button id="rlFilterReset" class="btn" type="button">초기화</button>
+        <button id="rlFilterApply" class="btn pri" type="button">적용</button>
       </div>
     </div>
   </aside>
 
+  <!-- 공통 하단 탭 (ui.js가 고정 배치) -->
   <div id="bottom-tabs"></div>
 
+  <!-- 페이지 스크립트 -->
   <script src="js/recruit-list.js"></script>
 </body>
 </html>
