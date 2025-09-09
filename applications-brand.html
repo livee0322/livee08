@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>지원자 현황 | Livee</title>
+
+  <!-- 폰트/아이콘 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+
+  <!-- 공통 / 페이지 CSS -->
+  <link rel="stylesheet" href="css/main.css?v=2.9.7">
+  <link rel="stylesheet" href="css/applications.css?v=1.0.0">
+  <meta name="theme-color" content="#ffffff">
+</head>
+<body class="theme-artbook">
+  <!-- 상단바 / 상단탭 (ui.js가 렌더링) -->
+  <header id="appbar" data-title="지원자 현황"></header>
+  <nav id="top-tabs" data-hide="1"></nav>
+
+  <main class="container">
+    <section class="section">
+      <div class="section-head">
+        <h2>내가 등록한 공고</h2>
+        <a class="more" href="recruit-list.html">더보기</a>
+      </div>
+      <div id="brandApps" class="apps-root"></div>
+    </section>
+  </main>
+
+  <!-- 하단 탭 (ui.js가 렌더링) -->
+  <footer id="bottom-tabs" data-active="campaigns"></footer>
+
+  <!-- 스크립트 -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js?v=2.9.0"></script>
+  <script src="js/applications-brand.js?v=1.0.3"></script>
+</body>
+</html>
