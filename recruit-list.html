@@ -3,115 +3,108 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>공고 리스트 - LIVEE</title>
-
-  <!-- 폰트 & 아이콘 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
-
-  <!-- 글로벌 + 페이지 전용 -->
-  <link rel="stylesheet" href="css/main.css?v=2.9.7" />
-  <link rel="stylesheet" href="css/recruit-list.css?v=1.6.0" />
-  <meta name="theme-color" content="#ffffff" />
+  <title>모든 공고 - LIVEE</title>
+  <link rel="stylesheet" href="css/recruit-list.css">
 </head>
 <body>
-  <!-- 상단바/탑탭 (기존 ui.js가 렌더) -->
-  <header id="appbar"></header>
-  <nav id="top-tabs"></nav>
 
-  <header class="rl-header container" role="region" aria-label="페이지 제목">
-    <h1>모든 공고</h1>
-    <div class="rl-head-right">
-      <div id="rlTotal" class="muted">총 0건</div>
+  <header class="rl-head">
+    <h1 class="ttl">모든 공고</h1>
+    <div class="count-sort">
+      <div class="total"><span id="rlTotal">총 0건</span></div>
       <label class="sort">
-        <span class="sr-only">정렬</span>
-        <select id="rlSort">
-          <option value="newest">최신 등록순</option>
+        <select id="rlSort" aria-label="정렬">
+          <option value="recent">최신 등록순</option>
           <option value="closing">마감 임박순</option>
-          <option value="fee_desc">출연료 높은순</option>
-          <option value="fee_asc">출연료 낮은순</option>
+          <option value="pay_desc">출연료 높은순</option>
+          <option value="pay_asc">출연료 낮은순</option>
         </select>
       </label>
     </div>
   </header>
 
-  <div class="rl-toolbar container">
-    <form id="rlSearchForm" class="rl-search" role="search" aria-label="공고 검색">
+  <!-- 툴바 -->
+  <section class="rl-toolbar">
+    <div class="search">
       <i class="ri-search-line" aria-hidden="true"></i>
-      <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" autocomplete="off" />
-      <button type="submit" class="btn">검색</button>
-    </form>
-    <button id="rlFilterOpen" class="btn ghost only-mobile" aria-haspopup="dialog" aria-controls="rlFilters" aria-expanded="false">
-      <i class="ri-filter-3-line"></i> 필터
-    </button>
-  </div>
+      <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" />
+    </div>
+    <div class="tool-btns">
+      <button id="rlBtnSearch" class="btn ghost" aria-label="검색">검색</button>
+      <button id="rlBtnFilter" class="btn ghost" aria-label="필터 열기">필터</button>
+    </div>
+  </section>
 
-  <!-- 모바일 오버레이 -->
-  <div id="rlDim" class="rl-dim" hidden></div>
+  <!-- 선택된 필터 칩 -->
+  <nav id="rlChips" class="chips" aria-label="선택된 필터" hidden></nav>
 
-  <main class="rl-wrap container">
-    <!-- 필터 드로어 -->
-    <aside class="rl-filters" id="rlFilters" role="dialog" aria-modal="true" aria-label="필터" aria-hidden="true">
-      <div class="fheadbar only-mobile">
-        <strong>필터</strong>
-        <button id="rlFilterClose" class="btn ghost" type="button" aria-label="필터 닫기">
-          <i class="ri-close-line"></i>
-        </button>
-      </div>
+  <!-- TOP AD -->
+  <section id="rlTopAd" class="top-ad" hidden></section>
 
-      <form id="rlFilterForm">
-        <div class="fblock">
-          <div class="fhead">상태</div>
-          <label><input type="checkbox" name="status" value="open" checked> 모집중</label>
-          <label><input type="checkbox" name="status" value="scheduled"> 예정</label>
-          <label><input type="checkbox" name="status" value="closed"> 마감</label>
-        </div>
-
-        <div class="fblock">
-          <div class="fhead">출연료(원)</div>
-          <div class="row">
-            <input id="minPay" type="number" min="0" step="10000" placeholder="최소" />
-            <span class="dash">–</span>
-            <input id="maxPay" type="number" min="0" step="10000" placeholder="최대" />
-          </div>
-          <label><input id="payNegotiable" type="checkbox"> 협의 포함</label>
-        </div>
-
-        <div class="fblock">
-          <div class="fhead">마감일</div>
-          <div class="row">
-            <input id="fromDate" type="date" /> <span class="dash">–</span>
-            <input id="toDate" type="date" />
-          </div>
-          <button id="quick7" class="btn chip" type="button">마감 임박(7일)</button>
-        </div>
-
-        <div class="fblock">
-          <div class="fhead">브랜드</div>
-          <input id="brand" type="text" placeholder="브랜드명" />
-        </div>
-
-        <div class="fblock actions">
-          <button id="applyFilters" class="btn pri" type="button">적용</button>
-          <button id="resetFilters" class="btn ghost" type="button">초기화</button>
-        </div>
-      </form>
-    </aside>
-
-    <!-- 리스트 -->
-    <section class="rl-content">
-      <div id="chips" class="chips" aria-live="polite"></div>
-      <div id="rlList" class="rl-list" aria-live="polite"></div>
-      <nav class="rl-pager" id="rlPager" aria-label="페이지 이동"></nav>
-    </section>
+  <!-- 리스트 -->
+  <main id="rlList" class="rl-list" aria-live="polite">
+    <!-- skeleton -->
+    <div class="card skeleton"></div>
+    <div class="card skeleton"></div>
+    <div class="card skeleton"></div>
   </main>
 
-  <!-- 하단탭 (고정) -->
-  <footer id="bottom-tabs"></footer>
+  <!-- 페이지네이션 -->
+  <nav id="rlPager" class="pager" aria-label="페이지 이동"></nav>
 
-  <!-- Config & UI & Page JS -->
-  <script src="js/config.js"></script>
-  <script src="js/ui.js?v=2.9.0"></script>
-  <script src="js/recruit-list.js?v=1.6.0"></script>
+  <!-- 필터 드로어 -->
+  <aside id="rlDrawer" class="drawer" aria-hidden="true" aria-label="필터">
+    <div class="drawer-sheet">
+      <header class="drawer-head">
+        <strong>필터</strong>
+        <button id="rlFilterClose" class="x" aria-label="닫기">✕</button>
+      </header>
+
+      <div class="drawer-body">
+        <div class="fsec">
+          <label class="flab">지역</label>
+          <div class="grid2">
+            <select id="fRegion">
+              <option value="">전체</option>
+              <option>서울</option><option>경기</option><option>인천</option>
+              <option>부산</option><option>대구</option><option>기타</option>
+            </select>
+            <input id="fDistrict" type="text" placeholder="구/군 (선택)">
+          </div>
+        </div>
+
+        <div class="fsec">
+          <label class="flab">출연료</label>
+          <div class="grid2">
+            <input id="fPayMin" type="number" min="0" step="10000" placeholder="최소">
+            <input id="fPayMax" type="number" min="0" step="10000" placeholder="최대">
+          </div>
+          <label class="row">
+            <input id="fNegotiable" type="checkbox"> 협의 가능 포함
+          </label>
+        </div>
+
+        <div class="fsec">
+          <label class="flab">마감</label>
+          <select id="fCloseIn">
+            <option value="">전체</option>
+            <option value="1">오늘</option>
+            <option value="3">3일 이내</option>
+            <option value="7">7일 이내</option>
+            <option value="30">30일 이내</option>
+          </select>
+        </div>
+      </div>
+
+      <footer class="drawer-foot">
+        <button id="rlFilterReset" class="btn ghost">초기화</button>
+        <button id="rlFilterApply" class="btn pri">적용</button>
+      </footer>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.js" defer></script>
+  <script src="js/ui.js"></script>
+  <script src="js/recruit-list.js"></script>
 </body>
 </html>
