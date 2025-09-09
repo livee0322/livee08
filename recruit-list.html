@@ -9,13 +9,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
 
-  <!-- 글로벌 스타일(사이트 공통) + 페이지 전용 -->
+  <!-- 글로벌 + 페이지 전용 -->
   <link rel="stylesheet" href="css/main.css?v=2.9.7" />
   <link rel="stylesheet" href="css/recruit-list.css" />
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-  <!-- 상단바 / 상단탭 (ui.js가 렌더) -->
+  <!-- 상단바/탑탭 -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
@@ -39,13 +39,21 @@
       <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" />
       <button type="submit" class="btn">검색</button>
     </form>
-    <button id="rlFilterOpen" class="btn ghost only-mobile">
+    <button id="rlFilterOpen" class="btn ghost only-mobile" aria-controls="rlFilters" aria-expanded="false">
       <i class="ri-filter-3-line"></i> 필터
     </button>
   </div>
 
+  <!-- 모바일 오버레이(필터 열릴 때만 표시) -->
+  <div id="rlDim" class="rl-dim" hidden></div>
+
   <main class="rl-wrap container">
-    <aside class="rl-filters" id="rlFilters" aria-label="필터">
+    <aside class="rl-filters" id="rlFilters" aria-label="필터" aria-hidden="true">
+      <div class="fheadbar only-mobile">
+        <strong>필터</strong>
+        <button id="rlFilterClose" class="btn ghost" type="button" aria-label="필터 닫기"><i class="ri-close-line"></i></button>
+      </div>
+
       <div class="fblock">
         <div class="fhead">상태</div>
         <label><input type="checkbox" name="status" value="open" checked> 모집중</label>
@@ -90,7 +98,7 @@
     </section>
   </main>
 
-  <!-- 하단탭 (ui.js가 렌더) -->
+  <!-- 하단탭 -->
   <footer id="bottom-tabs"></footer>
 
   <!-- Config & UI & Page JS -->
