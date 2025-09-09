@@ -11,99 +11,107 @@
 
   <!-- 글로벌 + 페이지 전용 -->
   <link rel="stylesheet" href="css/main.css?v=2.9.7" />
-  <link rel="stylesheet" href="css/recruit-list.css" />
+  <link rel="stylesheet" href="css/recruit-list.css?v=1.6.0" />
   <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
-  <!-- 상단바/탑탭 -->
+  <!-- 상단바/탑탭 (기존 ui.js가 렌더) -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
-  <!-- 페이지 헤더 -->
-  <header class="rl-header container">
+  <header class="rl-header container" role="region" aria-label="페이지 제목">
     <h1>모든 공고</h1>
     <div class="rl-head-right">
       <div id="rlTotal" class="muted">총 0건</div>
-      <select id="rlSort" aria-label="정렬">
-        <option value="newest">최신 등록순</option>
-        <option value="closing">마감 임박순</option>
-        <option value="fee_desc">출연료 높은순</option>
-        <option value="fee_asc">출연료 낮은순</option>
-      </select>
+      <label class="sort">
+        <span class="sr-only">정렬</span>
+        <select id="rlSort">
+          <option value="newest">최신 등록순</option>
+          <option value="closing">마감 임박순</option>
+          <option value="fee_desc">출연료 높은순</option>
+          <option value="fee_asc">출연료 낮은순</option>
+        </select>
+      </label>
     </div>
   </header>
 
   <div class="rl-toolbar container">
     <form id="rlSearchForm" class="rl-search" role="search" aria-label="공고 검색">
-      <i class="ri-search-line"></i>
-      <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" />
+      <i class="ri-search-line" aria-hidden="true"></i>
+      <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" autocomplete="off" />
       <button type="submit" class="btn">검색</button>
     </form>
-    <button id="rlFilterOpen" class="btn ghost only-mobile" aria-controls="rlFilters" aria-expanded="false">
+    <button id="rlFilterOpen" class="btn ghost only-mobile" aria-haspopup="dialog" aria-controls="rlFilters" aria-expanded="false">
       <i class="ri-filter-3-line"></i> 필터
     </button>
   </div>
 
-  <!-- 모바일 오버레이(필터 열릴 때만 표시) -->
+  <!-- 모바일 오버레이 -->
   <div id="rlDim" class="rl-dim" hidden></div>
 
   <main class="rl-wrap container">
-    <aside class="rl-filters" id="rlFilters" aria-label="필터" aria-hidden="true">
+    <!-- 필터 드로어 -->
+    <aside class="rl-filters" id="rlFilters" role="dialog" aria-modal="true" aria-label="필터" aria-hidden="true">
       <div class="fheadbar only-mobile">
         <strong>필터</strong>
-        <button id="rlFilterClose" class="btn ghost" type="button" aria-label="필터 닫기"><i class="ri-close-line"></i></button>
+        <button id="rlFilterClose" class="btn ghost" type="button" aria-label="필터 닫기">
+          <i class="ri-close-line"></i>
+        </button>
       </div>
 
-      <div class="fblock">
-        <div class="fhead">상태</div>
-        <label><input type="checkbox" name="status" value="open" checked> 모집중</label>
-        <label><input type="checkbox" name="status" value="scheduled"> 예정</label>
-        <label><input type="checkbox" name="status" value="closed"> 마감</label>
-      </div>
-
-      <div class="fblock">
-        <div class="fhead">출연료(원)</div>
-        <div class="row">
-          <input id="minPay" type="number" min="0" step="10000" placeholder="최소" />
-          <span class="dash">–</span>
-          <input id="maxPay" type="number" min="0" step="10000" placeholder="최대" />
+      <form id="rlFilterForm">
+        <div class="fblock">
+          <div class="fhead">상태</div>
+          <label><input type="checkbox" name="status" value="open" checked> 모집중</label>
+          <label><input type="checkbox" name="status" value="scheduled"> 예정</label>
+          <label><input type="checkbox" name="status" value="closed"> 마감</label>
         </div>
-        <label><input id="payNegotiable" type="checkbox"> 협의 포함</label>
-      </div>
 
-      <div class="fblock">
-        <div class="fhead">마감일</div>
-        <div class="row">
-          <input id="fromDate" type="date" /> <span class="dash">–</span>
-          <input id="toDate" type="date" />
+        <div class="fblock">
+          <div class="fhead">출연료(원)</div>
+          <div class="row">
+            <input id="minPay" type="number" min="0" step="10000" placeholder="최소" />
+            <span class="dash">–</span>
+            <input id="maxPay" type="number" min="0" step="10000" placeholder="최대" />
+          </div>
+          <label><input id="payNegotiable" type="checkbox"> 협의 포함</label>
         </div>
-        <button id="quick7" class="btn chip" type="button">마감 임박(7일)</button>
-      </div>
 
-      <div class="fblock">
-        <div class="fhead">브랜드</div>
-        <input id="brand" type="text" placeholder="브랜드명" />
-      </div>
+        <div class="fblock">
+          <div class="fhead">마감일</div>
+          <div class="row">
+            <input id="fromDate" type="date" /> <span class="dash">–</span>
+            <input id="toDate" type="date" />
+          </div>
+          <button id="quick7" class="btn chip" type="button">마감 임박(7일)</button>
+        </div>
 
-      <div class="fblock">
-        <button id="applyFilters" class="btn pri" type="button">적용</button>
-        <button id="resetFilters" class="btn ghost" type="button">초기화</button>
-      </div>
+        <div class="fblock">
+          <div class="fhead">브랜드</div>
+          <input id="brand" type="text" placeholder="브랜드명" />
+        </div>
+
+        <div class="fblock actions">
+          <button id="applyFilters" class="btn pri" type="button">적용</button>
+          <button id="resetFilters" class="btn ghost" type="button">초기화</button>
+        </div>
+      </form>
     </aside>
 
+    <!-- 리스트 -->
     <section class="rl-content">
-      <div id="chips" class="chips"></div>
+      <div id="chips" class="chips" aria-live="polite"></div>
       <div id="rlList" class="rl-list" aria-live="polite"></div>
       <nav class="rl-pager" id="rlPager" aria-label="페이지 이동"></nav>
     </section>
   </main>
 
-  <!-- 하단탭 -->
+  <!-- 하단탭 (고정) -->
   <footer id="bottom-tabs"></footer>
 
   <!-- Config & UI & Page JS -->
   <script src="js/config.js"></script>
   <script src="js/ui.js?v=2.9.0"></script>
-  <script src="js/recruit-list.js"></script>
+  <script src="js/recruit-list.js?v=1.6.0"></script>
 </body>
 </html>
