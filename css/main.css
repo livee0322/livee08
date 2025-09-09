@@ -297,3 +297,43 @@ img{ max-width:100%; display:block; }
 hr{ border:none; border-top:1px solid var(--line); margin:16px 0; }
 ul,ol{ list-style:none; padding:0; margin:0; }
 :focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+/* --- recruit 카드 내 액션 버튼 라인 --- */
+.card-mini .mini-actions{
+  display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;
+}
+.btn.ghost{ background:#fff; }
+.btn.pri{ background:var(--primary); color:#fff; border-color:transparent; }
+.btn.pri:hover{ filter:brightness(0.98); }
+
+/* --- 공고 지원 모달 --- */
+#applyModal{ position:fixed; inset:0; z-index:1000; display:none; }
+#applyModal.show{ display:block; }
+#applyModal .lv-modal__mask{
+  position:absolute; inset:0; background:rgba(0,0,0,.4);
+}
+#applyModal .lv-modal{
+  position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  width:min(520px,100%); background:#fff; border-radius:16px 16px 0 0;
+  box-shadow:0 -16px 40px rgba(0,0,0,.25); max-height:85vh; overflow:auto;
+}
+#applyModal .lv-modal__head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid var(--line);
+}
+#applyModal .lv-modal__head .x{
+  width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:#fff;
+}
+#applyModal .lv-modal__body{ padding:14px 16px; display:grid; gap:10px; }
+#applyModal .lv-modal__body .label{ font-weight:800; }
+#applyModal .lv-modal__foot{ padding:12px 16px; display:flex; gap:8px; justify-content:flex-end; border-top:1px solid var(--line); }
+#applyModal .input{
+  width:100%; height:44px; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; font:inherit;
+}
+#applyModal textarea.input{ min-height:120px; resize:vertical; }
+#applyModal .hint{ font-size:12px; color:#6b7280; }
+#applyModal .warn{
+  background:#f8fafc; border:1px solid #e2e8f0; color:#0f172a;
+  padding:10px 12px; border-radius:12px; line-height:1.5;
+}
+#applyModal .warn b{ color:#8b5cf6; }
