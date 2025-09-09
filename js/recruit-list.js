@@ -188,22 +188,25 @@
     `;
   }
 
-  function adHTML(ad) {
-    const thumb = pickThumb(ad);
-    const fee = feeText(ad.pay ?? ad.fee, ad.payNegotiable ?? ad.feeNegotiable);
-    return `
-      <article class="adcard">
+ function adHTML(ad){
+  const thumb = pickThumb(ad);
+  const fee = (ad.pay ?? ad.fee);
+  const nego = (ad.payNegotiable ?? ad.feeNegotiable);
+  return `
+    <article class="card ad">
+      <div class="card-head">
+        <img class="thumb" src="${thumb}" alt="">
         <span class="ad-badge">AD</span>
-        <img class="ad-thumb" src="${thumb}" alt="">
-        <div class="ad-copy">
-          <div class="ad-title">${ad.title || '스폰서 공고'}</div>
-          <div class="ad-meta">${ad.brandName || '브랜드'} · ${fee} · 마감 ${fmt(ad.closeAt)}</div>
-        </div>
-        <div class="ad-cta">
-          <a class="btn small pri" href="recruit-detail.html?id=${encodeURIComponent(ad.id || ad._id)}">바로 보기</a>
-        </div>
-      </article>
-    `;
+      </div>
+      <div class="title">${ad.title || '스폰서 공고'}</div>
+      <div class="meta">${ad.brandName || '브랜드'} · ${nego ? '협의' : (fee!=null ? (Number(fee).toLocaleString('ko-KR')+'원') : '출연료 미정')} · 마감 ${fmt(ad.closeAt)}</div>
+      <div class="actions">
+        <a class="btn small pri" href="recruit-detail.html?id=${encodeURIComponent(ad.id||ad._id)}">
+          <i class="ri-external-link-line"></i> 바로 보기
+        </a>
+      </div>
+    </article>
+  `;
   }
 
   function renderChips() {
