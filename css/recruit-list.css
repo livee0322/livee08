@@ -27,7 +27,7 @@ body{color:var(--ink);background:#fff;font-family:'SUIT','Apple SD Gothic Neo',s
 .rl-search input{flex:1;border:0;outline:none;font-size:15px}
 
 /* 레이아웃 */
-.rl-wrap{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:14px 0 24px}
+.rl-wrap{display:grid;grid-template-columns:300px 1fr;gap:18px;padding:14px 0 24px}
 /* 하단탭에 가리지 않도록 패딩 */
 .rl-content{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
 
@@ -41,20 +41,24 @@ body{color:var(--ink);background:#fff;font-family:'SUIT','Apple SD Gothic Neo',s
 .fblock.actions{display:flex;gap:8px}
 
 /* 리스트/카드 */
-.rl-list{display:grid;gap:14px}
-.rl-card{display:grid;grid-template-columns:220px 1fr;gap:14px;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
-.rl-thumb{width:100%;aspect-ratio:16/10;border-radius:12px;object-fit:cover;background:#f3f4f6}
-.rl-meta{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
-.badge{display:inline-flex;gap:4px;align-items:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:900}
+.rl-list{display:grid;gap:18px}
+.rl-card{
+  display:grid;grid-template-columns:220px 1fr;gap:16px;
+  border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;
+  box-shadow:0 1px 0 rgba(2,6,23,.03);
+}
+.rl-thumb{width:100%;aspect-ratio:16/10;border-radius:14px;object-fit:cover;background:#f3f4f6}
+.rl-meta{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px;flex-wrap:nowrap}
+.badge{display:inline-flex;gap:4px;align-items:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
 .badge.ok{background:#dcfce7;color:var(--ok)}
 .badge.hold{background:#eef2ff;color:var(--hold)}
 .badge.wait{background:#f1f5f9;color:#334155}
 .badge.no{background:#f3f4f6;color:#334155}
-.rl-title{font-size:17px;font-weight:900;line-height:1.35;margin:2px 0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rl-title{font-size:18px;font-weight:900;line-height:1.35;margin:4px 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rl-summary{color:var(--muted);font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rl-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.rl-rowtop{display:flex;gap:8px;align-items:center;justify-content:space-between}
-.rl-rowbtm{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:6px}
+.rl-actions{display:flex;gap:8px;flex-wrap:wrap}
+.rl-rowtop{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.rl-rowbtm{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}
 
 .bmark{border:1px solid var(--line);background:#fff;border-radius:50%;width:38px;height:38px;display:inline-grid;place-items:center}
 .bmark.active{background:#fff7ed;border-color:#fdba74;color:#f97316}
@@ -81,16 +85,19 @@ body{color:var(--ink);background:#fff;font-family:'SUIT','Apple SD Gothic Neo',s
   .fheadbar{display:flex}
   .rl-dim{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:59;opacity:0;transition:opacity .2s ease}
   .rl-dim.on{opacity:1}
-  /* 카드 단일 열 */
+
+  /* 카드: 단일열 + 액션을 하단으로 */
   .rl-card{grid-template-columns:1fr}
   .rl-thumb{aspect-ratio:16/9}
-  .rl-toolbar{top:0}
+  .rl-rowtop{align-items:flex-start}
+  .rl-actions .btn{padding:.5rem .7rem}
+  .bmark{width:36px;height:36px}
 }
 
 /* 초소형 보정 */
 @media (max-width: 420px){
   .btn{padding:.5rem .7rem}
-  .bmark{width:36px;height:36px}
+  .rl-title{font-size:17px}
 }
 
 /* 스크롤락 (드로어 열릴 때) */
