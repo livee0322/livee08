@@ -1,4 +1,4 @@
-/* recruit-list.css — v1.2.1 */
+/* recruit-list.css — v1.3.0 */
 :root{
   --side: 16px;
   --card-radius: 16px;
@@ -10,19 +10,45 @@
 body{background:#fff;}
 .rl-page{padding:16px var(--side) calc(88px + env(safe-area-inset-bottom));max-width:980px;margin:0 auto}
 
-/* header */
+/* head */
 .rl-head{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:6px 2px 12px}
 .rl-head h1{font-size:28px;line-height:1.1;margin:0;font-weight:900}
 .rl-head .sort{display:flex;align-items:center;gap:8px}
 .rl-head select{height:40px;border:1px solid var(--border);border-radius:10px;padding:0 10px;background:#fff}
 
-/* search / toolbar */
+/* toolbar */
 .rl-toolbar{display:flex;gap:10px;margin:8px 0 14px}
-.rl-toolbar .search{flex:1;display:flex;align-items:center;border:1px solid var(--border);border-radius:14px;padding:0 12px;height:48px;background:#fff}
-.rl-toolbar .search input{border:0;outline:0;width:100%;font-size:16px}
-.rl-toolbar .btn{height:48px}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;font-weight:800}
+/* premium search pill */
+.rl-toolbar .search{
+  position:relative; flex:1; height:52px; border-radius:14px; background:#fff;
+  border:1px solid transparent;
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    linear-gradient(180deg,#eef2f7,#dde6f1) border-box;
+  box-shadow:0 6px 18px rgba(15,23,42,.06);
+}
+.rl-toolbar .search i.lead{
+  position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:18px; color:#94a3b8;
+  pointer-events:none;
+}
+.rl-toolbar .search input{
+  width:100%; height:100%; border:0; outline:0; padding:0 50px 0 44px; background:transparent;
+  font-size:16px; color:#0f172a;
+}
+.rl-toolbar .search input::placeholder{ color:#94a3b8 }
+.rl-toolbar .search .sgo{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:36px; height:36px; border-radius:10px; border:1px solid var(--border); background:#fff;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.rl-toolbar .search .sgo i{ font-size:18px; color:#334155 }
+.rl-toolbar .search:focus-within{
+  box-shadow:0 0 0 4px rgba(79,70,229,.10), 0 8px 22px rgba(15,23,42,.08);
+}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;font-weight:800;white-space:nowrap}
 .btn.small{padding:8px 12px;border-radius:12px}
 .btn.icon i{font-size:18px}
 .btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -34,7 +60,6 @@ body{background:#fff;}
 .chip .x{border:0;background:#eef2ff;border-radius:999px;width:22px;height:22px;cursor:pointer}
 
 /* ad card */
-#adWrap{}
 .adcard{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;border:1px dashed #c7d2fe;background:#eef2ff;border-radius:18px;padding:14px}
 .ad-thumb{width:72px;height:72px;border-radius:12px;object-fit:cover;background:#f3f4f6}
 .ad-title{font-weight:900}
@@ -42,7 +67,7 @@ body{background:#fff;}
 .ad-badge{border:1px solid #c7d2fe;background:#e0e7ff;color:#3730a3;border-radius:999px;padding:6px 18px;font-weight:900}
 .ad-cta .btn{white-space:nowrap}
 
-/* list */
+/* list cards */
 #rlList{display:flex;flex-direction:column;gap:16px;margin-top:12px}
 .card{border:1px solid var(--border);border-radius:18px;background:#fff;padding:14px;box-shadow:0 1px 0 rgba(15,23,42,.02)}
 .card-head{margin:-6px -6px 10px}
@@ -51,9 +76,14 @@ body{background:#fff;}
 .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:#fff;font-size:12px}
 .badge.ok{border-color:#c7f0d7;background:#eafaf1;color:#065f46}
 .title{font-weight:900;font-size:18px;margin:6px 2px}
-.summary{color:var(--muted);margin:0 2px 8px}
+.summary{color:var(--muted);margin:0 2px 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .meta{color:var(--muted);font-size:13px;margin:0 2px 12px}
-.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+/* actions: 줄바꿈 방지 + 아이콘 북마크 */
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:nowrap}
+.actions .btn{flex:0 0 auto}
+.btn.icon-only{width:44px; padding:0; border-radius:12px}
+.btn.icon-only i{font-size:20px}
 
 /* skeleton */
 .card.skeleton{position:relative;overflow:hidden}
