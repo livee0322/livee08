@@ -11,7 +11,7 @@
 html,body{background:#fff;color:#0f172a}
 *{box-sizing:border-box}
 
-.rl-page{padding:16px var(--side) 88px;max-width:980px;margin:0 auto}
+..rl-page{padding:16px var(--side) calc(88px + env(safe-area-inset-bottom));max-width:980px;margin:0 auto}
 .rl-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:4px 0 10px}
 .rl-head h1{font-size:28px;letter-spacing:-.3px;margin:0}
 .rl-head .right{display:flex;gap:10px;align-items:center}
