@@ -1,4 +1,5 @@
-/* Applications (Brand) — v1.1.0 (mine 필터+MSG fix+safe count) */
+
+/* Applications (Brand) — v1.2.1 (retry + per-section reload + safe count) */
 (function () {
   'use strict';
 
@@ -32,6 +33,12 @@
 
   const parseItems = (j)=> Array.isArray(j) ? j : (j.items || (j.data && (j.data.items || j.data.docs)) || j.docs || []);
 
+  // --- small retry helper (GET 전용) ---
+  async function getJSONRetry(url, retry=1){
+    try{ return await getJSON(url); }
+    catch(e){ if(retry>0){ await new Promise(r=>setTimeout(r,700)); return getJSONRetry(url, retry-1); } throw e; }
+  }
+
   // -------- auth guard --------
   function guard() {
     if (!TOKEN) {
@@ -59,7 +66,7 @@
   async function fetchMyRecruits() {
     // 1) mine=1
     try{
-      const j = await getJSON(API_BASE + '/recruit-test?mine=1&limit=50');
+      const j = await getJSONRetry(API_BASE + '/recruit-test?mine=1&limit=50');
       const it = parseItems(j);
       if (Array.isArray(it) && it.length) return it;
     }catch(_){}
@@ -68,7 +75,7 @@
     try{
       const me = await getMe();
       const meId = me && (me.id || me._id || me.userId);
-      const j = await getJSON(API_BASE + '/recruit-test?limit=50');
+      const j = await getJSONRetry(API_BASE + '/recruit-test?limit=50');
       const all = parseItems(j);
       if (!meId) return all;
       return all.filter(r =>
@@ -82,21 +89,19 @@
 
   async function fetchApplications(recruitId) {
     try{
-      const j = await getJSON(API_BASE + '/applications-test?recruitId=' + encodeURIComponent(recruitId) + '&limit=100');
-      return parseItems(j);
+      const j = await getJSONRetry(API_BASE + '/applications-test?recruitId=' + encodeURIComponent(recruitId) + '&limit=100', 1);
+      return parseItems(j);                 // ok → 배열
     }catch(e){
-      console.warn('[apps:list]', recruitId, e);
-      return [];
+      console.warn('[apps:list failed]', recruitId, e);
+      return null;                          // 실패 → null (구분용)
     }
   }
 
   async function fetchAppCount(recruitId){
     try{
-      const j = await getJSON(API_BASE + '/applications-test/count?recruitId=' + encodeURIComponent(recruitId));
+      const j = await getJSONRetry(API_BASE + '/applications-test/count?recruitId=' + encodeURIComponent(recruitId), 1);
       return (j.data && j.data.total) || 0;
-    }catch(_){
-      return 0;
-    }
+    }catch(_){ return 0; }
   }
 
   // -------- templates --------
@@ -131,14 +136,30 @@
     `;
   }
 
+  function failedListBlock(count, recId){
+    // 실패했지만 카운트는 있을 때 보여줄 UI
+    return `
+      <div class="app-empty">
+        지원자 ${Number(count)||0}명이 확인되었으나 목록을 불러오지 못했습니다.<br>
+        <button class="btn-chip" data-retry="${recId}"><i class="ri-refresh-line"></i> 다시 시도</button>
+      </div>`;
+  }
+
   function recruitBlock(r, apps, count){
     const thumb = r.mainThumbnailUrl || r.thumbnailUrl || FALLBACK_IMG;
     const title = text(coalesce(r.title, r.recruit && r.recruit.title, '제목 없음'));
     const brand = text(coalesce(r.brandName, r.brand && r.brand.name, '브랜드'));
     const fee = feeText(coalesce(r.fee, r.pay), r.feeNegotiable || r.payNegotiable);
-    const list = (apps && apps.length)
-      ? apps.map(applicantCard).join('')
-      : `<div class="app-empty">아직 지원자가 없습니다.</div>`;
+
+    let listHtml = '';
+    if (apps === null && Number(count) > 0) {
+      listHtml = failedListBlock(count, (r.id||r._id));
+    } else if (apps && apps.length) {
+      listHtml = apps.map(applicantCard).join('');
+    } else {
+      listHtml = `<div class="app-empty">아직 지원자가 없습니다.</div>`;
+    }
+
     return html`
       <section class="rec-card" data-rec="${r.id||r._id}">
         <div class="rec-head">
@@ -151,7 +172,7 @@
           <div class="rec-count"><i class="ri-team-line"></i> ${Number.isFinite(count)?count:(apps?.length||0)}명</div>
         </div>
         <hr class="sep">
-        <div class="app-list">${list}</div>
+        <div class="app-list">${listHtml}</div>
       </section>
     `;
   }
@@ -215,13 +236,9 @@
 
       let offer = null;
       try{
-        // 1) application 상태 변경(accepted)
         try{ await patchJSON(API_BASE + '/applications-test/' + (app.id||app._id), { status:'accepted' }); }catch(_){}
-        // 2) 오퍼 생성(서버 준비 전이면 실패해도 UX 진행)
         offer = await postJSON(API_BASE + '/offers-test', payload);
-      }catch(e){
-        console.warn('[offer create]', e);
-      }
+      }catch(e){ console.warn('[offer create]', e); }
 
       openPaymentSheet(offer, fee, app, recruit);
       close();
@@ -274,24 +291,47 @@
       }
     });
 
-    // 서버 결제 생성 시도(가능하면)
     (async ()=>{
       try{
         if (!offer?.id){
           const body = { offerId: (offer?.id||'offer_tmp'), method:'bank_transfer', amount:Number(offer?.amount)||Number(fee)||0,
-            bt:{ bank:'KB', account:'1234-5678-8888', holder:'라이비', reference: ref }, dueAt: due.toISOString() };
+            bt:{ bank:'KB', account:'1234-5678-8888', holder:'라이비', reference: ref }, dueAt: new Date(Date.now()+24*60*60*1000).toISOString() };
           await postJSON(API_BASE + '/payments-test', body);
         }
       }catch(e){ console.warn('[payment create]', e); }
     })();
   }
 
-  // -------- actions binding --------
+  // -------- per-section actions & retry --------
+  async function reloadSection(sec, recruit){
+    const recId = recruit.id || recruit._id;
+    const [apps, count] = await Promise.all([
+      fetchApplications(recId),
+      fetchAppCount(recId)
+    ]);
+    $('.app-list', sec).innerHTML =
+      (apps === null && count>0)
+        ? failedListBlock(count, recId)
+        : ((apps && apps.length) ? apps.map(applicantCard).join('') : '<div class="app-empty">아직 지원자가 없습니다.</div>');
+    $('.rec-count', sec).innerHTML = `<i class="ri-team-line"></i> ${Number.isFinite(count)?count:(Array.isArray(apps)?apps.length:0)}명`;
+  }
+
   function bindActions(root, recruit){
     on(root,'click', async (e)=>{
-      const card = e.target.closest('.app-card'); if(!card) return;
-      const appId = card.getAttribute('data-app');
-      const actBtn = e.target.closest('[data-act]'); if(!actBtn) return;
+      const sec   = e.target.closest('.rec-card');
+      const card  = e.target.closest('.app-card');
+      const recId = sec?.getAttribute('data-rec');
+      const appId = card?.getAttribute('data-app');
+
+      // 재시도 버튼
+      if (e.target.matches('[data-retry]')){
+        e.target.disabled = true;
+        e.target.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> 불러오는 중';
+        await reloadSection(sec, recruit);
+        return;
+      }
+
+      const actBtn = e.target.closest('[data-act]'); if(!actBtn || !card) return;
       const act = actBtn.getAttribute('data-act');
 
       const findApp = ()=> {
@@ -354,7 +394,7 @@
 
       root.innerHTML = recs.map((r,idx)=> recruitBlock(r, lists[idx], counts[idx])).join('');
 
-      // 액션 바인딩
+      // 액션 & 재시도 바인딩
       root.querySelectorAll('.rec-card').forEach((sec, i)=>{
         bindActions(sec, recs[i]);
       });
