@@ -1,4 +1,4 @@
-/* Applications (Brand) — v1.0.3 */
+/* Applications (Brand) — v1.1.0 (mine 필터+MSG fix+safe count) */
 (function () {
   'use strict';
 
@@ -23,6 +23,7 @@
   const money = (v) => (v == null ? '' : Number(v).toLocaleString('ko-KR'));
   const text  = (v) => (v == null ? '' : String(v).trim());
   const coalesce = (...a) => a.find(v => v !== undefined && v !== null && v !== '');
+  const sameId = (a,b)=> a && b && String(a)===String(b);
 
   const HJSON = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
   async function getJSON(url, headers){ const r=await fetch(url,{headers:headers||HJSON(false)}); let j=null; try{ j=await r.json(); }catch{} if(!r.ok||(j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
@@ -41,18 +42,41 @@
     return true;
   }
 
+  // -------- me --------
+  async function getMe(){
+    if(!TOKEN) return null;
+    const eps = ['/auth/me','/users/me','/me'];
+    for(const ep of eps){
+      try{
+        const j = await getJSON(API_BASE + ep);
+        return j.data || j.user || j;
+      }catch(_){}
+    }
+    try{ return JSON.parse(localStorage.getItem('livee_user')||'null'); }catch{ return null; }
+  }
+
   // -------- fetchers --------
   async function fetchMyRecruits() {
     // 1) mine=1
     try{
       const j = await getJSON(API_BASE + '/recruit-test?mine=1&limit=50');
       const it = parseItems(j);
-      if (Array.isArray(it)) return it;
+      if (Array.isArray(it) && it.length) return it;
     }catch(_){}
-    // 2) fallback: 내가 만든 최근 공고
+
+    // 2) fallback: 전체 → 내 것만 필터
     try{
+      const me = await getMe();
+      const meId = me && (me.id || me._id || me.userId);
       const j = await getJSON(API_BASE + '/recruit-test?limit=50');
-      return parseItems(j);
+      const all = parseItems(j);
+      if (!meId) return all;
+      return all.filter(r =>
+        sameId(r.createdBy, meId) ||
+        sameId(r.ownerId,   meId) ||
+        sameId(r.userId,    meId) ||
+        sameId(r.brand && r.brand.ownerId, meId)
+      );
     }catch(_){ return []; }
   }
 
@@ -60,11 +84,24 @@
     try{
       const j = await getJSON(API_BASE + '/applications-test?recruitId=' + encodeURIComponent(recruitId) + '&limit=100');
       return parseItems(j);
-    }catch(_){ return []; }
+    }catch(e){
+      console.warn('[apps:list]', recruitId, e);
+      return [];
+    }
+  }
+
+  async function fetchAppCount(recruitId){
+    try{
+      const j = await getJSON(API_BASE + '/applications-test/count?recruitId=' + encodeURIComponent(recruitId));
+      return (j.data && j.data.total) || 0;
+    }catch(_){
+      return 0;
+    }
   }
 
   // -------- templates --------
   const feeText = (fee, nego) => (nego ? '협의' : (fee != null ? (money(fee) + '원') : '출연료 미정'));
+
   function applicantCard(a){
     const p = a.portfolio || a.applicant || {};
     const thumb = p.mainThumbnailUrl || p.thumbnailUrl || (Array.isArray(p.subThumbnails) && p.subThumbnails[0]) || FALLBACK_IMG;
@@ -77,7 +114,7 @@
       return '<span class="badge wait"><i class="ri-inbox-line"></i> 검토중</span>';
     };
     return html`
-      <article class="app-card" data-app="${a.id||a._id}">
+      <article class="app-card" data-app="${a.id||a._id}" data-portfolio="${p.id||p._id||''}">
         <img class="app-ava" src="${thumb}" alt="">
         <div class="app-info">
           <div class="app-name">${name} ${badge(a.status)}</div>
@@ -94,7 +131,7 @@
     `;
   }
 
-  function recruitBlock(r, apps){
+  function recruitBlock(r, apps, count){
     const thumb = r.mainThumbnailUrl || r.thumbnailUrl || FALLBACK_IMG;
     const title = text(coalesce(r.title, r.recruit && r.recruit.title, '제목 없음'));
     const brand = text(coalesce(r.brandName, r.brand && r.brand.name, '브랜드'));
@@ -111,7 +148,7 @@
             <div class="rec-title">${title}</div>
             <div class="rec-meta">마감 ${fmtDate(r.closeAt)} · ${fee}</div>
           </div>
-          <div class="rec-count"><i class="ri-team-line"></i> ${apps?.length||0}명</div>
+          <div class="rec-count"><i class="ri-team-line"></i> ${Number.isFinite(count)?count:(apps?.length||0)}명</div>
         </div>
         <hr class="sep">
         <div class="app-list">${list}</div>
@@ -176,17 +213,16 @@
         acceptTerms: true
       };
 
-      let offer = null, payment = null;
+      let offer = null;
       try{
         // 1) application 상태 변경(accepted)
         try{ await patchJSON(API_BASE + '/applications-test/' + (app.id||app._id), { status:'accepted' }); }catch(_){}
-        // 2) 오퍼 생성
+        // 2) 오퍼 생성(서버 준비 전이면 실패해도 UX 진행)
         offer = await postJSON(API_BASE + '/offers-test', payload);
       }catch(e){
         console.warn('[offer create]', e);
       }
 
-      // 결제 시트 열기 (오퍼가 없어도 UX는 이어감)
       openPaymentSheet(offer, fee, app, recruit);
       close();
     });
@@ -259,18 +295,19 @@
       const act = actBtn.getAttribute('data-act');
 
       const findApp = ()=> {
-        const p = { id: appId };
-        // 최소 정보만 DOM에서 회수
         const nickname = $('.app-name',card)?.textContent.replace(/(선정|보류|거절|검토중).*/,'').trim();
         const headline = $('.app-head',card)?.textContent.trim();
         const ava = $('.app-ava',card)?.getAttribute('src');
-        return { id: appId, portfolio:{ nickname, headline, mainThumbnailUrl: ava } };
+        const portfolioId = card.getAttribute('data-portfolio') || '';
+        return { id: appId, portfolio:{ id: portfolioId, nickname, headline, mainThumbnailUrl: ava } };
       };
       const app = findApp();
 
       try{
         if (act === 'msg'){
-          location.href = 'outbox-proposals.html?to=' + encodeURIComponent(app.portfolioId || '');
+          const toId = app.portfolio.id;
+          if (!toId) { alert('포트폴리오 ID를 찾을 수 없습니다.'); return; }
+          location.href = 'outbox-proposals.html?to=' + encodeURIComponent(toId);
           return;
         }
         if (act === 'reject'){
@@ -309,10 +346,13 @@
         return;
       }
 
-      // 각 공고별 지원자 병렬 로드
-      const lists = await Promise.all(recs.map(r => fetchApplications(r.id||r._id)));
+      // 각 공고별 지원자/카운트 병렬 로드
+      const [lists, counts] = await Promise.all([
+        Promise.all(recs.map(r => fetchApplications(r.id||r._id))),
+        Promise.all(recs.map(r => fetchAppCount(r.id||r._id)))
+      ]);
 
-      root.innerHTML = recs.map((r,idx)=> recruitBlock(r, lists[idx])).join('');
+      root.innerHTML = recs.map((r,idx)=> recruitBlock(r, lists[idx], counts[idx])).join('');
 
       // 액션 바인딩
       root.querySelectorAll('.rec-card').forEach((sec, i)=>{
