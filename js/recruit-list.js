@@ -1,36 +1,49 @@
-/* recruit-list.js — 리스트/필터/페이지/AD + 북마크 + 지원버튼 */
+/* recruit-list.js — v1.3.0
+ * 리스트/필터/페이지/AD + 북마크 + 지원버튼
+ * - API_BASE(ui.js) 사용, /recruit-test 실패 시 /recruit 폴백 ★
+ * - 정렬 맵핑, status=published 기본 추가 ★
+ * - AbortController로 레이스 방지 ★
+ */
 (function(){
   'use strict';
 
   // ---- helpers ----
-  const $ = (s, el=document)=>el.querySelector(s);
+  const $  = (s, el=document)=>el.querySelector(s);
   const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/,'');
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
   const HJSON = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
-  async function getJSON(url){ const r=await fetch(url,{headers:HJSON(false)}); let j=null; try{ j=await r.json(); }catch{} if(!r.ok||(j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
+  async function getJSON(url, signal){ const r=await fetch(url,{headers:HJSON(false), signal}); let j=null; try{ j=await r.json(); }catch{} if(!r.ok||(j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
   const parseItems = (j)=> Array.isArray(j)?j : (j.items || (j.data&&(j.data.items||j.data.docs)) || j.docs || []);
-  const readTotal  = (j)=> (j.total || (j.data&&j.data.total) || (j.data&&j.data.count) || 0);
+  const readTotal  = (j)=> (j.total ?? (j.data&&j.data.total) ?? (j.data&&j.data.count) ?? (Array.isArray(parseItems(j))?parseItems(j).length:0));
   const money = n => (n==null?'':Number(n).toLocaleString('ko-KR'));
-  const fmt = (iso)=>{ if(!iso) return '미정'; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,10); const pad=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
-  const pickThumb = (o)=> o?.mainThumbnailUrl || o?.thumbnailUrl || (Array.isArray(o?.subThumbnails)&&o.subThumbnails[0]) || (o?.coverImageUrl) || 'default.jpg';
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = (iso)=>{ if(!iso) return '미정'; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,10); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+  const strip = (html)=>String(html||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  const pickThumb = (o)=>
+    o?.mainThumbnailUrl || o?.thumbnailUrl ||
+    (Array.isArray(o?.subThumbnails)&&o.subThumbnails[0]) ||
+    o?.coverImageUrl || o?.imageUrl || o?.thumbUrl || 'default.jpg';
+  const getId = (o)=> o?.id || o?._id;
 
   // ---- state ----
+  const qs = new URLSearchParams(location.search);
   const state = {
-    page: Number(new URLSearchParams(location.search).get('page')||1),
+    page: Number(qs.get('page')||1),
     limit: 10,
-    sort: new URLSearchParams(location.search).get('sort') || 'recent',
-    query: new URLSearchParams(location.search).get('query') || '',
+    sort: qs.get('sort') || 'recent', // recent | deadline | popular
+    query: qs.get('query') || '',
     filters: {
-      region: new URLSearchParams(location.search).get('region') || '',
-      district: new URLSearchParams(location.search).get('district') || '',
-      payMin: new URLSearchParams(location.search).get('payMin') || '',
-      payMax: new URLSearchParams(location.search).get('payMax') || '',
-      negotiable: new URLSearchParams(location.search).get('negotiable') || '',
-      closeIn: new URLSearchParams(location.search).get('closeIn') || ''
-    }
+      region: qs.get('region') || '',
+      district: qs.get('district') || '',
+      payMin: qs.get('payMin') || '',
+      payMax: qs.get('payMax') || '',
+      negotiable: qs.get('negotiable') || '',
+      closeIn: qs.get('closeIn') || ''
+    },
+    includeUnpublished: qs.get('all')==='1' // 기본은 published만
   };
 
   // ---- bookmarks (local) ----
@@ -39,13 +52,21 @@
   const saveBM = (set)=> localStorage.setItem(BM_KEY, JSON.stringify([...set]));
   let bm = loadBM();
 
+  // ---- sort mapping ★ ----
+  const sortToServer = (s)=>{
+    if (s==='deadline') return 'closeAt';               // 오름차순
+    if (s==='popular') return '-applicationsCount';     // 내림차순 가정
+    return '-createdAt';                                // recent: 최신순
+  };
+
   // ---- query build ----
   function buildQuery(){
     const p = new URLSearchParams();
     p.set('limit', state.limit);
     p.set('skip', (state.page-1)*state.limit);
-    p.set('sort', state.sort);
+    p.set('sort', sortToServer(state.sort));
     if(state.query) p.set('query', state.query);
+    if(!state.includeUnpublished) p.set('status','published'); // ★ 기본
     const f = state.filters;
     if(f.region) p.set('region', f.region);
     if(f.district) p.set('district', f.district);
@@ -56,18 +77,22 @@
     return p.toString();
   }
 
-  // ---- fetch ----
-  async function fetchRecruits(){
+  // ---- fetch (with -test → prod fallback) ★ ----
+  async function fetchRecruits(signal){
     const qs = buildQuery();
-    const url = `${API_BASE}/recruit-test?${qs}`;
-    const j = await getJSON(url);
-    return {
-      items: parseItems(j),
-      total: readTotal(j)
-    };
+    const urlTest = `${API_BASE}/recruit-test?${qs}`;
+    try{
+      const j = await getJSON(urlTest, signal);
+      return { items: parseItems(j), total: readTotal(j) };
+    }catch(err){
+      // 폴백: 운영 라우트
+      const urlProd = `${API_BASE}/recruit?${qs}`;
+      const j = await getJSON(urlProd, signal);
+      return { items: parseItems(j), total: readTotal(j) };
+    }
   }
 
-  // ---- AD: 등록된 공고에서 1개 선택하여 상단 스폰서로 노출 ----
+  // ---- AD: 조회된 공고에서 1개 선택해 상단 노출 ----
   function pickTopAd(items){
     if(!items || !items.length) return null;
     const idx = Math.floor(Math.random() * items.length);
@@ -77,14 +102,16 @@
   }
 
   // ---- render ----
-  const listEl = $('#rlList');
+  const listEl  = $('#rlList');
   const topAdEl = $('#rlTopAd');
   const pagerEl = $('#rlPager');
   const chipsEl = $('#rlChips');
+  const totalEl = $('#rlTotal');
 
-  function feeText(v, nego){ return (nego ? '협의' : (v!=null ? (money(v)+'원') : '출연료 미정')); }
+  if(!listEl){ console.warn('[recruit-list] mount target not found'); return; }
+
+  const feeText = (v, nego)=> (nego ? '협의' : (v!=null ? (money(v)+'원') : '출연료 미정'));
   function statusBadge(r){
-    // 모집 상태 간단 표시
     const now = Date.now();
     const d = r.closeAt ? new Date(r.closeAt).getTime() : null;
     if(d && d < now) return `<span class="badge">마감</span>`;
@@ -93,23 +120,20 @@
 
   function cardHTML(r){
     const thumb = pickThumb(r);
-    const fee = feeText(r.pay ?? r.fee, r.payNegotiable ?? r.feeNegotiable);
+    const fee   = feeText(r.pay ?? r.fee, r.payNegotiable ?? r.feeNegotiable);
     const title = r.title || '제목 없음';
-    const sum = r.summary || (r.description || r.descriptionText || '요약 정보가 없습니다.');
+    const sum   = strip(r.summary || r.description || r.descriptionText || r.descriptionHTML || '요약 정보가 없습니다.');
     const brand = r.brandName || '브랜드';
-    const bookmarked = bm.has(String(r.id||r._id));
-    const id = r.id || r._id;
+    const id    = getId(r);
+    const bookmarked = bm.has(String(id));
 
     return `
       <article class="card" data-id="${id}">
-        <div class="card-head">
-          <img class="thumb" src="${thumb}" alt="">
-        </div>
+        <div class="card-head"><img class="thumb" src="${thumb}" alt=""></div>
         <div class="badges">${statusBadge(r)} <span class="badge">${brand}</span></div>
         <div class="title">${title}</div>
         <div class="summary">${sum}</div>
         <div class="meta">마감 ${fmt(r.closeAt)} · ${fee}</div>
-
         <div class="actions">
           <button class="btn small icon bm" aria-label="북마크">
             <i class="${bookmarked?'ri-bookmark-fill':'ri-bookmark-line'}"></i> 북마크
@@ -127,7 +151,8 @@
 
   function adHTML(ad){
     const thumb = pickThumb(ad);
-    const fee = feeText(ad.pay ?? ad.fee, ad.payNegotiable ?? ad.feeNegotiable);
+    const fee   = feeText(ad.pay ?? ad.fee, ad.payNegotiable ?? ad.feeNegotiable);
+    const id    = getId(ad);
     return `
       <article class="adcard">
         <span class="ad-badge">AD</span>
@@ -137,7 +162,7 @@
           <div class="ad-meta">${ad.brandName || '브랜드'} · ${fee} · 마감 ${fmt(ad.closeAt)}</div>
         </div>
         <div class="ad-cta">
-          <a class="btn small pri" href="recruit-detail.html?id=${encodeURIComponent(ad.id||ad._id)}">바로 보기</a>
+          <a class="btn small pri" href="recruit-detail.html?id=${encodeURIComponent(id)}">바로 보기</a>
         </div>
       </article>
     `;
@@ -147,12 +172,12 @@
     const f = state.filters;
     const chips=[];
     if(state.query) chips.push(chip('검색', state.query, ()=>{ state.query=''; $('#rlQuery').value=''; load(); }));
-    if(f.region) chips.push(chip('지역', f.region, ()=>{ f.region=''; load(); }));
-    if(f.district) chips.push(chip('구/군', f.district, ()=>{ f.district=''; load(); }));
-    if(f.payMin) chips.push(chip('최소', money(f.payMin), ()=>{ f.payMin=''; load(); }));
-    if(f.payMax) chips.push(chip('최대', money(f.payMax), ()=>{ f.payMax=''; load(); }));
-    if(f.negotiable) chips.push(chip('협의', '포함', ()=>{ f.negotiable=''; load(); }));
-    if(f.closeIn) chips.push(chip('마감', f.closeIn+'일 이내', ()=>{ f.closeIn=''; load(); }));
+    if(f.region)    chips.push(chip('지역', f.region, ()=>{ f.region=''; load(); }));
+    if(f.district)  chips.push(chip('구/군', f.district, ()=>{ f.district=''; load(); }));
+    if(f.payMin)    chips.push(chip('최소', money(f.payMin), ()=>{ f.payMin=''; load(); }));
+    if(f.payMax)    chips.push(chip('최대', money(f.payMax), ()=>{ f.payMax=''; load(); }));
+    if(f.negotiable)chips.push(chip('협의', '포함', ()=>{ f.negotiable=''; load(); }));
+    if(f.closeIn)   chips.push(chip('마감', f.closeIn+'일 이내', ()=>{ f.closeIn=''; load(); }));
 
     if(chips.length){ chipsEl.innerHTML=chips.join(''); chipsEl.hidden=false; }
     else{ chipsEl.hidden=true; chipsEl.innerHTML=''; }
@@ -169,7 +194,8 @@
 
   function renderPager(total){
     const pages = Math.max(1, Math.ceil(total/state.limit));
-    const cur = state.page;
+    const cur = Math.min(Math.max(1, state.page), pages);
+    state.page = cur;
     const btn = (label, page, dis=false, on=false)=> `<button class="pbtn ${on?'on':''}" ${dis?'disabled':''} data-page="${page}">${label}</button>`;
     let html = '';
     html += btn('«', 1, cur===1);
@@ -206,7 +232,6 @@
         const icon = card.querySelector('.bm i');
         if(icon) icon.className = bm.has(key) ? 'ri-bookmark-fill' : 'ri-bookmark-line';
         UI.toast(bm.has(key)?'북마크에 저장':'북마크 해제');
-        // TODO: 서버 동기화가 필요하면 여기서 호출
         return;
       }
       if(e.target.closest('.apply')){
@@ -222,77 +247,101 @@
 
   // ---- filter drawer events ----
   function bindFilters(){
-    $('#rlBtnFilter').onclick = ()=> UI.openDrawer('rlDrawer');
-    $('#rlFilterClose').onclick = ()=> UI.closeDrawer('rlDrawer');
+    const openBtn  = $('#rlBtnFilter');
+    const closeBtn = $('#rlFilterClose');
+    const resetBtn = $('#rlFilterReset');
+    const applyBtn = $('#rlFilterApply');
 
-    $('#rlFilterReset').onclick = ()=>{
+    openBtn  && (openBtn.onclick  = ()=> UI.openDrawer('rlDrawer'));
+    closeBtn && (closeBtn.onclick = ()=> UI.closeDrawer('rlDrawer'));
+
+    resetBtn && (resetBtn.onclick = ()=>{
       state.filters = { region:'',district:'',payMin:'',payMax:'',negotiable:'',closeIn:'' };
-      $('#fRegion').value=''; $('#fDistrict').value=''; $('#fPayMin').value=''; $('#fPayMax').value=''; $('#fNegotiable').checked=false; $('#fCloseIn').value='';
+      $('#fRegion')?.value=''; $('#fDistrict')?.value=''; $('#fPayMin')?.value=''; $('#fPayMax')?.value='';
+      const ng = $('#fNegotiable'); if(ng) ng.checked=false;
+      $('#fCloseIn')?.value='';
       renderChips();
-    };
+    });
 
-    $('#rlFilterApply').onclick = ()=>{
-      state.filters.region = $('#fRegion').value.trim();
-      state.filters.district = $('#fDistrict').value.trim();
-      state.filters.payMin = $('#fPayMin').value.trim();
-      state.filters.payMax = $('#fPayMax').value.trim();
-      state.filters.negotiable = $('#fNegotiable').checked ? 1 : '';
-      state.filters.closeIn = $('#fCloseIn').value;
+    applyBtn && (applyBtn.onclick = ()=>{
+      state.filters.region = $('#fRegion')?.value.trim() || '';
+      state.filters.district = $('#fDistrict')?.value.trim() || '';
+      state.filters.payMin = $('#fPayMin')?.value.trim() || '';
+      state.filters.payMax = $('#fPayMax')?.value.trim() || '';
+      state.filters.negotiable = ($('#fNegotiable')?.checked ? 1 : '');
+      state.filters.closeIn = $('#fCloseIn')?.value || '';
       state.page = 1;
       UI.setQs({ ...state.filters, query:state.query, sort:state.sort, page:state.page });
       UI.closeDrawer('rlDrawer');
       load();
-    };
+    });
   }
 
   function bindToolbar(){
-    $('#rlSort').value = state.sort;
-    $('#rlSort').onchange = ()=>{
-      state.sort = $('#rlSort').value;
-      state.page = 1;
-      UI.setQs({ ...state.filters, query:state.query, sort:state.sort, page:state.page });
-      load();
-    };
+    const sortSel = $('#rlSort');
+    const qInput  = $('#rlQuery');
+    const sBtn    = $('#rlBtnSearch');
 
-    $('#rlQuery').value = state.query;
-    $('#rlBtnSearch').onclick = doSearch;
-    $('#rlQuery').addEventListener('keydown', (e)=>{ if(e.key==='Enter') doSearch(); });
+    if(sortSel){
+      sortSel.value = state.sort;
+      sortSel.onchange = ()=>{
+        state.sort = sortSel.value;
+        state.page = 1;
+        UI.setQs({ ...state.filters, query:state.query, sort:state.sort, page:state.page });
+        load();
+      };
+    }
 
-    function doSearch(){
-      state.query = $('#rlQuery').value.trim();
-      state.page = 1;
-      UI.setQs({ ...state.filters, query:state.query, sort:state.sort, page:state.page });
-      load();
+    if(qInput){
+      qInput.value = state.query;
+      const doSearch = ()=>{
+        state.query = qInput.value.trim();
+        state.page = 1;
+        UI.setQs({ ...state.filters, query:state.query, sort:state.sort, page:state.page });
+        load();
+      };
+      sBtn && (sBtn.onclick = doSearch);
+      qInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') doSearch(); });
     }
   }
 
-  // ---- main loader ----
+  // ---- main loader (Abort race safe) ★ ----
+  let inflight = null;
   async function load(){
     // 스켈레톤
     listEl.innerHTML = `<div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div>`;
     renderChips();
+    totalEl && (totalEl.textContent = '');
+
+    if (inflight) inflight.abort();
+    inflight = new AbortController();
+    const { signal } = inflight;
 
     try{
-      const {items, total} = await fetchRecruits();
-      $('#rlTotal').textContent = `총 ${total}건`;
+      const {items, total} = await fetchRecruits(signal);
+      totalEl && (totalEl.textContent = `총 ${total}건`);
 
       // AD 선택(조회된 공고 중 1개를 스폰서로)
-      const picked = pickTopAd(items);
-      topAdEl.hidden = true;
+      topAdEl && (topAdEl.hidden = true);
       let list = items;
-      if(picked){
+      const picked = pickTopAd(items);
+      if(topAdEl && picked){
         topAdEl.innerHTML = adHTML(picked.ad);
         topAdEl.hidden = false;
         list = picked.rest;
       }
 
       // 렌더
-      listEl.innerHTML = list.map(cardHTML).join('') || `<div class="card"><div class="title">표시할 공고가 없습니다</div><div class="summary">검색어나 필터를 조정해보세요.</div></div>`;
+      listEl.innerHTML = list.map(cardHTML).join('') ||
+        `<div class="card"><div class="title">표시할 공고가 없습니다</div><div class="summary">검색어나 필터를 조정해보세요.</div></div>`;
       renderPager(total);
     }catch(e){
-      console.warn(e);
+      if (e.name === 'AbortError') return;
+      console.warn('[recruit-list] load error', e);
       listEl.innerHTML = `<div class="card"><div class="title">데이터를 불러오지 못했습니다</div><div class="summary">잠시 후 다시 시도해주세요.</div></div>`;
       renderPager(1);
+    }finally{
+      inflight = null;
     }
   }
 
