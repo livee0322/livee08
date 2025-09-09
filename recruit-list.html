@@ -1,88 +1,101 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>내가 등록한 공고 - Livee</title>
+  <title>공고 리스트 - LIVEE</title>
 
-  <!-- 폰트 / 아이콘 -->
+  <!-- 폰트 & 아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
 
-  <!-- 캐시 무력화 -->
-  <script>
-    window.__v = new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,12);
-    document.write(
-      `<link rel="stylesheet" href="css/main.css?v=${window.__v}">`+
-      `<link rel="stylesheet" href="css/recruit-list.css?v=${window.__v}">`
-    );
-  </script>
-  <noscript>
-    <link rel="stylesheet" href="css/main.css?v=manual" />
-    <link rel="stylesheet" href="css/recruit-list.css?v=manual" />
-  </noscript>
+  <!-- 글로벌 스타일(사이트 공통) + 페이지 전용 -->
+  <link rel="stylesheet" href="css/main.css?v=2.9.7" />
+  <link rel="stylesheet" href="css/recruit-list.css" />
+  <meta name="theme-color" content="#ffffff" />
 </head>
 <body>
+  <!-- 상단바 / 상단탭 (ui.js가 렌더) -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
-  <main class="container" role="main" aria-live="polite">
-    <section class="section">
-      <div class="section-head">
-        <h2>내가 등록한 공고</h2>
-        <a class="btn primary" href="recruit-new.html"><i class="ri-add-line"></i> 공고 등록하기</a>
+  <!-- 페이지 헤더 -->
+  <header class="rl-header container">
+    <h1>모든 공고</h1>
+    <div class="rl-head-right">
+      <div id="rlTotal" class="muted">총 0건</div>
+      <select id="rlSort" aria-label="정렬">
+        <option value="newest">최신 등록순</option>
+        <option value="closing">마감 임박순</option>
+        <option value="fee_desc">출연료 높은순</option>
+        <option value="fee_asc">출연료 낮은순</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="rl-toolbar container">
+    <form id="rlSearchForm" class="rl-search" role="search" aria-label="공고 검색">
+      <i class="ri-search-line"></i>
+      <input id="rlQuery" type="search" placeholder="제목·내용·브랜드로 검색" />
+      <button type="submit" class="btn">검색</button>
+    </form>
+    <button id="rlFilterOpen" class="btn ghost only-mobile">
+      <i class="ri-filter-3-line"></i> 필터
+    </button>
+  </div>
+
+  <main class="rl-wrap container">
+    <aside class="rl-filters" id="rlFilters" aria-label="필터">
+      <div class="fblock">
+        <div class="fhead">상태</div>
+        <label><input type="checkbox" name="status" value="open" checked> 모집중</label>
+        <label><input type="checkbox" name="status" value="scheduled"> 예정</label>
+        <label><input type="checkbox" name="status" value="closed"> 마감</label>
       </div>
 
-      <!-- 툴바 -->
-      <div class="toolbar">
-        <div class="chips" id="rlTabs">
-          <button class="chip is-active" data-status="all">전체</button>
-          <button class="chip" data-status="open">모집중</button>
-          <button class="chip" data-status="upcoming">예정</button>
-          <button class="chip" data-status="closed">마감</button>
-          <button class="chip" data-status="draft">임시저장</button>
+      <div class="fblock">
+        <div class="fhead">출연료(원)</div>
+        <div class="row">
+          <input id="minPay" type="number" min="0" step="10000" placeholder="최소" />
+          <span class="dash">–</span>
+          <input id="maxPay" type="number" min="0" step="10000" placeholder="최대" />
         </div>
-        <div class="rl-controls">
-          <input id="rlSearch" type="search" placeholder="제목 검색" class="input" />
-          <select id="rlSort" class="select">
-            <option value="latest">최신순</option>
-            <option value="closeAsc">마감 임박</option>
-            <option value="viewsDesc">조회수↑</option>
-          </select>
+        <label><input id="payNegotiable" type="checkbox"> 협의 포함</label>
+      </div>
+
+      <div class="fblock">
+        <div class="fhead">마감일</div>
+        <div class="row">
+          <input id="fromDate" type="date" /> <span class="dash">–</span>
+          <input id="toDate" type="date" />
         </div>
+        <button id="quick7" class="btn chip" type="button">마감 임박(7일)</button>
       </div>
 
-      <!-- 목록 -->
-      <div id="rlList" class="rl-list"></div>
-
-      <!-- 더보기 -->
-      <div class="more-wrap">
-        <button id="rlMore" class="btn">더 보기</button>
+      <div class="fblock">
+        <div class="fhead">브랜드</div>
+        <input id="brand" type="text" placeholder="브랜드명" />
       </div>
 
-      <!-- 빈상태 -->
-      <div id="rlEmpty" class="empty" hidden>
-        <i class="ri-file-list-3-line"></i>
-        <p>아직 등록한 공고가 없어요.</p>
-        <a class="btn" href="recruit-new.html">공고 등록하기</a>
+      <div class="fblock">
+        <button id="applyFilters" class="btn pri" type="button">적용</button>
+        <button id="resetFilters" class="btn ghost" type="button">초기화</button>
       </div>
+    </aside>
+
+    <section class="rl-content">
+      <div id="chips" class="chips"></div>
+      <div id="rlList" class="rl-list" aria-live="polite"></div>
+      <nav class="rl-pager" id="rlPager" aria-label="페이지 이동"></nav>
     </section>
   </main>
 
+  <!-- 하단탭 (ui.js가 렌더) -->
   <footer id="bottom-tabs"></footer>
 
-  <!-- JS -->
-  <script>
-    document.write(
-      `<script src="js/config.js?v=${window.__v}"><\/script>`+
-      `<script src="js/ui.js?v=${window.__v}"><\/script>`+
-      `<script src="js/recruit-list.js?v=${window.__v}"><\/script>`
-    );
-  </script>
-  <noscript>
-    <script src="js/config.js?v=manual"></script>
-    <script src="js/ui.js?v=manual"></script>
-    <script src="js/recruit-list.js?v=manual"></script>
-  </noscript>
+  <!-- Config & UI & Page JS -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js?v=2.9.0"></script>
+  <script src="js/recruit-list.js"></script>
 </body>
 </html>
