@@ -350,17 +350,20 @@ function pickTopAd(items){
       const { items, total } = await fetchRecruits(signal);
       totalEl && (totalEl.textContent = `총 ${total}건`);
 
-      // AD
-      let list = items;
-      if (topAdEl) {
-        topAdEl.hidden = true;
-        const picked = pickTopAd(items);
-        if (picked) {
-          topAdEl.innerHTML = adHTML(picked.ad);
-          topAdEl.hidden = false;
-          list = picked.rest;
-        }
-      }
+      // AD 선택(조회된 공고 중 1개를 스폰서로) — 2개 미만이면 AD 숨김
+ topAdEl.hidden = true;
+    let list = items;
+      const picked = pickTopAd(items);
+     if (picked) {
+      topAdEl.innerHTML = adHTML(picked.ad);
+        topAdEl.hidden = false;
+     list = picked.rest; // AD로 하나 빼고 나머지 노출
+     }
+
+       // 렌더
+       listEl.innerHTML = list.map(cardHTML).join('') || `<div class="card"><div class="title">표시할 공고가 없습니다</div><div class="summary">검색어나 필터를 조정해보세요.</div></div>`;
+       renderPager(total);
+     }catch(e){
 
       listEl.innerHTML =
         (list && list.length ? list.map(cardHTML).join('') : `<div class="card"><div class="title">표시할 공고가 없습니다</div><div class="summary">검색어나 필터를 조정해보세요.</div></div>`);
