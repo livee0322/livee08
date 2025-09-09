@@ -1,4 +1,4 @@
-/* Recruit List — v1.4.0 (검색/필터/정렬/페이지네이션 + 지원하기 + 북마크 + 모바일 드로어) */
+/* Recruit List — v1.6.0 (반응형/드로어 고정, 스크롤락/하단탭 패딩, 카드 정돈, 검색·필터·정렬·페이지·지원/북마크) */
 (function () {
   'use strict';
 
@@ -71,7 +71,7 @@
     if($('#apply-css')) return;
     const st=document.createElement('style'); st.id='apply-css';
     st.textContent = `
-      .amodal{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.38)}
+      .amodal{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.38)}
       .amodal .sheet{width:100%;max-width:520px;background:#fff;border-radius:16px 16px 0 0;padding:14px;box-shadow:0 -12px 36px rgba(15,23,42,.18)}
       .amodal header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
       .amodal header strong{font-weight:900;font-size:16px}
@@ -167,7 +167,7 @@
       q: state.q || undefined,
       sort: state.sort || 'newest',
       limit: state.limit || 20,
-      skip: ((state.page||1)-1) * (state.limit||20),
+      skip: ((state.page||1) - 1) * (state.limit||20),
       brand: state.brand || undefined,
       from: state.from || undefined,
       to: state.to || undefined,
@@ -280,10 +280,7 @@
     on(root,'click',(e)=>{
       const b = e.target.closest('button[data-page]'); if(!b) return;
       const to = +b.dataset.page;
-      state.page = to;
-      pushQ({ page: state.page });
-      refresh();
-      window.scrollTo({ top:0, behavior:'smooth' });
+      state.page = to; pushQ({ page: state.page }); refresh(); window.scrollTo({ top:0, behavior:'smooth' });
     });
   }
 
@@ -331,40 +328,34 @@
       if(k==='status') state.status=[];
       else if(k==='from_to'){ state.from=''; state.to=''; }
       else state[k]='';
-      state.page=1;
-      pushQ(state);
-      hydrateUI(); refresh();
+      state.page=1; pushQ(state); hydrateUI(); refresh();
     });
   }
 
-  // ---------- filter drawer open/close ----------
+  // ---------- filter drawer ----------
   function openFilters(){
-    const panel = $('#rlFilters'); const dim = $('#rlDim');
-    panel.setAttribute('aria-hidden','false');
-    dim.hidden = false; dim.classList.add('on');
-    document.documentElement.style.overflow='hidden';
+    $('#rlFilters').classList.add('open');
+    const dim = $('#rlDim'); dim.hidden=false; dim.classList.add('on');
+    $('body').classList.add('lock');
     $('#rlFilterOpen').setAttribute('aria-expanded','true');
+    // 포커스 이동
+    setTimeout(()=> $('#rlFilters').focus(), 0);
   }
   function closeFilters(){
-    const panel = $('#rlFilters'); const dim = $('#rlDim');
-    panel.setAttribute('aria-hidden','true');
-    dim.classList.remove('on'); dim.hidden = true;
-    document.documentElement.style.overflow='';
+    $('#rlFilters').classList.remove('open');
+    const dim = $('#rlDim'); dim.classList.remove('on'); dim.hidden = true;
+    $('body').classList.remove('lock');
     $('#rlFilterOpen').setAttribute('aria-expanded','false');
   }
   function ensureFiltersForViewport(){
-    // 데스크톱에서는 패널 항상 열림 상태로 취급(overflow 복원)
     if (window.matchMedia('(max-width: 1024px)').matches) {
-      // 모바일: 기본 닫힘
-      $('#rlFilters').setAttribute('aria-hidden','true');
-      $('#rlDim').classList.remove('on'); $('#rlDim').hidden = true;
-      document.documentElement.style.overflow='';
-      $('#rlFilterOpen').setAttribute('aria-expanded','false');
+      closeFilters(); // 모바일은 기본 닫힘
     } else {
-      // 데스크톱: 드로어 동작 비활성화
-      $('#rlFilters').setAttribute('aria-hidden','false');
+      // 데스크톱: 드로어 형태 비활성(항상 열림처럼 보이게)
+      $('#rlFilters').classList.remove('open');
+      $('#rlFilters').removeAttribute('aria-hidden');
       $('#rlDim').classList.remove('on'); $('#rlDim').hidden = true;
-      document.documentElement.style.overflow='';
+      $('body').classList.remove('lock');
       $('#rlFilterOpen').setAttribute('aria-expanded','false');
     }
   }
@@ -375,12 +366,9 @@
       e.preventDefault();
       Object.assign(state, collectUI());
       pushQ(state); renderChips(); refresh();
-      // 모바일에서 검색/적용 시 드로어 닫기
       if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
     });
-    on($('#rlSort'),'change',()=>{
-      state.sort = $('#rlSort').value; state.page=1; pushQ(state); refresh();
-    });
+    on($('#rlSort'),'change',()=>{ state.sort = $('#rlSort').value; state.page=1; pushQ(state); refresh(); });
     on($('#applyFilters'),'click',()=>{
       Object.assign(state, collectUI()); pushQ(state); renderChips(); refresh();
       if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
@@ -400,12 +388,13 @@
     on($('#rlFilterOpen'),'click',()=> openFilters());
     on($('#rlFilterClose'),'click',()=> closeFilters());
     on($('#rlDim'),'click',()=> closeFilters());
+    on(document,'keydown',(e)=>{ if(e.key==='Escape') closeFilters(); });
 
-    // 브레이크포인트 전환 시 상태 정리
-    window.addEventListener('resize',()=> ensureFiltersForViewport());
+    // 반응형 전환
+    window.addEventListener('resize', ensureFiltersForViewport);
     ensureFiltersForViewport();
 
-    // 브라우저 뒤로가기 대응
+    // URL state 복원
     window.addEventListener('popstate',()=>{ state = readQ(); hydrateUI(); renderChips(); refresh(); });
   }
 
