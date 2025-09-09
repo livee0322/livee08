@@ -122,14 +122,16 @@
     }
   }
 
-  // ---- AD ----
-  function pickTopAd(items) {
-    if (!items || !items.length) return null;
-    const idx = Math.floor(Math.random() * items.length);
-    const ad = { ...items[idx], isAd: true, adLabel: 'AD 스폰서' };
-    const rest = items.filter((_, i) => i !== idx);
-    return { ad, rest };
-  }
+  
+// ---- AD: 등록된 공고에서 1개 선택하여 상단 스폰서로 노출 (아이템 2개 이상일 때만) ----
++  const AD_MIN = 2;
++  function pickTopAd(items){
++    if(!items || items.length < AD_MIN) return null; // 1개면 AD 숨김
++    const idx = Math.floor(Math.random() * items.length);
++    const ad = { ...items[idx], isAd:true, adLabel:'AD 스폰서' };
++    const rest = items.filter((_,i)=> i!==idx);
++    return { ad, rest };
++  }
 
   // ---- render ----
   const listEl = $('#rlList');
