@@ -1,4 +1,4 @@
-/* Recruit List — v1.3.0 (검색/필터/정렬/페이지네이션 + 지원하기 + 북마크) */
+/* Recruit List — v1.4.0 (검색/필터/정렬/페이지네이션 + 지원하기 + 북마크 + 모바일 드로어) */
 (function () {
   'use strict';
 
@@ -40,7 +40,7 @@
   }; }
   function pushQ(obj){ const u = new URL(location.href); Object.entries(obj).forEach(([k,v])=>{ if(v==null||v===''||(Array.isArray(v)&&!v.length)) u.searchParams.delete(k); else { u.searchParams.delete(k); (Array.isArray(v)?v:[v]).forEach(x=>u.searchParams.append(k,x)); } }); history.pushState(null,'',u.toString()); }
 
-  // ---------- bookmarks (server → fallback localStorage) ----------
+  // ---------- bookmarks ----------
   const LS_BM_KEY = 'livee_bookmarks';
   async function loadBookmarks(){
     try{
@@ -58,7 +58,6 @@
     const set = await loadBookmarks();
     if(on) set.add(String(id)); else set.delete(String(id));
     localStorage.setItem(LS_BM_KEY, JSON.stringify([...set]));
-    // 서버 시도(실패 무시)
     try{
       if(!TOKEN) throw 0;
       const base = API_BASE + (EP_BOOKMARKS.startsWith('/')?EP_BOOKMARKS:'/'+EP_BOOKMARKS);
@@ -179,7 +178,6 @@
     (state.status||[]).forEach(v=>{ if(!q.status) q.status=[]; q.status.push(v); });
     return new URLSearchParams(q).toString();
   }
-
   async function fetchRecruits(state){
     try{
       const url = API_BASE + (EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS) + '?' + buildQuery(state);
@@ -241,7 +239,6 @@
         </div>
       </article>`;
   }
-
   function renderList(items, total, page, limit, bookmarks){
     $('#rlTotal').textContent = `총 ${total.toLocaleString('ko-KR')}건`;
     const root = $('#rlList');
@@ -267,7 +264,6 @@
     });
     renderPager(total, page, limit);
   }
-
   function renderPager(total, page, limit){
     const pages = Math.max(1, Math.ceil(total/limit));
     const root = $('#rlPager'); if(!root) return;
@@ -341,26 +337,75 @@
     });
   }
 
+  // ---------- filter drawer open/close ----------
+  function openFilters(){
+    const panel = $('#rlFilters'); const dim = $('#rlDim');
+    panel.setAttribute('aria-hidden','false');
+    dim.hidden = false; dim.classList.add('on');
+    document.documentElement.style.overflow='hidden';
+    $('#rlFilterOpen').setAttribute('aria-expanded','true');
+  }
+  function closeFilters(){
+    const panel = $('#rlFilters'); const dim = $('#rlDim');
+    panel.setAttribute('aria-hidden','true');
+    dim.classList.remove('on'); dim.hidden = true;
+    document.documentElement.style.overflow='';
+    $('#rlFilterOpen').setAttribute('aria-expanded','false');
+  }
+  function ensureFiltersForViewport(){
+    // 데스크톱에서는 패널 항상 열림 상태로 취급(overflow 복원)
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      // 모바일: 기본 닫힘
+      $('#rlFilters').setAttribute('aria-hidden','true');
+      $('#rlDim').classList.remove('on'); $('#rlDim').hidden = true;
+      document.documentElement.style.overflow='';
+      $('#rlFilterOpen').setAttribute('aria-expanded','false');
+    } else {
+      // 데스크톱: 드로어 동작 비활성화
+      $('#rlFilters').setAttribute('aria-hidden','false');
+      $('#rlDim').classList.remove('on'); $('#rlDim').hidden = true;
+      document.documentElement.style.overflow='';
+      $('#rlFilterOpen').setAttribute('aria-expanded','false');
+    }
+  }
+
   // ---------- events ----------
   function bindUI(){
     on($('#rlSearchForm'),'submit',(e)=>{
       e.preventDefault();
       Object.assign(state, collectUI());
       pushQ(state); renderChips(); refresh();
+      // 모바일에서 검색/적용 시 드로어 닫기
+      if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
     });
     on($('#rlSort'),'change',()=>{
       state.sort = $('#rlSort').value; state.page=1; pushQ(state); refresh();
     });
-    on($('#applyFilters'),'click',()=>{ Object.assign(state, collectUI()); pushQ(state); renderChips(); refresh(); });
+    on($('#applyFilters'),'click',()=>{
+      Object.assign(state, collectUI()); pushQ(state); renderChips(); refresh();
+      if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
+    });
     on($('#resetFilters'),'click',()=>{
       state = { q:'', status:['open'], sort:'newest', page:1, limit:20 };
       pushQ(state); hydrateUI(); renderChips(); refresh();
+      if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
     });
     on($('#quick7'),'click',()=>{
       const now=new Date(); const to=new Date(now.getTime()+7*24*3600*1000);
       state.from = ''; state.to = to.toISOString().slice(0,10); state.page=1; pushQ(state); hydrateUI(); renderChips(); refresh();
+      if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
     });
-    on($('#rlFilterOpen'),'click',()=>{ const el=$('#rlFilters'); el.style.display = (getComputedStyle(el).display==='none'?'block':'none'); window.scrollTo({top:0,behavior:'smooth'}); });
+
+    // 드로어 토글
+    on($('#rlFilterOpen'),'click',()=> openFilters());
+    on($('#rlFilterClose'),'click',()=> closeFilters());
+    on($('#rlDim'),'click',()=> closeFilters());
+
+    // 브레이크포인트 전환 시 상태 정리
+    window.addEventListener('resize',()=> ensureFiltersForViewport());
+    ensureFiltersForViewport();
+
+    // 브라우저 뒤로가기 대응
     window.addEventListener('popstate',()=>{ state = readQ(); hydrateUI(); renderChips(); refresh(); });
   }
 
