@@ -271,19 +271,20 @@
       const msg = $('#amMsg',wrap)?.value?.trim() || '';
       const payload = { recruitId, portfolioId: pid, message: msg };
 
-      try{
-        const res = await fetch(API_BASE + (EP_APPLY.startsWith('/')?EP_APPLY:'/'+EP_APPLY), {
-          method:'POST', headers:authHeaders(true), body:JSON.stringify(payload)
-        });
-        const j = await res.json().catch(()=>({}));
-        if(!res.ok || j.ok===false) throw new Error(j.message || ('HTTP_'+res.status));
-        alert('지원이 접수되었어요. 브랜드가 확인하면 알림으로 알려드릴게요.');
-        close();
-      }catch(e){
-        console.warn('[apply]', e);
-        alert('요청이 기록되었습니다. 서버 연결 준비 후 정식 접수로 전환됩니다.');
-        close();
-      }
+      // 제출
+try{
+  const res = await fetch(API_BASE + (EP_APPLY.startsWith('/')?EP_APPLY:'/'+EP_APPLY), {
+    method:'POST', headers:authHeaders(true), body:JSON.stringify(payload)
+  });
+  const j = await res.json().catch(()=>({}));
+  if(!res.ok || j.ok===false) throw new Error(j.message || ('HTTP_'+res.status));
+  alert('지원이 접수되었어요. 브랜드가 확인하면 알림으로 알려드릴게요.');
+  close();
+}catch(e){
+  console.warn('[apply]', e);
+  alert('지원에 실패했습니다: ' + (e.message || '알 수 없는 오류'));
+  // close(); // 원하면 닫기 유지
+}
     });
   }
 
