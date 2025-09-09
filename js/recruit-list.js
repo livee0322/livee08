@@ -1,4 +1,4 @@
-/* Recruit List — v1.6.0 (반응형/드로어 고정, 스크롤락/하단탭 패딩, 카드 정돈, 검색·필터·정렬·페이지·지원/북마크) */
+/* Recruit List — v1.7.0 (모바일 카드 재배치, 버튼 정렬/여백 개선) */
 (function () {
   'use strict';
 
@@ -29,7 +29,6 @@
 
   async function getJSON(url, headers){ const r=await fetch(url,{headers:headers||HJSON(false)}); let j=null; try{ j=await r.json(); }catch{} if(!r.ok||(j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
   async function postJSON(url, body){ const r=await fetch(url,{method:'POST',headers:HJSON(true),body:JSON.stringify(body)}); let j=null; try{ j=await r.json(); }catch{} if(!r.ok||(j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
-  async function patchJSON(url, body){ const r=await fetch(url,{method:'PATCH',headers:HJSON(true),body:JSON.stringify(body)}); let j=null; try{ j=await r.json(); }catch{} if(!r.ok||(j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
   const parseItems = (j)=> Array.isArray(j) ? j : (j.items || (j.data && (j.data.items || j.data.docs)) || j.docs || []);
 
   // ---------- URL state ----------
@@ -66,7 +65,7 @@
     }catch(_){}
   }
 
-  // ---------- Apply modal ----------
+  // ---------- Apply modal (동일) ----------
   function ensureApplyCSS(){
     if($('#apply-css')) return;
     const st=document.createElement('style'); st.id='apply-css';
@@ -89,11 +88,7 @@
     `;
     document.head.appendChild(st);
   }
-  async function getMe(){
-    if(!TOKEN) return null;
-    const eps=['/auth/me','/users/me','/me'];
-    for(const ep of eps){ try{ const j=await getJSON(API_BASE+ep); return j.data||j.user||j; }catch(_){}} return null;
-  }
+  async function getMe(){ if(!TOKEN) return null; const eps=['/auth/me','/users/me','/me']; for(const ep of eps){ try{ const j=await getJSON(API_BASE+ep); return j.data||j.user||j; }catch(_){}} return null; }
   async function fetchMyPortfolios(){
     if(!TOKEN) return [];
     const tryFetch = async (p)=>{ try{ const j=await getJSON(API_BASE+p,HJSON(false)); const it=parseItems(j); return Array.isArray(it)?it:[]; }catch(_){ return []; } };
@@ -126,8 +121,7 @@
 
     (async ()=>{
       if(!TOKEN){ alert('로그인 후 이용 가능합니다.'); location.href='login.html?returnTo='+encodeURIComponent(location.pathname+location.search); close(); return; }
-      let items=[];
-      try{ items = await fetchMyPortfolios(); }catch(_){}
+      let items=[]; try{ items = await fetchMyPortfolios(); }catch(_){}
       if(items.length){
         $('#amList',wrap).innerHTML = items.map((p,i)=>`
           <label class="prow"><input type="radio" name="amP" value="${p.id||p._id}" ${i===0?'checked':''}>
@@ -213,6 +207,7 @@
     if(s.includes('closed')||s.includes('end')||s.includes('done')) return '<span class="badge no" aria-label="마감"><i class="ri-close-line"></i> 마감</span>';
     return '<span class="badge wait" aria-label="검토중"><i class="ri-inbox-line"></i> 검토중</span>';
   }
+  // ▶ 액션 버튼을 하단으로 이동해 모바일에서 절대 겹치지 않게 구성
   function cardTpl(r, bookmarked){
     return html`
       <article class="rl-card" data-id="${r.id}">
@@ -223,6 +218,11 @@
               ${statusBadge(r.status)}
               <span>${r.brandName}</span>
             </div>
+          </div>
+          <div class="rl-title">${r.title}</div>
+          <div class="rl-summary">${r.summary || '요약 정보가 없습니다.'}</div>
+          <div class="rl-rowbtm">
+            <div class="rl-meta">마감 ${fmtDate(r.closeAt)} · ${feeText(r.pay, r.payNegotiable)}</div>
             <div class="rl-actions">
               <button class="bmark ${bookmarked?'active':''}" title="북마크" aria-label="북마크" data-act="bookmark">
                 <i class="${bookmarked?'ri-bookmark-fill':'ri-bookmark-line'}"></i>
@@ -230,11 +230,6 @@
               <button class="btn" data-act="detail"><i class="ri-external-link-line"></i> 상세보기</button>
               <button class="btn pri" data-act="apply"><i class="ri-send-plane-line"></i> 지원하기</button>
             </div>
-          </div>
-          <div class="rl-title">${r.title}</div>
-          <div class="rl-summary">${r.summary || '요약 정보가 없습니다.'}</div>
-          <div class="rl-rowbtm">
-            <div class="rl-meta">마감 ${fmtDate(r.closeAt)} · ${feeText(r.pay, r.payNegotiable)}</div>
           </div>
         </div>
       </article>`;
@@ -284,7 +279,7 @@
     });
   }
 
-  // ---------- filters/chips ----------
+  // ---------- 필터/칩스/드로어 (이전 버전 동일) ----------
   function hydrateUI(){
     $('#rlQuery').value = state.q||'';
     $('#rlSort').value = state.sort||'newest';
@@ -332,35 +327,30 @@
     });
   }
 
-  // ---------- filter drawer ----------
+  // 드로어
   function openFilters(){
     $('#rlFilters').classList.add('open');
     const dim = $('#rlDim'); dim.hidden=false; dim.classList.add('on');
-    $('body').classList.add('lock');
+    document.body.classList.add('lock');
     $('#rlFilterOpen').setAttribute('aria-expanded','true');
-    // 포커스 이동
-    setTimeout(()=> $('#rlFilters').focus(), 0);
   }
   function closeFilters(){
     $('#rlFilters').classList.remove('open');
     const dim = $('#rlDim'); dim.classList.remove('on'); dim.hidden = true;
-    $('body').classList.remove('lock');
+    document.body.classList.remove('lock');
     $('#rlFilterOpen').setAttribute('aria-expanded','false');
   }
   function ensureFiltersForViewport(){
     if (window.matchMedia('(max-width: 1024px)').matches) {
-      closeFilters(); // 모바일은 기본 닫힘
+      closeFilters();
     } else {
-      // 데스크톱: 드로어 형태 비활성(항상 열림처럼 보이게)
       $('#rlFilters').classList.remove('open');
-      $('#rlFilters').removeAttribute('aria-hidden');
       $('#rlDim').classList.remove('on'); $('#rlDim').hidden = true;
-      $('body').classList.remove('lock');
+      document.body.classList.remove('lock');
       $('#rlFilterOpen').setAttribute('aria-expanded','false');
     }
   }
 
-  // ---------- events ----------
   function bindUI(){
     on($('#rlSearchForm'),'submit',(e)=>{
       e.preventDefault();
@@ -384,21 +374,16 @@
       if (window.matchMedia('(max-width: 1024px)').matches) closeFilters();
     });
 
-    // 드로어 토글
     on($('#rlFilterOpen'),'click',()=> openFilters());
     on($('#rlFilterClose'),'click',()=> closeFilters());
     on($('#rlDim'),'click',()=> closeFilters());
     on(document,'keydown',(e)=>{ if(e.key==='Escape') closeFilters(); });
 
-    // 반응형 전환
     window.addEventListener('resize', ensureFiltersForViewport);
     ensureFiltersForViewport();
-
-    // URL state 복원
     window.addEventListener('popstate',()=>{ state = readQ(); hydrateUI(); renderChips(); refresh(); });
   }
 
-  // ---------- main ----------
   let state = readQ();
   async function refresh(){
     const bookmarks = await loadBookmarks();
