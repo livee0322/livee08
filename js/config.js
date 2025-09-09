@@ -27,7 +27,7 @@
     },
 
     // 기본 썸네일
-    placeholderThumb: "assets/default.jpg",
+    placeholderThumb: "default.jpg",
   };
 
   cfg.API_BASE = trim(cfg.API_BASE);
