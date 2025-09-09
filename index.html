@@ -6,12 +6,13 @@
   <title>Livee — v2.9 · Home</title>
 
   <!-- 아이콘 & 폰트 -->
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
 
   <!-- 메인 스타일 -->
-  <link rel="stylesheet" href="css/main.css?v=2.9.7" />
-  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="css/main.css?v=2.9.7">
+  <meta name="theme-color" content="#ffffff">
 </head>
 <body class="theme-artbook">
   <!-- 상단바 / 상단탭 -->
@@ -23,22 +24,23 @@
     <section class="section">
       <div class="hero-wrap" aria-label="메인 배너">
         <div id="hero"></div>
-        <div class="hero-nav" aria-hidden="true">
+        <!-- 내비 버튼은 기본 숨김, 필요하면 CSS로 표시 -->
+        <div class="hero-nav" aria-hidden="true" style="display:none">
           <button class="hero-btn prev" aria-label="이전"><i class="ri-arrow-left-line"></i></button>
           <button class="hero-btn next" aria-label="다음"><i class="ri-arrow-right-line"></i></button>
         </div>
       </div>
     </section>
 
-    <!-- 홈 섹션 -->
+    <!-- 홈 섹션(렌더 타깃) -->
     <section id="home" class="section section--ed"></section>
   </main>
 
   <!-- 하단탭 -->
   <footer id="bottom-tabs"></footer>
 
-  <!-- Config & UI & Page JS -->
-  <script src="js/config.js"></script>
+  <!-- 스크립트: 순서 매우 중요! -->
+  <script src="js/config.js?v=20250909"></script>
   <script src="js/ui.js?v=2.9.0"></script>
   <script src="js/main.js?v=2.9.11"></script>
 </body>
