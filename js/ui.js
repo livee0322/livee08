@@ -56,6 +56,44 @@
       else setActive('home');
     }
 
+// ui.js — 공통 유틸(드로어/토스트/쿼리)
+(function(){
+  'use strict';
+  const $ = (s, el=document) => el.querySelector(s);
+
+  window.UI = {
+    openDrawer(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.add('open');
+      el.setAttribute('aria-hidden','false');
+      document.documentElement.style.overflow='hidden';
+    },
+    closeDrawer(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.remove('open');
+      el.setAttribute('aria-hidden','true');
+      document.documentElement.style.overflow='';
+    },
+    toast(msg){
+      let t = $('#__toast');
+      if(!t){ t=document.createElement('div'); t.id='__toast';
+        t.style.cssText='position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;z-index:80';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg; t.style.opacity='1';
+      setTimeout(()=>{ t.style.opacity='0'; }, 1300);
+    },
+    qs(){ return new URLSearchParams(location.search); },
+    setQs(params){
+      const q = new URLSearchParams(params);
+      const url = location.pathname + '?' + q.toString();
+      history.replaceState(null,'',url);
+    }
+  };
+})();
+
     /* ---------- Bottom Tabs ---------- */
     const ensure = (id) => document.getElementById(id) || (() => {
       const el = document.createElement('div'); el.id = id; document.body.appendChild(el); return el;
