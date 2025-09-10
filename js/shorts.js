@@ -1,4 +1,4 @@
-/* shorts.js — v1.1 (preview limit + sticky actions + scroll into view) */
+/* shorts.js — v1.2 */
 (function(){
   'use strict';
   const $  = (s, el=document)=>el.querySelector(s);
@@ -10,7 +10,7 @@
   const HJSON = { 'Accept':'application/json','Content-Type':'application/json' };
   const join = (b,p)=> b + (p.startsWith('/')?p:('/'+p));
 
-  /* ---------- Provider/ID/Embed helpers ---------- */
+  /* ---------- Provider/ID/Embed ---------- */
   const ytId = (u='') => (u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/)||[])[1]||'';
   const igId = (u='') => (u.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/)||[])[1]||'';
   const tkId = (u='') => (u.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)||[])[1]||'';
@@ -23,9 +23,15 @@
   }
   function embedUrl(provider,url){
     switch(provider){
-      case 'youtube':{ const id = ytId(url); return id?`https://www.youtube.com/embed/${id}`:''; }
-      case 'instagram':{ const id = igId(url); return id?`https://www.instagram.com/reel/${id}/embed`:''; }
-      case 'tiktok':{ const id = tkId(url); return id?`https://www.tiktok.com/embed/v2/${id}`:''; }
+      case 'youtube':{
+        const id = ytId(url); return id?`https://www.youtube.com/embed/${id}?playsinline=1`:'';
+      }
+      case 'instagram':{
+        const id = igId(url); return id?`https://www.instagram.com/reel/${id}/embed`:'';
+      }
+      case 'tiktok':{
+        const id = tkId(url); return id?`https://www.tiktok.com/embed/v2/${id}`:'';
+      }
       default: return '';
     }
   }
@@ -41,8 +47,8 @@
   async function fetchShorts(){
     const url = join(API_BASE, SHORTS_BASE) + '?status=published&limit=24';
     const r = await fetch(url, { headers:HJSON });
-    const j = await r.json();
-    const items = j.items || j.data || j.docs || [];
+    const j = await r.json().catch(()=>({}));
+    const items = Array.isArray(j)?j:(j.items||j.data||j.docs||[]);
     const total = j.total ?? items.length;
     return { items, total };
   }
@@ -54,8 +60,9 @@
                  p==='tiktok' ? 'ri-tiktok-line' : 'ri-global-line';
     const src = t || (CFG.placeholderThumb || 'default.jpg');
     const title = it.title || '제목 없음';
+    const embed = it.embedUrl || embedUrl(p, it.sourceUrl||'');
     return `
-      <article class="sc-card" data-embed="${it.embedUrl || embedUrl(p, it.sourceUrl||'')}" data-title="${title.replace(/"/g,'&quot;')}">
+      <article class="sc-card" data-embed="${embed}" data-title="${title.replace(/"/g,'&quot;')}">
         <span class="badge"><i class="${icon}"></i>${p}</span>
         <img class="thumb" src="${src}" alt="">
         <div class="title">${title}</div>
@@ -86,7 +93,7 @@
     const card = e.target.closest('.sc-card'); if(!card) return;
     const src = card.getAttribute('data-embed');
     const tt  = card.getAttribute('data-title') || '';
-    if(!src){ window.open(card.querySelector('.thumb')?.src || '#', '_blank'); return; }
+    if(!src){ return; }
     player.src = src;
     vtitle.textContent = tt;
     viewer.setAttribute('aria-hidden','false');
@@ -148,9 +155,8 @@
     if(curEmbed){
       prvIf.src = curEmbed;
       prv.hidden = false;
-
-      /* ✅ 미리보기 생기면 저장 버튼이 보이도록 아래로 스크롤 */
-      saveBtn.scrollIntoView({ behavior:'smooth', block:'end' });
+      /* 저장 버튼이 항상 보이도록 */
+      saveBtn.scrollIntoView({ behavior:'smooth', block:'nearest' });
     }else{
       prvIf.src = 'about:blank';
       prv.hidden = true;
@@ -174,17 +180,17 @@
     };
     try{
       const r = await fetch(join(API_BASE, SHORTS_BASE), { method:'POST', headers:HJSON, body:JSON.stringify(body) });
-      const j = await r.json();
+      const j = await r.json().catch(()=>({}));
       if(!r.ok || j.ok===false) throw new Error(j.message||'SAVE_ERROR');
       UI.toast('저장되었습니다');
       closeModal();
-      load(); // 목록 갱신
+      load();
     }catch(e){
       console.warn('[shorts] save error', e);
       UI.toast('저장 실패');
     }
   };
 
-  /* ---------- init ---------- */
+  /* init */
   load();
 })();
