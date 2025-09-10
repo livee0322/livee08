@@ -1,13 +1,12 @@
-/* influencer-list.css — v1.0.0 (히어로 + 그리드 + 숫자형 페이지네이션) */
+/* influencer-list.css — v1.3.0 (히어로 + 가로스크롤 + 썸네일월 + 카드그리드 + 숫자형 페이지네이션) */
 :root{
   --ff: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",Arial,sans-serif;
   --text:#0f172a; --muted:#64748b; --border:#e5e7eb; --bg:#f6f7fb; --white:#fff;
-  --primary:#4f46e5; --ok:#16a34a; --danger:#ef4444;
+  --primary:#4f46e5; --ok:#16a34a;
   --fs-h1:28px; --fs-title:18px; --fs-body:16px; --fs-small:14px;
   --fw-black:900; --fw-bold:800; --fw-med:600; --fw-reg:500;
 }
 
-/* 페이지 기본 */
 .il-page{ font-family:var(--ff); color:var(--text); background:var(--bg); padding-bottom:90px; }
 
 /* 상단 총 N건 + 정렬 */
@@ -41,13 +40,41 @@
 .il-hero .line{ color:#475569; font-size:15px; margin:0 0 4px; }
 .il-hero .meta{ color:#6b7280; font-size:14px; display:flex; gap:10px; flex-wrap:wrap; }
 .il-hero .actions{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+
+/* 공통 버튼 */
 .btn{ display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); background:#fff; color:#111827; padding:10px 14px; border-radius:14px; font-weight:var(--fw-black); font-size:15px; }
 .btn.small{ padding:9px 12px; } .btn.icon .ri{ font-size:18px; } .btn.pri{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
-/* 그리드 */
+/* ================== 커스텀 섹션 ================== */
+.il-curated{ padding:0 0 6px; }
+.il-strip{ padding:0 16px 14px; }
+.strip-head{ display:flex; align-items:end; justify-content:space-between; margin:4px 2px 10px; }
+.strip-head h2{ margin:0; font-size:22px; font-weight:var(--fw-black); letter-spacing:.2px; }
+.strip-head .see{ display:inline-flex; align-items:center; gap:6px; color:#334155; font-weight:var(--fw-bold); }
+.strip-head .see i{ font-size:18px; }
+
+/* 가로 스크롤 */
+.hscroll{ display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
+.hscroll::-webkit-scrollbar{ height:6px; }
+.hscroll::-webkit-scrollbar-thumb{ background:#d1d5db; border-radius:999px; }
+.hcell{ position:relative; flex:0 0 220px; border-radius:16px; overflow:hidden; background:#f3f4f6; scroll-snap-align:start; }
+@media (min-width:520px){ .hcell{ flex-basis:240px; } }
+@media (min-width:760px){ .hcell{ flex-basis:260px; } }
+.hcell img{ width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:4/5; }
+.hcell .cap{ position:absolute; left:10px; bottom:10px; background:rgba(17,24,39,.88); color:#fff; font-weight:var(--fw-bold); font-size:14px; border-radius:999px; padding:6px 10px; }
+
+/* 썸네일 월(그리드) */
+.wall{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+@media (min-width:760px){ .wall{ grid-template-columns:repeat(3,1fr); } }
+@media (min-width:1100px){ .wall{ grid-template-columns:repeat(4,1fr); } }
+.wcell{ position:relative; border-radius:16px; overflow:hidden; background:#f3f4f6; }
+.wcell img{ width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:4/5; }
+.wcell:active{ transform:translateY(1px); }
+
+/* ================== 카드 그리드(검색 결과) ================== */
 .il-grid{ padding:0 16px; display:grid; grid-template-columns:1fr; gap:14px; }
-@media (min-width: 760px){ .il-hero .hero{ grid-template-columns: 160px 1fr; } .il-grid{ grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1100px){ .il-grid{ grid-template-columns: repeat(3, 1fr); } }
+@media (min-width:760px){ .il-grid{ grid-template-columns:repeat(2, 1fr); } }
+@media (min-width:1100px){ .il-grid{ grid-template-columns:repeat(3, 1fr); } }
 
 .card{ border:1px solid var(--border); background:#fff; border-radius:20px; padding:12px; }
 .card .head{ position:relative; margin:-6px -6px 10px; border-radius:16px; overflow:hidden; }
@@ -67,7 +94,7 @@
 .pbtn.on{ color:var(--primary); text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:2px; }
 .pbtn[disabled]{ color:#cbd5e1; cursor:not-allowed; text-decoration:none; }
 
-/* 드로어 (공통 스타일 변형) */
+/* 드로어 */
 .drawer{ position:fixed; inset:0; background:rgba(0,0,0,.38); z-index:60; display:none; }
 .drawer.open{ display:block; }
 .drawer .sheet{ position:absolute; right:0; top:0; bottom:0; width:86%; max-width:440px; background:#fff; border-radius:16px 0 0 16px; padding:14px; overflow:auto; }
