@@ -1,4 +1,4 @@
-/* Home main.js — v2.9.16 (Apply modal: robust host check + load my portfolios first) */
+/* Home main.js — v3.0 (HOT Clips: horizontal 2-up + modal player) */
 (function () {
   'use strict';
 
@@ -14,6 +14,7 @@
   const EP_PORTFOLIOS = EP.portfolios || '/portfolio-test?status=published&limit=12';
   const EP_NEWS       = EP.news       || '/news-test?status=published&limit=10';
   const EP_APPLY      = EP.apply      || '/applications-test';
+  const EP_SHORTS     = EP.shorts     || '/shorts-test?status=published&limit=12';  // ✅ 추가
 
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
   const asset = (name) => (CFG.BASE_PATH ? (CFG.BASE_PATH + '/' + name) : name);
@@ -31,6 +32,19 @@
   async function getJSON(url, headers={Accept:'application/json'}){ const r=await fetch(url,{headers}); let j=null; try{ j=await r.json(); }catch(_){} if(!r.ok || (j&&j.ok===false)) throw new Error((j&&j.message)||('HTTP_'+r.status)); return j||{}; }
   const parseItems = (j) => ( Array.isArray(j) ? j : j.items || (j.data && (j.data.items || j.data.docs)) || j.docs || [] );
 
+  // ---------- Shorts helpers (provider/thumbnail/embed) ----------
+  const ytId = (u='') => (u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/)||[])[1]||'';
+  const igId = (u='') => (u.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/)||[])[1]||'';
+  const tkId = (u='') => (u.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)||[])[1]||'';
+  const detectProvider = (u='') => /youtu\.?be|youtube\.com/.test(u) ? 'youtube'
+                                : /instagram\.com/.test(u) ? 'instagram'
+                                : /tiktok\.com/.test(u) ? 'tiktok' : 'etc';
+  const embedUrl = (p,u) => p==='youtube'   ? (ytId(u)?`https://www.youtube.com/embed/${ytId(u)}`:'')
+                        : p==='instagram' ? (igId(u)?`https://www.instagram.com/reel/${igId(u)}/embed`:'')
+                        : p==='tiktok'    ? (tkId(u)?`https://www.tiktok.com/embed/v2/${tkId(u)}`:'')
+                        : '';
+  const thumbUrl = (p,u) => p==='youtube' && ytId(u) ? `https://img.youtube.com/vi/${ytId(u)}/hqdefault.jpg` : '';
+
   // ---------- brand/fee mapping ----------
   const getBrandName = (c) => text(coalesce(c.brandName, c.brand, c.recruit&&c.recruit.brandName, c.brand&&c.brand.name, c.owner&&c.owner.brandName, c.user&&c.user.brandName)) || '브랜드';
   const getFee = (c)=>{ const raw = coalesce(c.fee, c.recruit&&c.recruit.pay, c.pay); const n=Number(raw); return Number.isFinite(n)?n:undefined; };
@@ -40,6 +54,22 @@
   async function fetchRecruits(){ try{ const url=API_BASE+(EP_RECRUITS.startsWith('/')?EP_RECRUITS:'/'+EP_RECRUITS); const arr=parseItems(await getJSON(url)); return arr.map((c,i)=>({ id:c.id||c._id||String(i), brandName:getBrandName(c), title:text(coalesce(c.title, c.recruit&&c.recruit.title, '제목 없음')), thumb:pickThumb(c), closeAt:coalesce(c.closeAt, c.recruit&&c.recruit.closeAt), fee:getFee(c), feeNegotiable:isFeeNegotiable(c) })); }catch(_){ return []; } }
   async function fetchPortfolios(){ try{ const url=API_BASE+(EP_PORTFOLIOS.startsWith('/')?EP_PORTFOLIOS:'/'+EP_PORTFOLIOS); const arr=parseItems(await getJSON(url)); return arr.map((p,i)=>({ id:p.id||p._id||String(i), nickname:text(p.nickname||p.displayName||p.name||'쇼호스트'), headline:text(p.headline||''), thumb:pickThumb(p) })); }catch(_){ return []; } }
   async function fetchNews(fallback){ try{ const url=API_BASE+(EP_NEWS.startsWith('/')?EP_NEWS:'/'+EP_NEWS); const arr=parseItems(await getJSON(url)); return arr.map((n,i)=>({ id:n.id||n._id||String(i), title:text(n.title||n.headline||'뉴스'), date:n.publishedAt||n.createdAt||n.updatedAt, summary:text(n.summary||n.excerpt||'') })); }catch(_){ return (fallback||[]).slice(0,6).map((r,i)=>({ id:r.id||String(i), title:r.title, date:r.closeAt, summary:'브랜드 소식' })); } }
+  async function fetchShorts(){         // ✅ 추가
+    try{
+      const url=API_BASE+(EP_SHORTS.startsWith('/')?EP_SHORTS:'/'+EP_SHORTS);
+      const arr=parseItems(await getJSON(url));
+      return arr.map((s,i)=>{
+        const link = s.sourceUrl || s.url || s.link || '';
+        const provider = s.provider || detectProvider(link);
+        return {
+          id: s.id || s._id || String(i),
+          provider,
+          thumb: s.thumbnailUrl || thumbUrl(provider, link) || FALLBACK_IMG,
+          embed: s.embedUrl || embedUrl(provider, link)
+        };
+      }).filter(x=>x.embed);
+    }catch(_){ return []; }
+  }
 
   // ---------- me / host 判定 & 내 포트폴리오 ----------
   async function getMe(){
@@ -50,8 +80,6 @@
     }
     try{ const saved=localStorage.getItem('livee_user'); return saved?JSON.parse(saved):null; }catch{ return null; }
   }
-
-  // “host”를 폭넓게 인식(여러 필드/배열, 한글/영문, 부분일치)
   function isHost(me){
     if(!me) return false;
     const str = (v)=>String(v||'').toLowerCase();
@@ -63,23 +91,17 @@
         ...(Array.isArray(me.tags)?me.tags:[])
       ].filter(Boolean).map(str)
     );
-    // 키워드에 하나라도 걸리면 host 취급
     const hostKeys = ['host','showhost','show-host','쇼호스트','creator','influencer','mc'];
     const brandKeys= ['brand','advertiser','client','agency'];
     const hasHost = [...bag].some(s=>hostKeys.some(k=>s.includes(k))) || me.isHost === true;
     const looksBrand = [...bag].some(s=>brandKeys.some(k=>s.includes(k)));
     return hasHost && !looksBrand;
   }
-
-  // 다양한 엔드포인트를 순차 시도하여 “내 포트폴리오” 탐색
   async function fetchMyPortfolios(){
     if(!TOKEN) return [];
     const tryFetch = async (path) => { try{ const j=await getJSON(API_BASE+path, authHeaders(false)); const it=parseItems(j); return Array.isArray(it)?it:[]; }catch(_){ return []; } };
-
-    // 1) 서버가 지원할 가능성이 높은 쿼리들
     let items = await tryFetch('/portfolio-test?mine=1&limit=100');
     if(items.length) return items;
-
     const me = await getMe();
     const meId = me && (me.id || me._id || me.userId);
     const candidates = meId ? [
@@ -89,8 +111,6 @@
       `/users/${encodeURIComponent(meId)}/portfolio-test?limit=100`
     ] : [];
     for(const p of candidates){ items = await tryFetch(p); if(items.length) return items; }
-
-    // 2) 전체 후 필터 (서버가 userId를 내보내는 경우)
     const all = await tryFetch('/portfolio-test?limit=200');
     if(meId && all.length){
       const mine = all.filter(x=>{
@@ -155,6 +175,18 @@
           '</div>'+
         '</article>').join('')+'</div>'
     : '<div class="ed-grid"><article class="card-ed"><div class="card-ed__body"><div class="card-ed__title">포트폴리오가 없습니다</div><div class="card-ed__meta">첫 포트폴리오를 등록해보세요</div></div></article></div>';
+
+  // ✅ HOT clips (2-up horizontal like YouTube Shorts)
+  const tplHotClips = (items)=> items && items.length
+    ? `<div class="shorts-hscroll" id="hotShorts">
+        ${items.map(s=>`
+          <article class="clip-card" data-embed="${s.embed}">
+            <img class="clip-thumb" src="${s.thumb||FALLBACK_IMG}" alt="" loading="lazy" decoding="async">
+            <span class="clip-play"><i class="ri-play-fill"></i></span>
+          </article>
+        `).join('')}
+      </div>`
+    : '<div class="shorts-hscroll"><div class="clip-empty">등록된 클립이 없습니다</div></div>';
 
   const tplCtaBanner =
     '<div class="cta-banner" role="region" aria-label="상담 배너"><div class="cta-copy">'+
@@ -296,13 +328,54 @@ try{
       if(id) openApplyModal(id);
     });
   }
+  // -----------------------------------------------
+
+  // ---------- HOT Clip Modal (영상만, X 버튼) ----------
+  function ensureClipModal(){
+    appendStyleOnce('hotclip-css', `
+      .shorts-hscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+      .shorts-hscroll::-webkit-scrollbar{display:none}
+      .clip-card{position:relative;flex:0 0 calc(50% - 6px);scroll-snap-align:center;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:9/16}
+      .clip-thumb{width:100%;height:100%;object-fit:cover;background:#000}
+      .clip-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff}
+      .clip-empty{min-height:120px;display:grid;place-items:center;color:#98a2b3;border:1px dashed #e5e7eb;border-radius:12px}
+      .section-head .hl-hot{color:#ef4444}
+
+      .clip-modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+      .clip-modal.show{display:flex}
+      .clip-modal .inner{position:relative;width:min(520px,92vw);background:#000;border-radius:14px;overflow:hidden}
+      .clip-modal iframe{width:100%;aspect-ratio:9/16;display:block;background:#000;border:0}
+      .clip-modal .x{position:absolute;right:8px;top:8px;width:36px;height:36px;border:0;border-radius:10px;background:rgba(0,0,0,.5);color:#fff}
+    `);
+    if($('#clipModal')) return;
+    const wrap=document.createElement('div');
+    wrap.id='clipModal'; wrap.className='clip-modal';
+    wrap.innerHTML=`<div class="inner">
+      <button class="x" aria-label="닫기"><i class="ri-close-line"></i></button>
+      <iframe id="clipFrame" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>`;
+    document.body.appendChild(wrap);
+    const close=()=>{ $('#clipFrame').src='about:blank'; wrap.classList.remove('show'); document.documentElement.style.overflow=''; };
+    on($('.x',wrap),'click',close);
+    on(wrap,'click',e=>{ if(e.target===wrap) close(); });
+    window.__openClip = (src)=>{ if(!src) return; $('#clipFrame').src=src; wrap.classList.add('show'); document.documentElement.style.overflow='hidden'; };
+  }
+
+  function bindHotShorts(){
+    const root = $('#hotShorts'); if(!root) return;
+    ensureClipModal();
+    on(root,'click', (e)=>{
+      const card=e.target.closest('.clip-card'); if(!card) return;
+      const src=card.dataset.embed; if(src) window.__openClip(src);
+    });
+  }
 
   // ---------- render ----------
   async function render(){
     const root = $('#home') || $('main#home') || $('main') || document.body;
     const heroRoot = $('#hero') || $('[data-hero]');
     try{
-      const [recruits, portfolios] = await Promise.all([fetchRecruits(), fetchPortfolios()]);
+      const [recruits, portfolios, shorts] = await Promise.all([fetchRecruits(), fetchPortfolios(), fetchShorts()]);
       const news = await fetchNews(recruits);
 
       renderHero(heroRoot);
@@ -312,9 +385,10 @@ try{
         sectionBlock('브랜드 <span class="hl">pick</span>','recruit-list.html', tplRecruitHScroll(recruits.slice(0,8)),'recruits')+
         sectionBlock('<span class="hl">라이비</span> 뉴스','news.html', tplNewsList(news.slice(0,8)),'news')+
         sectionBlock('<span class="hl">이런 쇼호스트</span>는 어떠세요?','portfolio-list.html', tplPortfolios(portfolios),'pf')+
+        sectionBlock('<span class="hl-hot">HOT</span> clip','shorts.html', tplHotClips(shorts),'hotclips')+   // ✅ 추가 위치
         '<div class="section">'+tplCtaBanner+'</div>';
 
-      if(root){ root.innerHTML=html; bindApply(document.getElementById('brandPickH')||root); }
+      if(root){ root.innerHTML=html; bindHotShorts(); bindApply(document.getElementById('brandPickH')||root); }
     }catch(err){
       console.error('[home render error]', err);
       const r=$('#home')||$('main')||document.body;
