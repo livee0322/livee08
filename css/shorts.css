@@ -1,42 +1,80 @@
-/* shorts.css — v1.0.0 */
+/* shorts.css — v1.0 (유튜브 스타일 카드 + FAB + 모달/뷰어) */
 :root{
-  --ff: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",Arial,sans-serif;
-  --text:#0f172a; --muted:#64748b; --border:#e5e7eb; --bg:#f6f7fb; --white:#fff; --primary:#4f46e5;
+  --ff: system-ui, -apple-system, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+  --text:#0f172a; --muted:#64748b; --bg:#f6f7fb; --white:#fff; --border:#e5e7eb;
+  --primary:#4f46e5; --danger:#ef4444;
 }
-.sc-page{ font-family:var(--ff); color:var(--text); background:var(--bg); padding-bottom:88px; }
+.sc-page{ font-family:var(--ff); color:var(--text); background:var(--bg); padding:8px 12px 120px; }
+.sc-head{ display:flex; align-items:end; justify-content:space-between; gap:10px; padding:6px 4px 10px; }
+.sc-head h1{ font-size:22px; font-weight:900; letter-spacing:-.2px; margin:0;}
+.sc-head .meta{ color:#475569; font-weight:800; font-size:14px; }
 
-/* ---- Hero ---- */
-.sc-hero{ padding:8px 12px 0; }
-.sc-hero .in{ display:flex; gap:12px; align-items:center; border:1px solid var(--border); border-radius:16px; background:var(--white); padding:14px; }
-.sc-hero img{ width:88px; height:88px; object-fit:cover; border-radius:12px; }
-.sc-hero h1{ margin:0 0 4px; font-weight:900; font-size:20px; letter-spacing:-.2px; }
-.sc-hero p{ margin:0; color:#42526e; }
+/* grid = 유튜브 숏츠 2열 */
+.sc-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px;
+}
+.sc-card{
+  position:relative; background:var(--white); border:1px solid var(--border); border-radius:16px;
+  overflow:hidden; cursor:pointer;
+}
+.sc-card .thumb{
+  width:100%; aspect-ratio:9/16; object-fit:cover; background:#e5e7eb; display:block;
+}
+.sc-card .badge{
+  position:absolute; left:8px; top:8px; display:inline-flex; align-items:center; gap:6px;
+  background:rgba(15,23,42,.8); color:#fff; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:900;
+}
+.sc-card .badge i{ font-size:14px; }
+.sc-card .title{
+  font-size:14.5px; font-weight:900; padding:8px 10px 10px; line-height:1.35; letter-spacing:-.2px;
+}
 
-/* ---- Editor (optional) ---- */
-.sc-editor{ padding:12px; }
-.sc-editor .card{ border:1px solid var(--border); border-radius:16px; background:#fff; padding:12px; }
-.sc-editor h3{ margin:0 0 10px; font-size:16px; font-weight:900; }
-.sc-editor .row{ display:flex; gap:8px; }
-.sc-editor input{ flex:1 1 auto; border:1px solid var(--border); border-radius:12px; padding:12px; }
-.btn{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:#fff; border-radius:12px; padding:10px 14px; font-weight:800; }
+/* FAB */
+.sc-fab{
+  position:fixed; right:18px; bottom:calc(64px + 18px);
+  width:56px; height:56px; border-radius:50%; border:0; color:#fff; background:var(--primary);
+  box-shadow:0 10px 30px rgba(79,70,229,.35); display:grid; place-items:center; z-index:70;
+}
+.sc-fab .ri{ font-size:26px; }
+
+/* Viewer */
+.sc-viewer{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; z-index:80; }
+.sc-viewer[aria-hidden="false"]{ display:block; }
+.sc-viewer .inner{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:min(520px, 92%); background:#000; border-radius:14px; overflow:hidden; }
+.sc-viewer iframe{ width:100%; aspect-ratio:9/16; display:block; background:#000; }
+.sc-viewer .x{
+  position:absolute; right:8px; top:8px; z-index:2; width:40px; height:40px; border-radius:10px;
+  border:0; background:rgba(0,0,0,.5); color:#fff;
+}
+.viewer-title{ color:#fff; padding:10px 12px; font-weight:800; font-size:14px; }
+
+/* Modal(Sheet) */
+.sc-modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:90; }
+.sc-modal[aria-hidden="false"]{ display:block; }
+.sc-modal .sheet{
+  position:absolute; left:0; right:0; bottom:0; background:#fff; border-radius:20px 20px 0 0;
+  padding:14px; box-shadow:0 -10px 40px rgba(2,6,23,.25);
+}
+.sc-modal header{ display:flex; align-items:center; gap:8px; }
+.sc-modal header strong{ font-weight:900; font-size:18px; }
+.sc-modal .x{ margin-left:auto; border:1px solid var(--border); background:#fff; border-radius:10px; width:36px; height:36px; }
+
+.field{ display:block; margin:10px 0; }
+.field > span{ display:block; font-size:13px; font-weight:800; color:#334155; margin-bottom:6px; }
+.field input, .field textarea{
+  width:100%; border:1px solid var(--border); background:#fff; border-radius:12px; padding:12px 12px; font-size:15px;
+}
+.inline{ display:flex; gap:8px; align-items:end; }
+.provider{
+  display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px dashed var(--border);
+  border-radius:12px; min-width:130px; font-weight:900; color:#334155;
+}
+.provider i{ font-size:18px; }
+
+.preview{ margin:12px 0 8px; border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.preview iframe{ width:100%; aspect-ratio:9/16; display:block; }
+
+.actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:6px; }
+.btn{ display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); background:#fff; padding:10px 14px; border-radius:12px; font-weight:900; }
 .btn.pri{ background:var(--primary); border-color:var(--primary); color:#fff; }
-
-/* ---- Feed ---- */
-.sc-feed{ padding:10px; display:flex; flex-direction:column; gap:16px; }
-.sc-card{ border:1px solid var(--border); border-radius:20px; background:#000; overflow:hidden; }
-.sc-card .frame{ position:relative; background:#000; }
-.sc-card .ratio{ width:100%; padding-top:177.78%; }     /* 9:16 */
-.sc-card iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
-.sc-card .meta{ display:flex; align-items:center; justify-content:space-between; gap:10px;
-  background:#fff; color:#0f172a; padding:10px 12px; }
-.sc-card .title{ font-weight:900; font-size:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.sc-card .r{ display:flex; gap:6px; }
-.iconbtn{ width:40px; height:40px; border-radius:12px; background:#f1f5f9; border:1px solid var(--border); display:grid; place-items:center; }
-.iconbtn .ri{ font-size:18px; color:#111827; }
-
-/* skeleton */
-.sc-card.skeleton{ background:linear-gradient(90deg,#eef2f7,#f5f7fb,#eef2f7); animation:sks 1.2s infinite; height:420px; }
-@keyframes sks{ 0%{background-position:-240px 0} 100%{background-position:240px 0} }
-
-/* sentinel */
-.sentinel{ height:40px; }
