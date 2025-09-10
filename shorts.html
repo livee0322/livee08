@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>숏클립 - 라이비</title>
+
+  <!-- 공통 & 페이지 전용 -->
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/shorts.css" />
+
+  <!-- 아이콘 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
+
+  <!-- 설정/공통 UI -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+</head>
+<body>
+  <!-- 공통 헤더/탭 -->
+  <div id="appbar"></div>
+  <div id="top-tabs"></div>
+
+  <!-- 페이지 본문 -->
+  <main class="sc-page" aria-label="숏클립 피드">
+    <!-- 히어로 배너(선택) -->
+    <section class="sc-hero">
+      <div class="in">
+        <div class="txt">
+          <h1>쇼츠로 빠르게 보는 라이브 클립</h1>
+          <p>유튜브·인스타 릴스를 임베드로 모아 한 번에!</p>
+        </div>
+        <img src="default.jpg" alt="" />
+      </div>
+    </section>
+
+    <!-- 에디터(등록) : ?editor=1 로 진입 시 노출 -->
+    <section id="scEditor" class="sc-editor" hidden>
+      <div class="card">
+        <h3><i class="ri-link"></i> 숏클립 링크 등록</h3>
+        <div class="row">
+          <input id="scUrl" type="url" placeholder="YouTube/Instagram 릴스 URL 붙여넣기" />
+          <button id="scAdd" class="btn pri"><i class="ri-upload-2-line"></i> 등록</button>
+        </div>
+        <small class="muted">예: https://youtube.com/shorts/ID, https://youtu.be/ID, https://www.instagram.com/reel/ID/</small>
+      </div>
+    </section>
+
+    <!-- 숏클립 피드 -->
+    <section id="scFeed" class="sc-feed" aria-live="polite"></section>
+    <div id="scSentinel" class="sentinel" aria-hidden="true"></div>
+  </main>
+
+  <!-- 고정 하단 탭 -->
+  <div id="bottom-tabs"></div>
+
+  <!-- 페이지 스크립트 -->
+  <script src="js/shorts.js"></script>
+</body>
+</html>
