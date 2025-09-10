@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>인플루언서 더보기 - 라이비</title>
+
+  <!-- 페이지 전용 > 공통 순서 -->
+  <link rel="stylesheet" href="css/influencer-list.css" />
+  <link rel="stylesheet" href="css/main.css" />
+
+  <!-- 아이콘 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
+
+  <!-- 설정/공통 UI -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+</head>
+<body>
+  <!-- 공통 상단바/탭 -->
+  <div id="appbar"></div>
+  <div id="top-tabs"></div>
+
+  <main class="il-page">
+    <!-- 상단: 총 N건 + 정렬 -->
+    <header class="il-head" aria-label="요약 및 정렬">
+      <div class="left">
+        <span id="ilTotal" class="muted">총 0건</span>
+      </div>
+      <div class="right">
+        <select id="ilSort" aria-label="정렬">
+          <option value="recommended">추천순</option>
+          <option value="popular">인기순</option>
+          <option value="recent">최신순</option>
+          <option value="fee_asc">출연료 낮은순</option>
+          <option value="fee_desc">출연료 높은순</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- 검색/필터 툴바 -->
+    <section class="il-toolbar" aria-label="검색과 필터">
+      <label class="search" aria-label="검색">
+        <i class="ri-search-line lead" aria-hidden="true"></i>
+        <input id="ilQuery" type="search" placeholder="이름·한줄소개·카테고리로 검색" />
+        <button id="ilSearchGo" class="sgo" type="button" aria-label="검색 실행">
+          <i class="ri-arrow-right-line"></i>
+        </button>
+      </label>
+
+      <!-- 아이콘만 표시 -->
+      <button id="ilBtnFilter" class="btn-icon" type="button" aria-label="필터 열기">
+        <i class="ri-filter-3-line"></i>
+      </button>
+    </section>
+
+    <!-- 활성화된 필터 칩 -->
+    <div id="ilChips" class="il-chips" hidden></div>
+
+    <!-- 히어로(강조형 배너, AD/추천 1명) -->
+    <section id="ilHero" class="il-hero" hidden aria-label="추천 인플루언서"></section>
+
+    <!-- 포트폴리오 그리드 -->
+    <section id="ilGrid" class="il-grid" aria-live="polite"></section>
+
+    <!-- 페이지네이션 -->
+    <nav id="ilPager" class="il-pager" aria-label="페이지 네비게이션"></nav>
+  </main>
+
+  <!-- 필터 드로어 -->
+  <aside id="ilDrawer" class="drawer" aria-hidden="true">
+    <div class="sheet">
+      <header>
+        <strong>필터</strong>
+        <button id="ilFilterClose" class="x" type="button" aria-label="닫기">✕</button>
+      </header>
+
+      <div class="grid">
+        <div class="field">
+          <label for="fCat">카테고리</label>
+          <input id="fCat" placeholder="예: 뷰티, 패션" />
+        </div>
+        <div class="field">
+          <label for="fChannel">활동채널</label>
+          <input id="fChannel" placeholder="예: YouTube, Instagram" />
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="fRegion">지역</label>
+          <input id="fRegion" placeholder="예: 서울" />
+        </div>
+        <div class="field">
+          <label for="fFollowersMin">팔로워 최소</label>
+          <input id="fFollowersMin" type="number" inputmode="numeric" placeholder="예: 10000" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>출연료 범위(원)</label>
+        <div class="row">
+          <input id="fPayMin" type="number" inputmode="numeric" placeholder="최소" />
+          <span class="dash">~</span>
+          <input id="fPayMax" type="number" inputmode="numeric" placeholder="최대" />
+        </div>
+      </div>
+
+      <div class="grid">
+        <label class="chk"><input id="fNegotiable" type="checkbox" /> 출연료 협의 포함</label>
+        <label class="chk"><input id="fVerified" type="checkbox" /> 검증 완료(Verified)</label>
+      </div>
+
+      <div class="actions">
+        <button id="ilFilterReset" class="btn" type="button">초기화</button>
+        <button id="ilFilterApply" class="btn pri" type="button">적용</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 공통 하단 탭 -->
+  <div id="bottom-tabs"></div>
+
+  <!-- 페이지 스크립트 -->
+  <script src="js/influencer-list.js"></script>
+</body>
+</html>
