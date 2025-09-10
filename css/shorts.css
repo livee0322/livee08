@@ -1,15 +1,16 @@
-/* shorts.css — v1.1 (Modal scroll, preview height limit, sticky actions) */
+/* shorts.css — v1.2 (stable: modal scroll, fixed preview height, solid sticky actions) */
 :root{
   --ff: system-ui, -apple-system, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
   --text:#0f172a; --muted:#64748b; --bg:#f6f7fb; --white:#fff; --border:#e5e7eb;
   --primary:#4f46e5; --danger:#ef4444;
 }
+
 .sc-page{ font-family:var(--ff); color:var(--text); background:var(--bg); padding:8px 12px 120px; }
 .sc-head{ display:flex; align-items:end; justify-content:space-between; gap:10px; padding:6px 4px 10px; }
 .sc-head h1{ font-size:22px; font-weight:900; letter-spacing:-.2px; margin:0;}
 .sc-head .meta{ color:#475569; font-weight:800; font-size:14px; }
 
-/* grid = 유튜브 숏츠 2열 */
+/* Grid (2열) */
 .sc-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:4px; }
 .sc-card{ position:relative; background:var(--white); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; }
 .sc-card .thumb{ width:100%; aspect-ratio:9/16; object-fit:cover; background:#e5e7eb; display:block; }
@@ -20,32 +21,30 @@
 
 /* FAB */
 .sc-fab{ position:fixed; right:18px; bottom:calc(64px + 18px); width:56px; height:56px; border-radius:50%; border:0;
-  color:#fff; background:var(--primary); box-shadow:0 10px 30px rgba(79,70,229,.35); display:grid; place-items:center; z-index:70; }
+  color:#fff; background:var(--primary); box-shadow:0 10px 30px rgba(79,70,229,.35); display:grid; place-items:center; z-index:10020; }
 .sc-fab .ri{ font-size:26px; }
 
 /* Viewer */
-.sc-viewer{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; z-index:80; }
+.sc-viewer{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; z-index:10010; }
 .sc-viewer[aria-hidden="false"]{ display:block; }
 .sc-viewer .inner{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(520px, 92%); background:#000; border-radius:14px; overflow:hidden; }
 .sc-viewer iframe{ width:100%; aspect-ratio:9/16; display:block; background:#000; }
 .sc-viewer .x{ position:absolute; right:8px; top:8px; z-index:2; width:40px; height:40px; border-radius:10px; border:0; background:rgba(0,0,0,.5); color:#fff; }
 .viewer-title{ color:#fff; padding:10px 12px; font-weight:800; font-size:14px; }
 
-/* Modal(Sheet) */
-.sc-modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:90; }
+/* Modal (Sheet) */
+.sc-modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:10010; }
 .sc-modal[aria-hidden="false"]{ display:block; }
 .sc-modal .sheet{
   position:absolute; left:0; right:0; bottom:0;
   background:#fff; border-radius:20px 20px 0 0; padding:14px;
   box-shadow:0 -10px 40px rgba(2,6,23,.25);
-
-  /* ✅ 모달 스크롤 가능 & 화면 안에 고정 */
-  max-height:86vh;
-  overflow:auto;
-  overscroll-behavior:contain;
+  max-height:86vh; overflow:auto; overscroll-behavior:contain;
+  /* 하단 sticky 버튼 영역 여유 + 안전영역 */
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
 }
 
-/* 필드/레이아웃 */
+/* Fields */
 .sc-modal header{ display:flex; align-items:center; gap:8px; }
 .sc-modal header strong{ font-weight:900; font-size:18px; }
 .sc-modal .x{ margin-left:auto; border:1px solid var(--border); background:#fff; border-radius:10px; width:36px; height:36px; }
@@ -56,54 +55,23 @@
 .provider{ display:flex; align-items:center; gap:8px; padding:10px 12px; border:1px dashed var(--border); border-radius:12px; min-width:130px; font-weight:900; color:#334155; }
 .provider i{ font-size:18px; }
 
-/* ✅ 미리보기 높이 제한 & 둥근 모서리 */
+/* Preview: 고정 높이(넘침 방지) */
 .preview{
-  --pvh: 56vh;  /* 모바일 기본 */
-  margin:12px 0 8px; border:1px solid var(--border); border-radius:14px; overflow:hidden;
+  margin:12px 0 8px;
+  border:1px solid var(--border); border-radius:14px; overflow:hidden; background:#000;
+  height: min(48vh, 520px);     /* 모바일에서 너무 길어지지 않게 */
 }
-.preview iframe{ width:100%; height:var(--pvh); display:block; background:#000; }
-@media (min-width:768px){ .preview{ --pvh: 520px; } }
+.preview iframe{ width:100%; height:100%; display:block; border:0; background:#000; }
+@media (min-width:480px){ .preview{ height:min(54vh, 560px); } }
+@media (min-width:768px){ .preview{ height:560px; } }
 
-/* ✅ 저장 버튼 영역을 sticky 처리 */
+/* Sticky actions: 단색 바 + 그림자 (겹침/잘림 방지) */
 .actions{
-  position:sticky; bottom:0;
-  background:linear-gradient(180deg, rgba(255,255,255,0), #fff 40%);
-  padding-top:10px; margin-top:6px; display:flex; justify-content:flex-end; gap:8px;
+  position:sticky; bottom:0; z-index:2;
+  background:#fff;
+  box-shadow:0 -6px 14px rgba(0,0,0,.05);
+  padding:12px 0 calc(12px + env(safe-area-inset-bottom));
+  display:flex; justify-content:flex-end; gap:8px;
 }
 .btn{ display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); background:#fff; padding:10px 14px; border-radius:12px; font-weight:900; }
 .btn.pri{ background:var(--primary); border-color:var(--primary); color:#fff; }
-
-/* ===== HOTFIX: Shorts modal over bottom-tabs, preview smaller, sticky action always visible ===== */
-
-/* 모달/뷰어가 하단 탭보다 위로 오도록 */
-.sc-modal,
-.sc-viewer {
-  z-index: 10010 !important;
-}
-
-/* 미리보기 높이 더 낮게 (작은 화면에서 버튼이 가려지지 않도록) */
-.preview { --pvh: 48vh; }            /* 기존 56vh → 48vh */
-@media (min-width: 480px) { .preview { --pvh: 54vh; } }
-@media (min-width: 768px) { .preview { --pvh: 520px; } }
-
-/* 모달 시트 자체 스크롤 + 버튼 영역 확보 */
-.sc-modal .sheet {
-  max-height: 86vh;
-  overflow: auto;
-  overscroll-behavior: contain;
-
-  /* 하단에 버튼이 들어갈 여유 + 안전영역 */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
-}
-
-/* 저장 버튼 줄을 sticky로 고정하고 안전영역 반영 */
-.sc-modal .actions {
-  position: sticky;
-  bottom: 0;
-  padding-bottom: env(safe-area-inset-bottom);
-  background: linear-gradient(180deg, rgba(255,255,255,0), #fff 40%);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  z-index: 1; /* 시트 내부에서 맨 위 */
-}
