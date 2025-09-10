@@ -143,7 +143,7 @@
           <a class="tbi" href="#/library" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
             <i class="ri-bookmark-2-line" style="font-size:20px"></i><span style="font-size:12px">라이브러리</span>
           </a>
-          <a class="tbi" href="portfolio-list.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
+          <a class="tbi" href="influencer.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
             <i class="ri-user-3-line" style="font-size:20px"></i><span style="font-size:12px">인플루언서</span>
           </a>
           <a class="tbi" href="${myHref}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
