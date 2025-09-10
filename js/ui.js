@@ -81,7 +81,7 @@
         <nav class="lv-topTabs" role="navigation" aria-label="상단 탭"
              style="background:#fff;border-bottom:1px solid #eef1f5">
           <div class="lv-topTabs__in" style="display:flex;gap:18px;padding:10px 16px;overflow:auto">
-            <a class="tab" data-tab="home" href="index.html#/">숏클립</a>
+            <a class="tab" data-tab="home" href="shorts.html">숏클립</a>
             <a class="tab" data-tab="live" href="index.html#/live">쇼핑라이브</a>
             <a class="tab" data-tab="news" href="news.html">뉴스</a>
             <a class="tab" data-tab="event" href="index.html#/event">이벤트</a>
