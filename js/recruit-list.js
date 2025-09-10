@@ -188,7 +188,7 @@
     `;
   }
 
- function adHTML(ad){
+function adHTML(ad){
   const thumb = pickThumb(ad);
   const fee = (ad.pay ?? ad.fee);
   const nego = (ad.payNegotiable ?? ad.feeNegotiable);
@@ -202,13 +202,12 @@
       <div class="meta">${ad.brandName || '브랜드'} · ${nego ? '협의' : (fee!=null ? (Number(fee).toLocaleString('ko-KR')+'원') : '출연료 미정')} · 마감 ${fmt(ad.closeAt)}</div>
       <div class="actions">
         <a class="btn small pri" href="recruit-detail.html?id=${encodeURIComponent(ad.id||ad._id)}">
-          <i class="ri-external-link-line"></i> 바로 보기
+          <i class="ri-send-plane-line"></i> 바로 지원하기
         </a>
       </div>
     </article>
   `;
-  }
-
+}
   function renderChips() {
     const f = state.filters;
     const chips = [];
