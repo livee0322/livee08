@@ -337,3 +337,24 @@ ul,ol{ list-style:none; padding:0; margin:0; }
   padding:10px 12px; border-radius:12px; line-height:1.5;
 }
 #applyModal .warn b{ color:#8b5cf6; }
+
+/* ===== HOT clip (YouTube Shorts 스타일 2-up) ===== */
+.section-head .hl-hot{ color:#ef4444; }  /* 빨강 강조 */
+
+.shorts-hscroll{ display:flex; gap:10px; overflow-x:auto; padding:2px 2px 0;
+  scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+.shorts-hscroll::-webkit-scrollbar{ display:none; }
+
+.clip-card{ position:relative; flex:0 0 calc(50% - 6px);  /* 한 화면 2개 */
+  scroll-snap-align:center; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:9/16; }
+.clip-thumb{ width:100%; height:100%; object-fit:cover; background:#000; }
+.clip-play{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:56px; height:56px; border-radius:50%; display:grid; place-items:center; background:rgba(0,0,0,.45); color:#fff; }
+.clip-empty{ min-height:120px; display:grid; place-items:center; color:#98a2b3; border:1px dashed #e5e7eb; border-radius:12px; }
+
+/* 재생 모달 (제목/카피 없음 + X 버튼) */
+.clip-modal{ position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); }
+.clip-modal.show{ display:flex; }
+.clip-modal .inner{ position:relative; width:min(520px,92vw); background:#000; border-radius:14px; overflow:hidden; }
+.clip-modal iframe{ width:100%; aspect-ratio:9/16; display:block; background:#000; border:0; }
+.clip-modal .x{ position:absolute; right:8px; top:8px; width:36px; height:36px; border:0; border-radius:10px; background:rgba(0,0,0,.5); color:#fff; }
