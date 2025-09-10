@@ -1,4 +1,4 @@
-/* shorts.js — v1.2 */
+/* shorts.js — v1.3 (hide FAB when modal, solid sticky actions) */
 (function(){
   'use strict';
   const $  = (s, el=document)=>el.querySelector(s);
@@ -15,30 +15,17 @@
   const igId = (u='') => (u.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/)||[])[1]||'';
   const tkId = (u='') => (u.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)||[])[1]||'';
 
-  function detectProvider(url=''){
-    if(/youtu\.?be|youtube\.com/.test(url)) return 'youtube';
-    if(/instagram\.com/.test(url))          return 'instagram';
-    if(/tiktok\.com/.test(url))             return 'tiktok';
-    return 'etc';
-  }
-  function embedUrl(provider,url){
-    switch(provider){
-      case 'youtube':{
-        const id = ytId(url); return id?`https://www.youtube.com/embed/${id}?playsinline=1`:'';
-      }
-      case 'instagram':{
-        const id = igId(url); return id?`https://www.instagram.com/reel/${id}/embed`:'';
-      }
-      case 'tiktok':{
-        const id = tkId(url); return id?`https://www.tiktok.com/embed/v2/${id}`:'';
-      }
-      default: return '';
-    }
-  }
-  function thumbUrl(provider,url){
-    if(provider==='youtube'){ const id = ytId(url); return id?`https://img.youtube.com/vi/${id}/hqdefault.jpg`:''; }
-    return '';
-  }
+  const detectProvider = (url='') =>
+    /youtu\.?be|youtube\.com/.test(url) ? 'youtube' :
+    /instagram\.com/.test(url)         ? 'instagram' :
+    /tiktok\.com/.test(url)            ? 'tiktok' : 'etc';
+
+  const embedUrl = (p,u) =>
+    p==='youtube'   ? (ytId(u)?`https://www.youtube.com/embed/${ytId(u)}?playsinline=1`:'') :
+    p==='instagram' ? (igId(u)?`https://www.instagram.com/reel/${igId(u)}/embed`:'') :
+    p==='tiktok'    ? (tkId(u)?`https://www.tiktok.com/embed/v2/${tkId(u)}`:'') : '';
+
+  const thumbUrl = (p,u) => p==='youtube' && ytId(u) ? `https://img.youtube.com/vi/${ytId(u)}/hqdefault.jpg` : '';
 
   /* ---------- List ---------- */
   const grid = $('#scGrid');
@@ -53,22 +40,20 @@
     return { items, total };
   }
 
-  function cardHTML(it){
+  const cardHTML = (it)=>{
     const p = it.provider || detectProvider(it.sourceUrl||'');
     const t = it.thumbnailUrl || thumbUrl(p, it.sourceUrl||'');
     const icon = p==='youtube' ? 'ri-youtube-fill' : p==='instagram' ? 'ri-instagram-line' :
                  p==='tiktok' ? 'ri-tiktok-line' : 'ri-global-line';
-    const src = t || (CFG.placeholderThumb || 'default.jpg');
-    const title = it.title || '제목 없음';
     const embed = it.embedUrl || embedUrl(p, it.sourceUrl||'');
+    const title = it.title || '제목 없음';
     return `
       <article class="sc-card" data-embed="${embed}" data-title="${title.replace(/"/g,'&quot;')}">
         <span class="badge"><i class="${icon}"></i>${p}</span>
-        <img class="thumb" src="${src}" alt="">
+        <img class="thumb" src="${t || (CFG.placeholderThumb || 'default.jpg')}" alt="">
         <div class="title">${title}</div>
-      </article>
-    `;
-  }
+      </article>`;
+  };
 
   async function load(){
     grid.innerHTML = '<div class="sc-card"><img class="thumb" style="opacity:.3" src="default.jpg" alt=""></div>'.repeat(6);
@@ -93,7 +78,7 @@
     const card = e.target.closest('.sc-card'); if(!card) return;
     const src = card.getAttribute('data-embed');
     const tt  = card.getAttribute('data-title') || '';
-    if(!src){ return; }
+    if(!src) return;
     player.src = src;
     vtitle.textContent = tt;
     viewer.setAttribute('aria-hidden','false');
@@ -127,11 +112,13 @@
   function openModal(){
     modal.setAttribute('aria-hidden','false');
     document.documentElement.style.overflow='hidden';
+    document.body.classList.add('modal-open');   /* ✅ FAB 백업 숨김 */
     urlIn.focus();
   }
   function closeModal(){
     modal.setAttribute('aria-hidden','true');
     document.documentElement.style.overflow='';
+    document.body.classList.remove('modal-open');
     resetModal();
   }
   function resetModal(){
@@ -155,7 +142,7 @@
     if(curEmbed){
       prvIf.src = curEmbed;
       prv.hidden = false;
-      /* 저장 버튼이 항상 보이도록 */
+      // 저장 버튼이 가시영역에 들어오도록
       saveBtn.scrollIntoView({ behavior:'smooth', block:'nearest' });
     }else{
       prvIf.src = 'about:blank';
