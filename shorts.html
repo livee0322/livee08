@@ -5,53 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>숏클립 - 라이비</title>
 
-  <!-- 공통 & 페이지 전용 -->
+  <!-- 공통 & 페이지 CSS -->
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/shorts.css" />
 
-  <!-- 아이콘 -->
+  <!-- Remix Icon -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
 
-  <!-- 설정/공통 UI -->
+  <!-- 공통 설정/UI -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
 </head>
 <body>
-  <!-- 공통 헤더/탭 -->
+  <!-- 공통 AppBar / TopTabs -->
   <div id="appbar"></div>
   <div id="top-tabs"></div>
 
-  <!-- 페이지 본문 -->
-  <main class="sc-page" aria-label="숏클립 피드">
-    <!-- 히어로 배너(선택) -->
-    <section class="sc-hero">
-      <div class="in">
-        <div class="txt">
-          <h1>쇼츠로 빠르게 보는 라이브 클립</h1>
-          <p>유튜브·인스타 릴스를 임베드로 모아 한 번에!</p>
-        </div>
-        <img src="default.jpg" alt="" />
+  <main class="sc-page">
+    <header class="sc-head">
+      <h1>숏클립</h1>
+      <div class="meta">
+        <span id="scTotal">총 0개</span>
       </div>
-    </section>
+    </header>
 
-    <!-- 에디터(등록) : ?editor=1 로 진입 시 노출 -->
-    <section id="scEditor" class="sc-editor" hidden>
-      <div class="card">
-        <h3><i class="ri-link"></i> 숏클립 링크 등록</h3>
-        <div class="row">
-          <input id="scUrl" type="url" placeholder="YouTube/Instagram 릴스 URL 붙여넣기" />
-          <button id="scAdd" class="btn pri"><i class="ri-upload-2-line"></i> 등록</button>
-        </div>
-        <small class="muted">예: https://youtube.com/shorts/ID, https://youtu.be/ID, https://www.instagram.com/reel/ID/</small>
-      </div>
-    </section>
-
-    <!-- 숏클립 피드 -->
-    <section id="scFeed" class="sc-feed" aria-live="polite"></section>
-    <div id="scSentinel" class="sentinel" aria-hidden="true"></div>
+    <!-- 그리드 -->
+    <section id="scGrid" class="sc-grid" aria-live="polite"></section>
   </main>
 
-  <!-- 고정 하단 탭 -->
+  <!-- 뷰어(클릭 시 재생) -->
+  <aside id="scViewer" class="sc-viewer" aria-hidden="true">
+    <div class="inner">
+      <button id="scViewerClose" class="x" aria-label="닫기"><i class="ri-close-line"></i></button>
+      <iframe id="scPlayer" title="Shorts player" loading="lazy" allowfullscreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
+      <div id="scViewerTitle" class="viewer-title"></div>
+    </div>
+  </aside>
+
+  <!-- 추가 모달(FAB) -->
+  <aside id="scModal" class="sc-modal" aria-hidden="true">
+    <div class="sheet">
+      <header>
+        <strong><i class="ri-add-line"></i> 숏클립 추가</strong>
+        <button id="scModalClose" class="x" aria-label="닫기"><i class="ri-close-line"></i></button>
+      </header>
+
+      <label class="field">
+        <span>링크(URL)</span>
+        <input id="scUrl" type="url" placeholder="YouTube / Instagram / TikTok 링크를 붙여넣기" />
+      </label>
+
+      <div class="inline">
+        <label class="field">
+          <span>제목</span>
+          <input id="scTitle" type="text" placeholder="제목 (선택)" />
+        </label>
+        <div class="provider" id="scProvider"><i class="ri-global-line"></i><b>알 수 없음</b></div>
+      </div>
+
+      <label class="field">
+        <span>설명</span>
+        <textarea id="scDesc" rows="2" placeholder="설명 (선택)"></textarea>
+      </label>
+
+      <div id="scPreview" class="preview" hidden>
+        <iframe title="미리보기" loading="lazy" allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
+      </div>
+
+      <div class="actions">
+        <button id="scSave" class="btn pri"><i class="ri-save-3-line"></i> 저장</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FAB -->
+  <button id="scFab" class="sc-fab" aria-label="숏클립 추가"><i class="ri-add-line"></i></button>
+
+  <!-- 공통 BottomTabs -->
   <div id="bottom-tabs"></div>
 
   <!-- 페이지 스크립트 -->
