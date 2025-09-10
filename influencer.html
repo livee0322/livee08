@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>인플루언서 더보기 - 라이비</title>
 
-  <!-- 페이지 전용 > 공통 순서 -->
+  <!-- 페이지 전용 > 공통 -->
   <link rel="stylesheet" href="css/influencer-list.css" />
   <link rel="stylesheet" href="css/main.css" />
 
@@ -17,25 +17,21 @@
   <script src="js/ui.js"></script>
 </head>
 <body>
-  <!-- 공통 상단바/탭 -->
+  <!-- 공통 상단/탭 (ui.js 채움) -->
   <div id="appbar"></div>
   <div id="top-tabs"></div>
 
   <main class="il-page">
     <!-- 상단: 총 N건 + 정렬 -->
     <header class="il-head" aria-label="요약 및 정렬">
-      <div class="left">
-        <span id="ilTotal" class="muted">총 0건</span>
-      </div>
-      <div class="right">
-        <select id="ilSort" aria-label="정렬">
-          <option value="recommended">추천순</option>
-          <option value="popular">인기순</option>
-          <option value="recent">최신순</option>
-          <option value="fee_asc">출연료 낮은순</option>
-          <option value="fee_desc">출연료 높은순</option>
-        </select>
-      </div>
+      <span id="ilTotal" class="muted">총 0건</span>
+      <select id="ilSort" aria-label="정렬">
+        <option value="recommended">추천순</option>
+        <option value="popular">인기순</option>
+        <option value="recent">최신순</option>
+        <option value="fee_asc">출연료 낮은순</option>
+        <option value="fee_desc">출연료 높은순</option>
+      </select>
     </header>
 
     <!-- 검색/필터 툴바 -->
@@ -47,20 +43,49 @@
           <i class="ri-arrow-right-line"></i>
         </button>
       </label>
-
-      <!-- 아이콘만 표시 -->
       <button id="ilBtnFilter" class="btn-icon" type="button" aria-label="필터 열기">
         <i class="ri-filter-3-line"></i>
       </button>
     </section>
 
-    <!-- 활성화된 필터 칩 -->
+    <!-- 활성 필터 칩 -->
     <div id="ilChips" class="il-chips" hidden></div>
 
-    <!-- 히어로(강조형 배너, AD/추천 1명) -->
+    <!-- 히어로(강조형 배너) -->
     <section id="ilHero" class="il-hero" hidden aria-label="추천 인플루언서"></section>
 
-    <!-- 포트폴리오 그리드 -->
+    <!-- =================== 커스텀 섹션들 =================== -->
+    <section id="ilCurated" class="il-curated" hidden>
+      <!-- 가로 스크롤: FEMALE -->
+      <section class="il-strip">
+        <header class="strip-head">
+          <h2>FEMALE MODEL</h2>
+          <a id="seeFemale" class="see" href="javascript:void(0)"><span>더보기</span><i class="ri-arrow-right-line"></i></a>
+        </header>
+        <div id="ilRowFemale" class="hscroll" aria-label="여성 모델"></div>
+      </section>
+
+      <!-- 가로 스크롤: MALE -->
+      <section class="il-strip">
+        <header class="strip-head">
+          <h2>MALE MODEL</h2>
+          <a id="seeMale" class="see" href="javascript:void(0)"><span>더보기</span><i class="ri-arrow-right-line"></i></a>
+        </header>
+        <div id="ilRowMale" class="hscroll" aria-label="남성 모델"></div>
+      </section>
+
+      <!-- 썸네일 월(그리드) -->
+      <section class="il-strip">
+        <header class="strip-head">
+          <h2>LATEST WORKS</h2>
+          <a id="seeWall" class="see" href="javascript:void(0)"><span>전체보기</span><i class="ri-arrow-right-line"></i></a>
+        </header>
+        <div id="ilWall" class="wall" aria-label="썸네일 모아보기"></div>
+      </section>
+    </section>
+    <!-- ==================================================== -->
+
+    <!-- 검색/필터 결과 그리드(카드형) -->
     <section id="ilGrid" class="il-grid" aria-live="polite"></section>
 
     <!-- 페이지네이션 -->
