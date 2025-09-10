@@ -72,3 +72,38 @@
 }
 .btn{ display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); background:#fff; padding:10px 14px; border-radius:12px; font-weight:900; }
 .btn.pri{ background:var(--primary); border-color:var(--primary); color:#fff; }
+
+/* ===== HOTFIX: Shorts modal over bottom-tabs, preview smaller, sticky action always visible ===== */
+
+/* 모달/뷰어가 하단 탭보다 위로 오도록 */
+.sc-modal,
+.sc-viewer {
+  z-index: 10010 !important;
+}
+
+/* 미리보기 높이 더 낮게 (작은 화면에서 버튼이 가려지지 않도록) */
+.preview { --pvh: 48vh; }            /* 기존 56vh → 48vh */
+@media (min-width: 480px) { .preview { --pvh: 54vh; } }
+@media (min-width: 768px) { .preview { --pvh: 520px; } }
+
+/* 모달 시트 자체 스크롤 + 버튼 영역 확보 */
+.sc-modal .sheet {
+  max-height: 86vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+
+  /* 하단에 버튼이 들어갈 여유 + 안전영역 */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+/* 저장 버튼 줄을 sticky로 고정하고 안전영역 반영 */
+.sc-modal .actions {
+  position: sticky;
+  bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: linear-gradient(180deg, rgba(255,255,255,0), #fff 40%);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  z-index: 1; /* 시트 내부에서 맨 위 */
+}
