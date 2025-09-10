@@ -1,8 +1,4 @@
-/* shorts.js — v1.0
- * - 리스트 그리드
- * - 카드 클릭 → 뷰어
- * - FAB 모달: 링크 인식/미리보기/저장(POST /shorts-test)
- */
+/* shorts.js — v1.1 (preview limit + sticky actions + scroll into view) */
 (function(){
   'use strict';
   const $  = (s, el=document)=>el.querySelector(s);
@@ -27,23 +23,15 @@
   }
   function embedUrl(provider,url){
     switch(provider){
-      case 'youtube':{
-        const id = ytId(url); return id?`https://www.youtube.com/embed/${id}`:'';
-      }
-      case 'instagram':{
-        const id = igId(url); return id?`https://www.instagram.com/reel/${id}/embed`:'';
-      }
-      case 'tiktok':{
-        const id = tkId(url); return id?`https://www.tiktok.com/embed/v2/${id}`:'';
-      }
+      case 'youtube':{ const id = ytId(url); return id?`https://www.youtube.com/embed/${id}`:''; }
+      case 'instagram':{ const id = igId(url); return id?`https://www.instagram.com/reel/${id}/embed`:''; }
+      case 'tiktok':{ const id = tkId(url); return id?`https://www.tiktok.com/embed/v2/${id}`:''; }
       default: return '';
     }
   }
   function thumbUrl(provider,url){
-    if(provider==='youtube'){
-      const id = ytId(url); return id?`https://img.youtube.com/vi/${id}/hqdefault.jpg`:'';
-    }
-    return ''; // 인스타/틱톡은 서버 저장 or 수동 입력 권장
+    if(provider==='youtube'){ const id = ytId(url); return id?`https://img.youtube.com/vi/${id}/hqdefault.jpg`:''; }
+    return '';
   }
 
   /* ---------- List ---------- */
@@ -64,7 +52,7 @@
     const t = it.thumbnailUrl || thumbUrl(p, it.sourceUrl||'');
     const icon = p==='youtube' ? 'ri-youtube-fill' : p==='instagram' ? 'ri-instagram-line' :
                  p==='tiktok' ? 'ri-tiktok-line' : 'ri-global-line';
-    const src = t || CFG.placeholderThumb || 'default.jpg';
+    const src = t || (CFG.placeholderThumb || 'default.jpg');
     const title = it.title || '제목 없음';
     return `
       <article class="sc-card" data-embed="${it.embedUrl || embedUrl(p, it.sourceUrl||'')}" data-title="${title.replace(/"/g,'&quot;')}">
@@ -121,6 +109,8 @@
   const prv   = $('#scPreview');
   const prvIf = $('#scPreview iframe');
   const providerBox = $('#scProvider');
+  const saveBtn = $('#scSave');
+
   let curProvider = 'etc', curEmbed = '', curThumb = '';
 
   $('#scFab').onclick = openModal;
@@ -158,6 +148,9 @@
     if(curEmbed){
       prvIf.src = curEmbed;
       prv.hidden = false;
+
+      /* ✅ 미리보기 생기면 저장 버튼이 보이도록 아래로 스크롤 */
+      saveBtn.scrollIntoView({ behavior:'smooth', block:'end' });
     }else{
       prvIf.src = 'about:blank';
       prv.hidden = true;
@@ -166,7 +159,7 @@
   urlIn.addEventListener('input', updatePreview);
   urlIn.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); updatePreview(); } });
 
-  $('#scSave').onclick = async ()=>{
+  saveBtn.onclick = async ()=>{
     const sourceUrl = urlIn.value.trim();
     if(!sourceUrl || curProvider==='etc' || !curEmbed){
       UI.toast('유효한 링크를 입력하세요'); return;
