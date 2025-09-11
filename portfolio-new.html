@@ -4,13 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>포트폴리오 등록</title>
-
-  <!-- 폰트/아이콘 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-
-  <!-- 페이지 CSS -->
-  <link rel="stylesheet" href="css/portfolio-new.css?v=20250909">
+  <link rel="stylesheet" href="css/portfolio-new.css?v=2.0">
 </head>
 <body>
   <header class="lv-appbar"><div class="lv-title">포트폴리오 등록</div></header>
@@ -19,14 +15,13 @@
     <div id="pfMsg" class="notice" role="status" aria-live="polite"></div>
 
     <form id="pfForm" class="pf-form">
-      <!-- Hero: FB-like cover + avatar -->
+      <!-- HERO -->
       <section class="pf-section pf-section--hero">
         <div class="pf-hero">
           <button type="button" id="coverTrigger" class="pf-coverBtn is-empty" aria-label="배경 이미지 업로드">
             <img id="coverPrev" alt="">
             <div class="pf-overlay"><i class="ri-landscape-line" aria-hidden="true"></i></div>
           </button>
-
           <div class="pf-profileRow">
             <div class="pf-avatarWrap">
               <button type="button" id="mainTrigger" class="pf-avatarBtn is-empty" aria-label="프로필 이미지 업로드">
@@ -40,48 +35,134 @@
             </div>
           </div>
         </div>
-
-        <!-- 실제 파일 입력 -->
         <input id="mainFile" type="file" accept="image/*" class="file-ghost">
         <input id="coverFile" type="file" accept="image/*" class="file-ghost">
       </section>
 
-      <!-- 서브 썸네일 -->
+      <!-- 갤러리(이미지 여러 장) -->
       <section class="pf-section">
-        <h3>서브 썸네일(선택, 최대 5)</h3>
+        <h3>갤러리 이미지 (최대 12)</h3>
         <div id="subsGrid" class="subs-grid"></div>
-        <button type="button" id="subsTrigger" class="pf-addThumb" aria-label="서브 이미지 추가"><i class="ri-image-add-line"></i></button>
+        <button type="button" id="subsTrigger" class="pf-addThumb"><i class="ri-image-add-line"></i> 이미지 추가</button>
         <input id="subsFile" type="file" accept="image/*" multiple class="file-ghost">
       </section>
 
       <!-- 기본 정보 -->
       <section class="pf-section">
         <h3>기본 정보</h3>
-
-        <label for="nickname" class="label">닉네임 <span class="req">*</span></label>
+        <label class="label" for="nickname">닉네임 <span class="req">*</span></label>
         <input id="nickname" class="input" placeholder="예: 라이브 크리에이터" required>
 
-        <label for="headline" class="label">한 줄 소개 <span class="req">*</span></label>
+        <label class="label" for="headline">한 줄 소개 <span class="req">*</span></label>
         <input id="headline" class="input" placeholder="예: 뷰티/일상 라이브 진행자" required>
 
-        <label for="bio" class="label">상세 소개 (자유)</label>
+        <label class="label" for="bio">상세 소개</label>
         <textarea id="bio" class="input" rows="7" placeholder="자유롭게 소개를 작성하세요."></textarea>
 
         <div class="pf-grid2">
           <div>
-            <label for="careerYears" class="label">경력(년)</label>
+            <label class="label" for="careerYears">경력(년)</label>
             <input id="careerYears" class="input" type="number" min="0" max="50" placeholder="0">
           </div>
           <div>
-            <label for="age" class="label">나이</label>
+            <label class="label" for="age">나이</label>
             <input id="age" class="input" type="number" min="14" max="99" placeholder="24">
+            <label class="checkbox"><input type="checkbox" id="agePublic"> 나이 공개</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 선택 정보(치수/지역) -->
+      <section class="pf-section">
+        <h3>선택 정보</h3>
+        <div class="pf-grid2">
+          <div>
+            <label class="label" for="regionCity">지역</label>
+            <input id="regionCity" class="input" placeholder="시/도 (예: 서울)">
+          </div>
+          <div>
+            <label class="label" for="regionArea">상세 지역</label>
+            <input id="regionArea" class="input" placeholder="구/군 (예: 강남구)">
+          </div>
+        </div>
+        <div class="pf-grid2">
+          <div>
+            <label class="label" for="gender">성별</label>
+            <select id="gender" class="input">
+              <option value="">선택 안함</option>
+              <option value="female">여성</option>
+              <option value="male">남성</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="height">키(cm)</label>
+            <input id="height" class="input" type="number" min="120" max="210" placeholder="165">
+          </div>
+        </div>
+        <div class="pf-grid2">
+          <div>
+            <label class="label" for="weight">몸무게(kg)</label>
+            <input id="weight" class="input" type="number" min="30" max="120" placeholder="50">
+          </div>
+          <div>
+            <label class="label" for="sizeTop">상의/하의/신발</label>
+            <div class="pf-grid2">
+              <input id="sizeTop" class="input" placeholder="상의 S/M/L">
+              <input id="sizeBottom" class="input" placeholder="하의 26/28…">
+            </div>
+            <input id="shoe" class="input" placeholder="신발 240">
+            <label class="checkbox"><input type="checkbox" id="sizePublic"> 치수 공개</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 쇼츠 연동 -->
+      <section class="pf-section">
+        <div class="shorts-head">
+          <h3 style="margin:0">내 쇼츠 가져오기</h3>
+          <button type="button" id="shortsRefresh" class="btn"><i class="ri-refresh-line"></i> 새로고침</button>
+        </div>
+        <div id="shortsGrid" class="shorts-grid">
+          <div class="note">로그인 시 내 쇼츠가 표시됩니다</div>
+        </div>
+      </section>
+
+      <!-- 최근 라이브 링크(붙여넣기 미리보기) -->
+      <section class="pf-section">
+        <h3>최근 라이브 링크</h3>
+        <div id="linksWrap" class="links-wrap"></div>
+        <button type="button" id="addLinkBtn" class="btn"><i class="ri-add-line"></i> 추가</button>
+      </section>
+
+      <!-- 링크 / 공개 / 제안 -->
+      <section class="pf-section">
+        <h3>링크 & 공개 설정</h3>
+        <label class="label" for="primaryLink">대표 링크</label>
+        <input id="primaryLink" class="input" type="url" placeholder="https://...">
+
+        <div class="pf-grid2" style="margin-top:10px">
+          <div>
+            <label class="label" for="linkWebsite">웹사이트</label>
+            <input id="linkWebsite" class="input" type="url" placeholder="https://">
+          </div>
+          <div>
+            <label class="label" for="linkInstagram">Instagram</label>
+            <input id="linkInstagram" class="input" type="url" placeholder="https://instagram.com/...">
+          </div>
+        </div>
+        <div class="pf-grid2" style="margin-top:10px">
+          <div>
+            <label class="label" for="linkYouTube">YouTube</label>
+            <input id="linkYouTube" class="input" type="url" placeholder="https://youtube.com/...">
+          </div>
+          <div>
+            <label class="label" for="linkTikTok">TikTok</label>
+            <input id="linkTikTok" class="input" type="url" placeholder="https://tiktok.com/...">
           </div>
         </div>
 
-        <label for="primaryLink" class="label">대표 링크</label>
-        <input id="primaryLink" class="input" type="url" placeholder="https://...">
-
-        <label for="visibility" class="label">공개 범위</label>
+        <label class="label" for="visibility" style="margin-top:10px">공개 범위</label>
         <select id="visibility" class="input">
           <option value="public">전체공개</option>
           <option value="unlisted">링크공개</option>
@@ -93,22 +174,6 @@
         </label>
       </section>
 
-      <!-- 최근 라이브 링크 -->
-      <section class="pf-section">
-        <h3>최근 라이브 링크</h3>
-        <div id="linksWrap" class="links-wrap"></div>
-        <button type="button" id="addLinkBtn" class="btn"><i class="ri-add-line"></i> 추가</button>
-      </section>
-
-      <!-- 태그 -->
-      <section class="pf-section">
-        <h3>태그</h3>
-        <div class="tag-row">
-          <input id="tagInput" class="input" placeholder="엔터로 추가">
-          <div id="tagList" class="chips"></div>
-        </div>
-      </section>
-
       <!-- 액션 -->
       <div class="pf-section btns">
         <button type="button" id="saveDraftBtn" class="btn">임시저장</button>
@@ -117,9 +182,7 @@
     </form>
   </main>
 
-  <!-- 환경설정 (API_BASE 등) -->
   <script src="js/config.js"></script>
-  <!-- 페이지 JS -->
-  <script src="js/portfolio-new.js?v=20250909"></script>
+  <script src="js/portfolio-new.js?v=2.0"></script>
 </body>
 </html>
