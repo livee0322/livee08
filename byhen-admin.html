@@ -15,7 +15,7 @@
     <div class="ad-title">BYHEN 관리자</div>
     <div class="ad-actions">
       <a class="btn ghost" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 미리보기</a>
-      <button id="adSave" class="btn pri"><i class="ri-save-3-line"></i> 저장</button>
+      <button id="adSave" class="btn pri" type="button"><i class="ri-save-3-line"></i> 저장</button>
     </div>
   </header>
 
@@ -49,8 +49,8 @@
         <label class="field"><span>로고 이미지 URL</span><input id="heroLogo" class="input" placeholder="https://..."></label>
       </div>
       <div class="upload-row">
-        <button id="upHeroImage" class="btn"><i class="ri-upload-2-line"></i> 배경 업로드</button>
-        <button id="upHeroLogo" class="btn"><i class="ri-upload-2-line"></i> 로고 업로드</button>
+        <button id="upHeroImage" class="btn" type="button"><i class="ri-upload-2-line"></i> 배경 업로드</button>
+        <button id="upHeroLogo" class="btn" type="button"><i class="ri-upload-2-line"></i> 로고 업로드</button>
         <input id="fileHeroImage" type="file" accept="image/*" hidden>
         <input id="fileHeroLogo"  type="file" accept="image/*" hidden>
       </div>
@@ -64,7 +64,7 @@
     <section class="card">
       <h3>가격 & 패키지</h3>
       <div id="plans"></div>
-      <button id="addPlan" class="btn"><i class="ri-add-line"></i> 패키지 추가</button>
+      <button id="addPlan" class="btn" type="button"><i class="ri-add-line"></i> 패키지 추가</button>
     </section>
 
     <!-- 예약/캘린더 -->
@@ -89,8 +89,8 @@
         <label class="field"><span>포트폴리오 사진(URL, 줄바꿈으로 구분)</span><textarea id="portfolioPhotos" class="input" rows="5"></textarea></label>
       </div>
       <div class="upload-row">
-        <button id="upStudio" class="btn"><i class="ri-upload-2-line"></i> 스튜디오 업로드</button>
-        <button id="upPortfolio" class="btn"><i class="ri-upload-2-line"></i> 포트폴리오 업로드</button>
+        <button id="upStudio" class="btn" type="button"><i class="ri-upload-2-line"></i> 스튜디오 업로드</button>
+        <button id="upPortfolio" class="btn" type="button"><i class="ri-upload-2-line"></i> 포트폴리오 업로드</button>
         <input id="fileStudio" type="file" accept="image/*" multiple hidden>
         <input id="filePortfolio" type="file" accept="image/*" multiple hidden>
       </div>
@@ -102,7 +102,7 @@
       <div id="shortsList"></div>
       <div class="grid2">
         <input id="shortUrl" class="input" placeholder="YouTube/Instagram/TikTok 링크 붙여넣기">
-        <button id="addShort" class="btn"><i class="ri-add-line"></i> 추가</button>
+        <button id="addShort" class="btn" type="button"><i class="ri-add-line"></i> 추가</button>
       </div>
     </section>
 
@@ -110,12 +110,12 @@
     <section class="card">
       <h3>FAQ / 정책</h3>
       <div id="faqList"></div>
-      <button id="addFaq" class="btn"><i class="ri-add-line"></i> FAQ 추가</button>
+      <button id="addFaq" class="btn" type="button"><i class="ri-add-line"></i> FAQ 추가</button>
       <label class="field" style="margin-top:10px"><span>정책</span><textarea id="policy" class="input" rows="4"></textarea></label>
     </section>
   </main>
 
   <script src="js/config.js"></script>
-  <script src="js/byhen-admin.page.js?v=1.0.0"></script>
+  <script src="js/byhen-admin.page.js?v=2.1.0"></script>
 </body>
 </html>
