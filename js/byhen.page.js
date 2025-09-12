@@ -1,28 +1,50 @@
-/* byhen.page.js — v1.1.0 (API 연동 + 렌더/달력/모달/갤러리/숏폼) */
+/* byhen.page.js — v1.1.1 (slug/id 자동 로드, 캘린더/모달/갤러리/숏폼 동일) */
 (function(w){
   'use strict';
 
   // ---------- config / data load ----------
   const CFG = w.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/,'');
-  const ENDPOINT = API_BASE + '/brands-test/byhen';
+  const QS = new URLSearchParams(location.search);
+  const SLUG = (QS.get('slug') || 'byhen').trim().toLowerCase();
+  const ID   = (QS.get('id') || '').trim();
 
   let D = {}; // 페이지 전역 데이터 (로드 후 채움)
 
+  async function fetchJSON(url){
+    const r = await fetch(url, { headers:{ Accept:'application/json' }});
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
+    return j;
+  }
+
   async function loadData(){
-    try{
-      const r = await fetch(ENDPOINT, { headers:{ Accept:'application/json' } });
-      const j = await r.json().catch(()=>({}));
-      const doc = (j && (j.data||j)) || null;
-      if (doc) return doc;
-    }catch(_){}
-    // 폴백: 정적 전역 (있다면)
+    // 1) id가 있으면 /:id
+    if (ID) {
+      try {
+        const j = await fetchJSON(`${API_BASE}/brands-test/${encodeURIComponent(ID)}`);
+        return j.data || j;
+      } catch (_) {}
+    }
+    // 2) slug 우선
+    try {
+      const j = await fetchJSON(`${API_BASE}/brands-test?slug=${encodeURIComponent(SLUG)}&limit=1`);
+      return j.data || j;
+    } catch (_) {}
+
+    // 3) 폴백: 첫 문서
+    try {
+      const j = await fetchJSON(`${API_BASE}/brands-test?limit=1`);
+      const items = j.items || j.data || j.docs || [];
+      if (Array.isArray(items) && items.length) return items[0];
+    } catch (_) {}
+
+    // 4) 최종 폴백: 전역 상수
     return (w.BYHEN_DATA || {});
   }
 
   // ---------- utils ----------
   const $ = (s,el=document)=>el.querySelector(s);
-  const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
   const on = (el,ev,fn)=>el && el.addEventListener(ev,fn);
   const pad2=(n)=>String(n).padStart(2,'0');
   const fmt=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -36,8 +58,9 @@
   // ---------- hero ----------
   function renderHero(){
     const root = $('#bh-hero'); if(!root) return;
+    const bg = D.hero?.image ? `background-image:linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)),url('${D.hero.image}')` : '';
     root.innerHTML = `
-      <div class="media" style="${D.hero?.image?`background-image:linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)),url('${D.hero.image}')`:''}"></div>
+      <div class="media" style="${bg}"></div>
       <div class="body">
         <div class="row">
           <div class="logo">${ D.hero?.logo ? `<img src="${D.hero.logo}" alt="">` : '' }</div>
@@ -47,8 +70,8 @@
           </div>
         </div>
         <div class="row" style="gap:6px;flex-wrap:wrap">
-          <span class="bh-chip"><i class="ri-map-pin-2-line"></i>${D.location||''}</span>
-          <span class="bh-chip"><i class="ri-time-line"></i>${D.hours||''}</span>
+          ${D.location?`<span class="bh-chip"><i class="ri-map-pin-2-line"></i>${D.location}</span>`:''}
+          ${D.hours?`<span class="bh-chip"><i class="ri-time-line"></i>${D.hours}</span>`:''}
           ${D.contact?.phone?`<a class="bh-chip" href="tel:${D.contact.phone}"><i class="ri-phone-line"></i>${D.contact.phone}</a>`:''}
           ${D.contact?.kakaoUrl?`<a class="bh-chip" href="${D.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
         </div>
@@ -57,12 +80,12 @@
 
   // ---------- calendar ----------
   const calState = { ym:new Date(), pickedDate:'', pickedTime:'' };
-  function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+  const addDays=(d, n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
 
   function renderCalendar(){
     const root = $('#bhCalendar'); if(!root) return;
     const y = calState.ym.getFullYear();
-    const m = calState.ym.getMonth(); // 0-11
+    const m = calState.ym.getMonth();
     $('#bhMonTitle').textContent = `${y}-${pad2(m+1)}`;
 
     const first = new Date(y,m,1);
@@ -70,8 +93,8 @@
     const start = addDays(first, -((first.getDay()+6)%7)); // 월요일 시작
     const weeks = 6, days=7;
 
-    const booked = new Set((D.availability?.booked||[]));
-    const closed = new Set((D.availability?.closed||[]));
+    const booked = new Set(D.availability?.booked||[]);
+    const closed = new Set(D.availability?.closed||[]);
     const lead   = Number(D.availability?.leadDays||0);
     const today  = new Date(); today.setHours(0,0,0,0);
     const earliest = addDays(today, lead);
@@ -87,21 +110,8 @@
       const isSoon   = d < earliest;
       const ok = inMon && !isClosed && !isBooked && !isSoon;
 
-      const cls = [
-        'cell',
-        inMon?'':'off',
-        isClosed?'off':'',
-        isBooked?'booked':'',
-        ok?'ok':'',
-        (calState.pickedDate===iso)?'sel':''
-      ].filter(Boolean).join(' ');
-
-      const dot =
-        isClosed ? '<i class="dot off"></i>' :
-        isBooked ? '<i class="dot booked"></i>' :
-        isSoon   ? '<i class="dot soon"></i>' :
-                   '<i class="dot ok"></i>';
-
+      const cls = ['cell', inMon?'':'off', isClosed?'off':'', isBooked?'booked':'', ok?'ok':'', (calState.pickedDate===iso)?'sel':''].filter(Boolean).join(' ');
+      const dot = isClosed ? '<i class="dot off"></i>' : isBooked ? '<i class="dot booked"></i>' : isSoon ? '<i class="dot soon"></i>' : '<i class="dot ok"></i>';
       grid += `<div class="${cls}" data-iso="${iso}"><span class="d">${d.getDate()}</span>${inMon?dot:''}</div>`;
     }
     root.innerHTML = `<div class="hd">${hd}</div><div class="grid">${grid}</div>`;
@@ -124,7 +134,8 @@
     const card = $('#bhSlotCard'); if(!card) return;
     if(!calState.pickedDate){ card.hidden = true; return; }
     $('#bhPickedDate').textContent = calState.pickedDate;
-    const wrap = $('#bhSlots'); wrap.innerHTML = (D.availability?.timeslots||[]).map(t=>{
+    const wrap = $('#bhSlots'); const slots = (D.availability?.timeslots||[]);
+    wrap.innerHTML = slots.map(t=>{
       const sel = (calState.pickedTime===t)?'is-sel':'';
       return `<button type="button" class="bh-chip2 ${sel}" data-t="${t}">${t}</button>`;
     }).join('');
@@ -140,6 +151,7 @@
   }
 
   // ---------- pricing ----------
+  const money = (n)=>Number(n||0).toLocaleString('ko-KR');
   function renderPricing(){
     const root = $('#bhPricing'); if(!root) return;
     const html = (D.pricing||[]).map(p=>`
@@ -179,6 +191,7 @@
 
   // lightbox
   function openLightbox(list, idx){
+    if(!list.length) return;
     let wrap=$('#bhLightbox');
     if(!wrap){
       wrap=document.createElement('div');
@@ -232,8 +245,8 @@
     const r = $('#bhInfo'); if(!r) return;
     r.innerHTML = `
       <div class="row">
-        <span class="bh-chip gray"><i class="ri-map-pin-2-line"></i>${D.location||''}</span>
-        <span class="bh-chip gray"><i class="ri-time-line"></i>${D.hours||''}</span>
+        ${D.location?`<span class="bh-chip gray"><i class="ri-map-pin-2-line"></i>${D.location}</span>`:''}
+        ${D.hours?`<span class="bh-chip gray"><i class="ri-time-line"></i>${D.hours}</span>`:''}
         ${D.contact?.phone?`<a class="bh-chip gray" href="tel:${D.contact.phone}"><i class="ri-phone-line"></i>${D.contact.phone}</a>`:''}
         ${D.contact?.kakaoUrl?`<a class="bh-chip gray" href="${D.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
       </div>
@@ -248,7 +261,7 @@
     r.innerHTML = items + (D.policy?`<div class="item"><div class="q">정책</div><div class="a">${D.policy}</div></div>`:'');
   }
 
-  // ---------- modals: inquiry / reserve ----------
+  // ---------- modals ----------
   function openModal(kind, payload={}){
     let wrap=$('#bhModal'); if(!wrap){
       wrap=document.createElement('div'); wrap.id='bhModal'; wrap.className='bh-modal';
@@ -318,7 +331,7 @@
   async function init(){
     try{
       D = await loadData();
-      w.BYHEN_DATA = D; // 다른 스크립트에서 참고할 수 있도록
+      w.BYHEN_DATA = D;
     }catch(e){
       console.warn('[byhen load error]', e);
       toast('데이터를 불러오지 못했습니다. 기본값으로 표시합니다.');
@@ -332,7 +345,6 @@
     renderShorts();
     renderInfo(); renderFAQ();
 
-    // CTA
     on($('#bhOpenInquiry'),'click',()=>openModal('inquiry'));
     on($('#bhOpenReserveBottom'),'click',()=>openModal('reserve'));
     on($('#bhOpenReserve'),'click',()=>openModal('reserve', {date:calState.pickedDate, time:calState.pickedTime}));
