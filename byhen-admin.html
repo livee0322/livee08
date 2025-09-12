@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BYHEN 관리자</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+  <link rel="stylesheet" href="css/byhen-admin.css?v=1.0.0">
+</head>
+<body>
+  <header class="ad-appbar">
+    <div class="ad-title">BYHEN 관리자</div>
+    <div class="ad-actions">
+      <a class="btn ghost" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 미리보기</a>
+      <button id="adSave" class="btn pri"><i class="ri-save-3-line"></i> 저장</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="adMsg" class="notice" aria-live="polite"></div>
+
+    <!-- 기본정보 -->
+    <section class="card">
+      <h3>기본 정보</h3>
+      <div class="grid2">
+        <label class="field"><span>브랜드명</span><input id="name" class="input" placeholder="BYHEN"></label>
+        <label class="field"><span>슬러그</span><input id="slug" class="input" placeholder="byhen" value="byhen" disabled></label>
+      </div>
+      <label class="field"><span>태그라인</span><input id="tagline" class="input" placeholder="브랜드가 사랑하는 크리에이티브 스튜디오"></label>
+      <div class="grid2">
+        <label class="field"><span>지역</span><input id="location" class="input" placeholder="서울 성수동"></label>
+        <label class="field"><span>운영시간</span><input id="hours" class="input" placeholder="10:00–19:00 (일·공휴일 휴무)"></label>
+      </div>
+      <div class="grid3">
+        <label class="field"><span>연락처(전화)</span><input id="phone" class="input" placeholder="02-000-0000"></label>
+        <label class="field"><span>카카오톡 채널 URL</span><input id="kakaoUrl" class="input" placeholder="https://pf.kakao.com/..."></label>
+        <label class="field"><span>이메일</span><input id="email" class="input" type="email" placeholder="brand@mail.com"></label>
+      </div>
+    </section>
+
+    <!-- 히어로 이미지 -->
+    <section class="card">
+      <h3>히어로 이미지</h3>
+      <div class="grid2">
+        <label class="field"><span>배경 이미지 URL</span><input id="heroImage" class="input" placeholder="https://..."></label>
+        <label class="field"><span>로고 이미지 URL</span><input id="heroLogo" class="input" placeholder="https://..."></label>
+      </div>
+      <div class="upload-row">
+        <button id="upHeroImage" class="btn"><i class="ri-upload-2-line"></i> 배경 업로드</button>
+        <button id="upHeroLogo" class="btn"><i class="ri-upload-2-line"></i> 로고 업로드</button>
+        <input id="fileHeroImage" type="file" accept="image/*" hidden>
+        <input id="fileHeroLogo"  type="file" accept="image/*" hidden>
+      </div>
+      <div class="preview-row">
+        <img id="prevHeroImage" alt="">
+        <img id="prevHeroLogo" alt="">
+      </div>
+    </section>
+
+    <!-- 가격/패키지 -->
+    <section class="card">
+      <h3>가격 & 패키지</h3>
+      <div id="plans"></div>
+      <button id="addPlan" class="btn"><i class="ri-add-line"></i> 패키지 추가</button>
+    </section>
+
+    <!-- 예약/캘린더 -->
+    <section class="card">
+      <h3>예약 설정</h3>
+      <div class="grid3">
+        <label class="field"><span>리드타임(일)</span><input id="leadDays" class="input" type="number" min="0" value="3"></label>
+        <label class="field"><span>타임슬롯(쉼표로 구분)</span><input id="timeslots" class="input" placeholder="10:00, 14:00, 19:00"></label>
+        <div></div>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>마감일(YYYY-MM-DD, 쉼표)</span><textarea id="booked" class="input" rows="3" placeholder="2025-09-15, 2025-09-20"></textarea></label>
+        <label class="field"><span>휴무일(YYYY-MM-DD, 쉼표)</span><textarea id="closed" class="input" rows="3" placeholder="2025-09-22"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 갤러리 -->
+    <section class="card">
+      <h3>갤러리 이미지</h3>
+      <div class="grid2">
+        <label class="field"><span>스튜디오 사진(URL, 줄바꿈으로 구분)</span><textarea id="studioPhotos" class="input" rows="5"></textarea></label>
+        <label class="field"><span>포트폴리오 사진(URL, 줄바꿈으로 구분)</span><textarea id="portfolioPhotos" class="input" rows="5"></textarea></label>
+      </div>
+      <div class="upload-row">
+        <button id="upStudio" class="btn"><i class="ri-upload-2-line"></i> 스튜디오 업로드</button>
+        <button id="upPortfolio" class="btn"><i class="ri-upload-2-line"></i> 포트폴리오 업로드</button>
+        <input id="fileStudio" type="file" accept="image/*" multiple hidden>
+        <input id="filePortfolio" type="file" accept="image/*" multiple hidden>
+      </div>
+    </section>
+
+    <!-- 숏폼 -->
+    <section class="card">
+      <h3>하이라이트(숏폼)</h3>
+      <div id="shortsList"></div>
+      <div class="grid2">
+        <input id="shortUrl" class="input" placeholder="YouTube/Instagram/TikTok 링크 붙여넣기">
+        <button id="addShort" class="btn"><i class="ri-add-line"></i> 추가</button>
+      </div>
+    </section>
+
+    <!-- FAQ / 정책 -->
+    <section class="card">
+      <h3>FAQ / 정책</h3>
+      <div id="faqList"></div>
+      <button id="addFaq" class="btn"><i class="ri-add-line"></i> FAQ 추가</button>
+      <label class="field" style="margin-top:10px"><span>정책</span><textarea id="policy" class="input" rows="4"></textarea></label>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/byhen-admin.page.js?v=1.0.0"></script>
+</body>
+</html>
