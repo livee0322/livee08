@@ -1,4 +1,4 @@
-/* byhen-admin.page.js — v2.0 (Cloudinary uploads + pricing/availability/FAQ/shorts)
+byhen-admin.page.js — v2.0 (Cloudinary uploads + pricing/availability/FAQ/shorts)
    - 포트폴리오 등록 페이지(v2) 구조/패턴을 그대로 따릅니다.
    - Cloudinary 서명: /api/v1/uploads/signature
    - 엔드포인트(변경 가능): CFG.endpoints.byhen || '/byhen-test'
