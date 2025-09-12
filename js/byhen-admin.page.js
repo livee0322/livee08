@@ -1,8 +1,6 @@
-/* byhen-admin.page.js — v2.1
-   - HTML(id)와 완전 정합
-   - Cloudinary 업로드 + 미리보기
-   - 가격/예약/갤러리/FAQ/숏폼 관리
-   - 엔드포인트: CFG.endpoints.byhen || '/byhen-test'
+/* byhen-admin.page.js — v2.1.1 (fix: duplicate identifier)
+   - Cloudinary uploads + pricing/availability/FAQ/shorts
+   - Endpoint: CFG.endpoints.byhen || '/byhen-test'
 */
 (function () {
   'use strict';
@@ -14,7 +12,6 @@
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
   const here  = encodeURIComponent(location.pathname + location.search + location.hash);
 
-  // 이미지 변환 preset (Cloudinary)
   const THUMB = {
     square:   'c_fill,g_auto,w_600,h_600,f_auto,q_auto',
     cover169: 'c_fill,g_auto,w_1600,h_900,f_auto,q_auto',
@@ -22,15 +19,13 @@
     logo:     'c_fill,g_auto,w_512,h_512,f_auto,q_auto',
   };
 
-  // -------- helpers --------
   const $id = (s)=>document.getElementById(s);
   const on  = (el, ev, fn)=>el && el.addEventListener(ev, fn);
   const withTransform=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8); }catch{ return url; } };
   const say = (t, ok=false)=>{ const el=$id('adMsg'); if(!el) return; el.textContent=t; el.classList.add('show'); el.classList.toggle('ok', ok); };
   const headers = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
-  const money = (n)=>Number(n||0).toLocaleString('ko-KR');
 
-  // Shorts utils
+  // Shorts helpers
   const ytId=(u='')=>(u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/)||[])[1]||'';
   const igId=(u='')=>(u.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/)||[])[1]||'';
   const tkId=(u='')=>(u.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)||[])[1]||'';
@@ -40,29 +35,21 @@
                        :p==='tiktok'?(tkId(u)?`https://www.tiktok.com/embed/v2/${tkId(u)}`:''):'';
   const thumbUrl=(p,u)=>p==='youtube'&&ytId(u)?`https://img.youtube.com/vi/${ytId(u)}/hqdefault.jpg`: '';
 
-  // -------- state --------
   const state = {
     id:'',
-    // hero/logo
     heroImageUrl:'',
     logoUrl:'',
-    // galleries
     studioPhotos:[],
     portfolioPhotos:[],
-    // pricing
-    pricing:[],               // [{name, price, duration, includes[], options[]}]
-    // availability
+    pricing:[],
     availability:{ leadDays:0, timeslots:[], booked:[], closed:[] },
-    // faq/policy
-    faq:[],                   // [{q,a}]
+    faq:[],
     policy:'',
-    // shorts
-    shorts:[],                // [{sourceUrl, provider, embedUrl, thumbnailUrl}]
+    shorts:[],
     pending:0
   };
   const bump=(n)=>{ state.pending=Math.max(0, state.pending+n); };
 
-  // -------- Cloudinary upload --------
   async function getSignature(){
     const r=await fetch(`${API_BASE}/uploads/signature`, { headers:headers(false) });
     const j=await r.json().catch(()=>({}));
@@ -80,7 +67,6 @@
   }
   const isImgOk=(f)=>{ if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); return false; } if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; } return true; };
 
-  // -------- UI binds --------
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init, {once:true});
   else init();
 
@@ -89,38 +75,38 @@
     const elName=$id('name'), elSlug=$id('slug'), elTagline=$id('tagline'), elLocation=$id('location'), elHours=$id('hours');
     const elPhone=$id('phone'), elKakao=$id('kakaoUrl'), elEmail=$id('email');
 
-    // hero/logo (URL inputs + upload)
+    // hero/logo
     const elHeroURL=$id('heroImage'), elLogoURL=$id('heroLogo');
     const upHero=$id('upHeroImage'), upLogo=$id('upHeroLogo');
     const fileHero=$id('fileHeroImage'), fileLogo=$id('fileHeroLogo');
     const prevHero=$id('prevHeroImage'), prevLogo=$id('prevHeroLogo');
 
     // pricing
-    const plans=$id('plans'), addPlan=$id('addPlan');
+    const plans=$id('plans'), btnAddPlan=$id('addPlan');
 
-    // availability
+    // availability (textarea/inputs)
     const elLeadDays=$id('leadDays'), elTimeslots=$id('timeslots');
     const elBooked=$id('booked'), elClosed=$id('closed');
 
     // galleries
     const taStudio=$id('studioPhotos'), taPortfolio=$id('portfolioPhotos');
-    const upStudio=$id('upStudio'), upPortfolio=$id('upPortfolio');
+    const btnUpStudio=$id('upStudio'), btnUpPortfolio=$id('upPortfolio');
     const fileStudio=$id('fileStudio'), filePortfolio=$id('filePortfolio');
 
-    // shorts
-    const shortsList=$id('shortsList'), shortUrl=$id('shortUrl'), addShort=$id('addShort');
+    // shorts (⚠️ 이름 충돌 방지: 버튼 → btnAddShort, 함수 → addShortItem)
+    const shortsList=$id('shortsList'), shortUrl=$id('shortUrl'), btnAddShort=$id('addShort');
 
-    // faq / policy
-    const faqList=$id('faqList'), addFaq=$id('addFaq'), elPolicy=$id('policy');
+    // faq/policy
+    const faqList=$id('faqList'), btnAddFaq=$id('addFaq'), elPolicy=$id('policy');
 
     // actions
     const btnSave=$id('adSave');
 
-    // ---- hero/logo: URL 입력 시 미리보기 ----
+    // hero/logo URL 입력 → 미리보기
     on(elHeroURL,'input', ()=>{ state.heroImageUrl = elHeroURL.value.trim(); prevHero.src = state.heroImageUrl || ''; });
     on(elLogoURL,'input', ()=>{ state.logoUrl = elLogoURL.value.trim(); prevLogo.src = state.logoUrl || ''; });
 
-    // ---- hero/logo: 업로드 → URL 세팅 + 미리보기 ----
+    // hero/logo 업로드
     on(upHero,'click', ()=>fileHero?.click());
     on(upLogo,'click', ()=>fileLogo?.click());
 
@@ -142,7 +128,7 @@
       finally{ URL.revokeObjectURL(local); bump(-1); e.target.value=''; }
     });
 
-    // ---- pricing ----
+    // pricing
     function renderPlans(){
       plans.innerHTML = state.pricing.map((p,i)=>`
         <div class="plan-row" data-i="${i}">
@@ -164,36 +150,20 @@
       const row=e.target.closest('.plan-row'); if(!row) return;
       if(e.target.closest('.rm')){ state.pricing.splice(Number(row.dataset.i),1); renderPlans(); }
     });
-    on(addPlan,'click', ()=> addPlanRow());
+    on(btnAddPlan,'click', ()=> addPlanRow());
 
-    function collectPlans(){
-      const rows=[...plans.querySelectorAll('.plan-row')];
-      return rows.map(r=>{
-        const name=r.querySelector('.p-name')?.value?.trim()||'';
-        if(!name) return null;
-        const price=Number(r.querySelector('.p-price')?.value||0);
-        const duration=r.querySelector('.p-dur')?.value?.trim()||'';
-        const includes=(r.querySelector('.p-inc')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-        const optRaw=(r.querySelector('.p-opt')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-        const options=optRaw.map(s=>{ const m=s.split('+'); return { name:(m[0]||'').trim(), price:Number(m[1]||0) }; }).filter(o=>o.name);
-        return { name, price, duration, includes, options };
-      }).filter(Boolean);
-    }
-
-    // ---- availability ----
+    // availability
     const splitCSV=(s)=> (s||'').split(',').map(x=>x.trim()).filter(Boolean);
     const joinCSV=(arr)=> (arr||[]).join(', ');
-    // 저장 시: elLeadDays, elTimeslots, elBooked(el textarea CSV), elClosed(el textarea CSV)
 
-    // ---- galleries (textarea에 URL 누적) ----
+    // galleries (append urls to textarea)
     function appendToTextarea(ta, urls){
       const cur=(ta.value||'').trim();
       const add=urls.filter(Boolean);
       ta.value = cur ? (cur + '\n' + add.join('\n')) : add.join('\n');
     }
-
-    on(upStudio,'click', ()=>fileStudio?.click());
-    on(upPortfolio,'click', ()=>filePortfolio?.click());
+    on(btnUpStudio,'click', ()=>fileStudio?.click());
+    on(btnUpPortfolio,'click', ()=>filePortfolio?.click());
 
     on(fileStudio,'change', async (e)=>{
       const files=Array.from(e.target.files||[]); if(!files.length) return;
@@ -221,7 +191,7 @@
       finally{ bump(-files.length); e.target.value=''; }
     });
 
-    // ---- shorts ----
+    // shorts
     function renderShorts(){
       shortsList.innerHTML = state.shorts.map((s,i)=>`
         <div class="short-item" data-i="${i}">
@@ -231,7 +201,7 @@
         </div>
       `).join('') || '<div class="note">링크를 입력 후 추가하세요</div>';
     }
-    function addShort(url){
+    function addShortItem(url){
       const u=(url||'').trim(); if(!u) return;
       const p=detectProvider(u);
       const embed=embedUrl(p,u);
@@ -239,14 +209,14 @@
       state.shorts.push({ sourceUrl:u, provider:p, embedUrl:embed, thumbnailUrl:thumbUrl(p,u) });
       shortUrl.value=''; renderShorts();
     }
-    on(addShort,'click', ()=> addShort(shortUrl.value));
-    on(shortUrl,'keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addShort(shortUrl.value); }});
+    on(btnAddShort,'click', ()=> addShortItem(shortUrl.value));
+    on(shortUrl,'keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addShortItem(shortUrl.value); }});
     on(shortsList,'click', (e)=>{
       const item=e.target.closest('.short-item'); if(!item) return;
       if(e.target.closest('.rm')){ state.shorts.splice(Number(item.dataset.i),1); renderShorts(); }
     });
 
-    // ---- FAQ ----
+    // FAQ
     function renderFaq(){
       faqList.innerHTML = state.faq.map((f,i)=>`
         <div class="faq-row" data-i="${i}">
@@ -256,13 +226,13 @@
         </div>
       `).join('') || '<div class="note">FAQ를 추가하세요</div>';
     }
-    on(addFaq,'click', ()=>{ state.faq.push({q:'',a:''}); renderFaq(); });
+    on(btnAddFaq,'click', ()=>{ state.faq.push({q:'',a:''}); renderFaq(); });
     on(faqList,'click', (e)=>{
       const row=e.target.closest('.faq-row'); if(!row) return;
       if(e.target.closest('.rm')){ state.faq.splice(Number(row.dataset.i),1); renderFaq(); }
     });
 
-    // ---- load (수정 모드) ----
+    // load existing
     state.id = new URLSearchParams(location.search).get('id') || '';
     await loadExisting();
 
@@ -277,7 +247,6 @@
           if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
           data=j.data||j;
         }else{
-          // slug=byhen 우선
           let r=await fetch(`${API_BASE}${ENTITY}?slug=byhen&limit=1`, { headers:headers(false) });
           let j=await r.json().catch(()=>({}));
           if(r.ok){
@@ -335,12 +304,12 @@
         elBooked && (elBooked.value = state.availability.booked.join(', '));
         elClosed && (elClosed.value = state.availability.closed.join(', '));
 
-        // faq / policy
+        // FAQ / 정책
         state.faq = Array.isArray(data.faq)? data.faq : [];
         renderFaq();
         elPolicy && (elPolicy.value = data.policy || '');
 
-        // shorts
+        // Shorts
         state.shorts = Array.isArray(data.shorts)? data.shorts : [];
         renderShorts();
 
@@ -351,12 +320,10 @@
       }
     }
 
-    // ---- validate & payload ----
     function validate(){
       if(state.pending>0){ say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
       if(!(elName?.value||'').trim()){ say('브랜드명을 입력해주세요'); return false; }
-      // URL 형식 간단 체크
-      const mustUrl = [elKakao?.value, elHeroURL?.value, elLogoURL?.value].filter(Boolean);
+      const mustUrl=[elKakao?.value, elHeroURL?.value, elLogoURL?.value].filter(Boolean);
       for(const u of mustUrl){ if(u.trim() && !/^https?:\/\//i.test(u.trim())){ say('URL은 http(s):// 로 시작해야 합니다'); return false; } }
       return true;
     }
@@ -367,21 +334,30 @@
         kakaoUrl: (elKakao?.value||'').trim() || undefined,
         email: (elEmail?.value||'').trim() || undefined,
       };
-      const pricing = collectPlans();
+      const pricing = [...plans.querySelectorAll('.plan-row')].map(r=>{
+        const name=r.querySelector('.p-name')?.value?.trim()||''; if(!name) return null;
+        const price=Number(r.querySelector('.p-price')?.value||0);
+        const duration=r.querySelector('.p-dur')?.value?.trim()||'';
+        const includes=(r.querySelector('.p-inc')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+        const optRaw=(r.querySelector('.p-opt')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+        const options=optRaw.map(s=>{ const m=s.split('+'); return { name:(m[0]||'').trim(), price:Number(m[1]||0) }; }).filter(o=>o.name);
+        return { name, price, duration, includes, options };
+      }).filter(Boolean);
+
       const availability = {
         leadDays: Number(elLeadDays?.value||0),
-        timeslots: splitCSV(elTimeslots?.value),
-        booked: splitCSV(elBooked?.value),
-        closed: splitCSV(elClosed?.value),
+        timeslots: (elTimeslots?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        booked: (elBooked?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        closed: (elClosed?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
       };
-      // galleries: textarea 줄바꿈 → 배열
+
       const studioPhotos = (taStudio?.value||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
       const portfolioPhotos = (taPortfolio?.value||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
 
       return {
         slug: (elSlug?.value||'byhen'),
         type: 'brand',
-        status: 'published', // 관리자 저장 = 발행 취급
+        status: 'published',
         name: (elName?.value||'').trim() || undefined,
         tagline: (elTagline?.value||'').trim() || undefined,
         location: (elLocation?.value||'').trim() || undefined,
@@ -390,13 +366,10 @@
         contact,
         studioPhotos, portfolioPhotos,
         pricing, availability,
-        faq: state.faq
-          .map((f,i)=>{ // 최신 입력값 반영 수집
-            const row = faqList.querySelector(`.faq-row[data-i="${i}"]`);
-            const q = row?.querySelector('.f-q')?.value?.trim()||'';
-            const a = row?.querySelector('.f-a')?.value?.trim()||'';
-            return q && a ? { q, a } : null;
-          }).filter(Boolean),
+        faq: [...faqList.querySelectorAll('.faq-row')].map(r=>{
+          const q=r.querySelector('.f-q')?.value?.trim()||''; const a=r.querySelector('.f-a')?.value?.trim()||'';
+          return (q && a) ? { q, a } : null;
+        }).filter(Boolean),
         policy: (elPolicy?.value||'').trim() || '',
         shorts: state.shorts
       };
@@ -420,9 +393,7 @@
       }
     }
 
-    // ---- actions ----
     on(btnSave,'click', (e)=>{ e.preventDefault(); submit(); });
-    // 디버그
-    window.BYHEN_ADMIN = { state, submit, money };
+    window.BYHEN_ADMIN = { state, submit };
   }
 })();
