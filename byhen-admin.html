@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <link rel="stylesheet" href="css/byhen-admin.css?v=1.0.0" />
+  <link rel="stylesheet" href="css/byhen-admin.css?v=1.1.0" />
 </head>
 <body>
   <header class="ad-appbar">
@@ -41,9 +41,9 @@
       </div>
     </section>
 
-    <!-- 히어로 이미지 -->
+    <!-- 히어로 이미지(대표/로고) -->
     <section class="card">
-      <h3>히어로 이미지</h3>
+      <h3>히어로 이미지 (대표 1장 + 로고)</h3>
       <div class="grid2">
         <label class="field"><span>배경 이미지 URL</span><input id="heroImage" class="input" placeholder="https://..."></label>
         <label class="field"><span>로고 이미지 URL</span><input id="heroLogo" class="input" placeholder="https://..."></label>
@@ -57,6 +57,56 @@
       <div class="preview-row">
         <img id="prevHeroImage" alt="">
         <img id="prevHeroLogo" alt="">
+      </div>
+    </section>
+
+    <!-- 히어로 배경 슬라이드(여러 장) -->
+    <section class="card">
+      <h3>히어로 배경 슬라이드 (여러 장)</h3>
+      <label class="field">
+        <span>이미지 URL (줄바꿈 구분)</span>
+        <textarea id="heroImages" class="input" rows="4" placeholder="https://...\nhttps://..."></textarea>
+      </label>
+      <div class="upload-row">
+        <button id="upHeroImages" class="btn"><i class="ri-upload-2-line"></i> 이미지 업로드</button>
+        <input id="fileHeroImages" type="file" accept="image/*" multiple hidden />
+      </div>
+      <div id="prevHeroImages" class="preview-list"></div>
+    </section>
+
+    <!-- 평점 -->
+    <section class="card">
+      <h3>리뷰 / 평점</h3>
+      <div class="grid3">
+        <label class="field"><span>평균 평점 (0~5)</span><input id="ratingAvg" class="input" type="number" step="0.1" min="0" max="5" placeholder="4.8"></label>
+        <label class="field"><span>리뷰 수</span><input id="ratingCount" class="input" type="number" min="0" placeholder="45"></label>
+        <div></div>
+      </div>
+    </section>
+
+    <!-- 소개 / 규칙 -->
+    <section class="card">
+      <h3>소개 / 이용 규칙</h3>
+      <label class="field"><span>소개(설명)</span><textarea id="description" class="input" rows="5" placeholder="플레이스/브랜드 소개를 입력하세요."></textarea></label>
+      <label class="field"><span>이용 규칙</span><textarea id="rules" class="input" rows="5" placeholder="이용 규칙을 입력하세요."></textarea></label>
+    </section>
+
+    <!-- 지도 -->
+    <section class="card">
+      <h3>위치 지도</h3>
+      <div class="grid2">
+        <label class="field"><span>지도 임베드 URL</span><input id="mapEmbedUrl" class="input" placeholder="https://... (네이버/카카오/구글 임베드)"></label>
+        <label class="field"><span>지도 외부 링크</span><input id="mapLink" class="input" placeholder="https://map.naver.com/..."></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>정적 지도 이미지 URL</span><input id="mapStaticImage" class="input" placeholder="https://..."></label>
+        <div class="upload-row">
+          <button id="upMapImage" class="btn"><i class="ri-upload-2-line"></i> 지도 이미지 업로드</button>
+          <input id="fileMapImage" type="file" accept="image/*" hidden />
+        </div>
+      </div>
+      <div class="preview-row">
+        <img id="prevMapImage" alt="">
       </div>
     </section>
 
@@ -116,6 +166,6 @@
   </main>
 
   <script src="js/config.js?v=2.12"></script>
-  <script src="js/byhen-admin.page.js?v=2.3"></script>
+  <script src="js/byhen-admin.page.js?v=2.4"></script>
 </body>
 </html>
