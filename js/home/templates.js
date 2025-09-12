@@ -79,3 +79,31 @@
 
   H.tpl = { tplLineupList, tplRecruitHScroll, tplNewsList, tplPortfolios, tplHotClips, tplCtaBanner, sectionBlock };
 })(window);
+
+// === Image Banner (HOT clip 아래) ===
+(function () {
+  'use strict';
+  // helpers / templates 안전 확보
+  const H = (window.HomeHelpers ||= {
+    appendStyleOnce(id, css) {
+      if (document.getElementById(id)) return;
+      const st = document.createElement('style');
+      st.id = id; st.textContent = css;
+      document.head.appendChild(st);
+    }
+  });
+  const T = (window.HomeTemplates ||= {});
+
+  // 스타일 1회 주입
+  H.appendStyleOnce('img-banner-css', `
+    .img-banner{display:block;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+    .img-banner img{width:100%;display:block;height:auto}
+  `);
+
+  // 배너 템플릿 (이미지: /bannertest2.png → 링크: byhen.html)
+  T.tplImageBanner = function () {
+    return '<a class="img-banner" href="byhen.html" aria-label="BYHEN 안내 배너">'
+         +   '<img src="bannertest2.png" alt="BYHEN 배너">'
+         + '</a>';
+  };
+})();
