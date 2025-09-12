@@ -1,399 +1,444 @@
-/* byhen-admin.page.js — v2.1.1 (fix: duplicate identifier)
-   - Cloudinary uploads + pricing/availability/FAQ/shorts
-   - Endpoint: CFG.endpoints.byhen || '/byhen-test'
+<!-- js/byhen-admin.page.js -->
+<script>
+/* byhen-admin.page.js — v2.1.1
+   - 데모(비로그인) 모드 지원: CFG.demo=true 또는 github.io에서 자동
+   - Cloudinary 업로드: 서명 실패(401/404 등) 시 unsigned upload_preset로 폴백
+   - 버튼/업로드 트리거 id 호환(adSave|saveDraftBtn, upHeroImage|heroTrigger 등)
+   - 서버 4xx/5xx 시 로컬스토리지로 임시 저장
 */
 (function () {
   'use strict';
+  if (window.__BYHEN_ADMIN_LOADED__) return;  // 중복 로드 방지
+  window.__BYHEN_ADMIN_LOADED__ = true;
 
   const CFG = window.LIVEE_CONFIG || {};
-  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/,'');
+  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
   const EP = CFG.endpoints || {};
-  const ENTITY = EP.byhen || '/byhen-test';
+  const ENTITY = (EP.byhen || '/byhen-test').replace(/^\/?/, '/'); // 항상 '/xxx'
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
-  const here  = encodeURIComponent(location.pathname + location.search + location.hash);
+  const DEMO = !!CFG.demo || /github\.io$/i.test(location.hostname);  // 비로그인 데모 허용
+  const here = encodeURIComponent(location.pathname + location.search + location.hash);
+
+  // Cloudinary unsigned fallback 설정(필요 시 config.js에 세팅)
+  const CLD = CFG.cloudinary || {}; // { cloudName:'xxx', uploadPreset:'unsigned_livee' }
 
   const THUMB = {
     square:   'c_fill,g_auto,w_600,h_600,f_auto,q_auto',
     cover169: 'c_fill,g_auto,w_1600,h_900,f_auto,q_auto',
-    gallery:  'c_fill,g_auto,w_1000,h_1000,f_auto,q_auto',
+    gallery:  'c_fill,g_auto,w_800,h_800,f_auto,q_auto',
     logo:     'c_fill,g_auto,w_512,h_512,f_auto,q_auto',
   };
 
-  const $id = (s)=>document.getElementById(s);
-  const on  = (el, ev, fn)=>el && el.addEventListener(ev, fn);
-  const withTransform=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8); }catch{ return url; } };
-  const say = (t, ok=false)=>{ const el=$id('adMsg'); if(!el) return; el.textContent=t; el.classList.add('show'); el.classList.toggle('ok', ok); };
-  const headers = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
-
-  // Shorts helpers
-  const ytId=(u='')=>(u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/)||[])[1]||'';
-  const igId=(u='')=>(u.match(/instagram\.com\/(?:reel|p)\/([A-Za-z0-9_-]+)/)||[])[1]||'';
-  const tkId=(u='')=>(u.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/)||[])[1]||'';
-  const detectProvider=(url='')=>/youtu\.?be|youtube\.com/.test(url)?'youtube':/instagram\.com/.test(url)?'instagram':/tiktok\.com/.test(url)?'tiktok':'etc';
-  const embedUrl=(p,u)=>p==='youtube'?(ytId(u)?`https://www.youtube.com/embed/${ytId(u)}`:'')
-                       :p==='instagram'?(igId(u)?`https://www.instagram.com/reel/${igId(u)}/embed`:'')
-                       :p==='tiktok'?(tkId(u)?`https://www.tiktok.com/embed/v2/${tkId(u)}`:''):'';
-  const thumbUrl=(p,u)=>p==='youtube'&&ytId(u)?`https://img.youtube.com/vi/${ytId(u)}/hqdefault.jpg`: '';
+  const $ = (s, el = document) => el.querySelector(s);
+  const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
+  const $pick = (...ids) => ids.map(id => document.getElementById(id)).find(Boolean);
+  const say = (t, ok = false) => { const el = $pick('bhMsg', 'adMsg'); if (!el) return; el.textContent = t; el.classList.add('show'); el.classList.toggle('ok', ok); };
+  const headers = (json = true) => { const h = { Accept: 'application/json' }; if (json) h['Content-Type'] = 'application/json'; if (TOKEN) h['Authorization'] = `Bearer ${TOKEN}`; return h; };
+  const withTransform = (url, t) => { try { if (!url || !/\/upload\//.test(url)) return url || ''; const i = url.indexOf('/upload/'); return url.slice(0, i + 8) + t + '/' + url.slice(i + 8); } catch { return url; } };
 
   const state = {
-    id:'',
-    heroImageUrl:'',
-    logoUrl:'',
-    studioPhotos:[],
-    portfolioPhotos:[],
-    pricing:[],
-    availability:{ leadDays:0, timeslots:[], booked:[], closed:[] },
-    faq:[],
-    policy:'',
-    shorts:[],
-    pending:0
+    id: '',
+    heroImageUrl: '',
+    logoUrl: '',
+    studioPhotos: [],
+    portfolioPhotos: [],
+    pending: 0
   };
-  const bump=(n)=>{ state.pending=Math.max(0, state.pending+n); };
+  const bump = (n) => { state.pending = Math.max(0, state.pending + n); };
 
-  async function getSignature(){
-    const r=await fetch(`${API_BASE}/uploads/signature`, { headers:headers(false) });
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
+  // ---------- Cloudinary 업로드 ----------
+  async function getSignature() {
+    if (DEMO) throw new Error('DEMO_NO_SIGNATURE'); // 데모에선 바로 unsigned 시도
+    const res = await fetch(`${API_BASE}/uploads/signature`, { method: 'POST', headers: headers(false) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.ok === false) {
+      const msg = j.message || `HTTP_${res.status}`;
+      throw new Error(msg);
+    }
     return j.data || j;
   }
-  async function uploadImage(file){
-    const {cloudName, apiKey, timestamp, signature} = await getSignature();
-    const fd=new FormData();
-    fd.append('file',file); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature);
-    const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body:fd });
-    const j=await res.json().catch(()=>({}));
-    if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
+
+  async function uploadUnsigned(file) {
+    if (!CLD.cloudName || !CLD.uploadPreset) throw new Error('Unsigned 설정 필요(CFG.cloudinary)');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLD.uploadPreset);
+    const u = `https://api.cloudinary.com/v1_1/${CLD.cloudName}/image/upload`;
+    const r = await fetch(u, { method: 'POST', body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${r.status}`);
     return j.secure_url;
   }
-  const isImgOk=(f)=>{ if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); return false; } if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; } return true; };
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  async function uploadImage(file) {
+    try {
+      const { cloudName, apiKey, timestamp, signature } = await getSignature();
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('api_key', apiKey);
+      fd.append('timestamp', timestamp);
+      fd.append('signature', signature);
+      const u = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+      const r = await fetch(u, { method: 'POST', body: fd });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${r.status}`);
+      return j.secure_url;
+    } catch (e) {
+      // 서명 실패/권한 문제 → unsigned 폴백
+      if (/401|403|404|HTTP_|DEMO_NO_SIGNATURE/i.test(String(e.message))) {
+        return uploadUnsigned(file);
+      }
+      throw e;
+    }
+  }
+
+  const isImgOk = (f) => {
+    if (!/^image\//.test(f.type)) { say('이미지 파일만 업로드 가능'); return false; }
+    if (f.size > 8 * 1024 * 1024) { say('이미지는 8MB 이하'); return false; }
+    return true;
+  };
+
+  // ---------- 초기화 ----------
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 
-  async function init(){
-    // basics
-    const elName=$id('name'), elSlug=$id('slug'), elTagline=$id('tagline'), elLocation=$id('location'), elHours=$id('hours');
-    const elPhone=$id('phone'), elKakao=$id('kakaoUrl'), elEmail=$id('email');
+  async function init() {
+    // 기본정보
+    const name       = $pick('bhName', 'name');
+    const tagline    = $pick('bhTagline', 'tagline');
+    const locationEl = $pick('bhLocation', 'location');
+    const hours      = $pick('bhHours', 'hours');
+    const phone      = $pick('bhPhone', 'phone');
+    const kakao      = $pick('bhKakao', 'kakaoUrl');
+    const website    = $pick('bhWebsite', 'website');
+    const mapUrl     = $pick('bhMapUrl', 'map');
 
-    // hero/logo
-    const elHeroURL=$id('heroImage'), elLogoURL=$id('heroLogo');
-    const upHero=$id('upHeroImage'), upLogo=$id('upHeroLogo');
-    const fileHero=$id('fileHeroImage'), fileLogo=$id('fileHeroLogo');
-    const prevHero=$id('prevHeroImage'), prevLogo=$id('prevHeroLogo');
+    // 히어로/로고
+    const heroTrig = $pick('heroTrigger', 'upHeroImage');
+    const heroFile = $pick('heroFile', 'fileHeroImage');
+    const heroPrev = $pick('heroPrev', 'prevHeroImage');
 
-    // pricing
-    const plans=$id('plans'), btnAddPlan=$id('addPlan');
+    const logoTrig = $pick('logoTrigger', 'upHeroLogo');
+    const logoFile = $pick('logoFile', 'fileHeroLogo');
+    const logoPrev = $pick('logoPrev', 'prevHeroLogo');
 
-    // availability (textarea/inputs)
-    const elLeadDays=$id('leadDays'), elTimeslots=$id('timeslots');
-    const elBooked=$id('booked'), elClosed=$id('closed');
+    // 갤러리(그리드)
+    const studioTrig = $pick('studioTrigger', 'upStudio');
+    const studioFile = $pick('studioFile', 'fileStudio');
+    const studioGrid = $pick('studioGrid'); // 새 HTML에 존재
+    const pfTrig     = $pick('pfTrigger', 'upPortfolio');
+    thepf: // label anchor
+    const pfFile     = $pick('pfFile', 'filePortfolio');
+    const pfGrid     = $pick('pfGrid');
 
-    // galleries
-    const taStudio=$id('studioPhotos'), taPortfolio=$id('portfolioPhotos');
-    const btnUpStudio=$id('upStudio'), btnUpPortfolio=$id('upPortfolio');
-    const fileStudio=$id('fileStudio'), filePortfolio=$id('filePortfolio');
+    // 가격
+    const pricingWrap = $pick('pricingWrap', 'plans');
+    const addPlanBtn  = $pick('addPlanBtn', 'addPlan');
 
-    // shorts (⚠️ 이름 충돌 방지: 버튼 → btnAddShort, 함수 → addShortItem)
-    const shortsList=$id('shortsList'), shortUrl=$id('shortUrl'), btnAddShort=$id('addShort');
+    // 예약
+    const leadDays    = $pick('leadDays');
+    const timeslots   = $pick('timeslots');
+    const bookedWrap  = $pick('bookedWrap');
+    const addBookedBtn= $pick('addBookedBtn');
+    const closedWrap  = $pick('closedWrap');
+    const addClosedBtn= $pick('addClosedBtn');
 
-    // faq/policy
-    const faqList=$id('faqList'), btnAddFaq=$id('addFaq'), elPolicy=$id('policy');
+    // FAQ / 정책
+    const faqWrap     = $pick('faqWrap', 'faqList');
+    const addFaqBtn   = $pick('addFaqBtn', 'addFaq');
+    const policy      = $pick('policy');
 
-    // actions
-    const btnSave=$id('adSave');
+    // 숏폼
+    const shortsWrap  = $pick('shortsWrap', 'shortsList');
+    const addShortBtn = $pick('addShortBtn', 'addShort');
+    const shortUrlInp = $pick('shortUrl');
 
-    // hero/logo URL 입력 → 미리보기
-    on(elHeroURL,'input', ()=>{ state.heroImageUrl = elHeroURL.value.trim(); prevHero.src = state.heroImageUrl || ''; });
-    on(elLogoURL,'input', ()=>{ state.logoUrl = elLogoURL.value.trim(); prevLogo.src = state.logoUrl || ''; });
+    // 액션
+    const saveBtn     = $pick('saveDraftBtn', 'adSave');
+    const pubBtn      = $pick('publishBtn'); // 없으면 무시
 
-    // hero/logo 업로드
-    on(upHero,'click', ()=>fileHero?.click());
-    on(upLogo,'click', ()=>fileLogo?.click());
+    // ---- 트리거
+    on(heroTrig, 'click', () => heroFile?.click());
+    on(logoTrig, 'click', () => logoFile?.click());
+    on(studioTrig, 'click', () => studioFile?.click());
+    on(pfTrig, 'click', () => pfFile?.click());
 
-    on(fileHero,'change', async (e)=>{
-      const f=e.target.files?.[0]; if(!f) return; if(!isImgOk(f)){ e.target.value=''; return; }
-      const local=URL.createObjectURL(f); prevHero.src=local; bump(+1);
-      try{ say('배경 업로드 중…'); const url=withTransform(await uploadImage(f), THUMB.cover169);
-        state.heroImageUrl=url; elHeroURL.value=url; prevHero.src=url; say('업로드 완료',true);
-      }catch(err){ console.error('[hero upload]',err); say('업로드 실패: '+(err.message||'오류')); }
-      finally{ URL.revokeObjectURL(local); bump(-1); e.target.value=''; }
+    // ---- 단일 업로드
+    heroFile?.addEventListener('change', async (e) => {
+      const f = e.target.files?.[0]; if (!f) return; if (!isImgOk(f)) { e.target.value = ''; return; }
+      const local = URL.createObjectURL(f); if (heroPrev) heroPrev.src = local; bump(+1);
+      try { say('배경 이미지 업로드 중…'); const url = await uploadImage(f); state.heroImageUrl = withTransform(url, THUMB.cover169); if (heroPrev) heroPrev.src = state.heroImageUrl; say('업로드 완료', true); }
+      catch (err) { console.error('[hero upload]', err); say('업로드 실패: ' + (err.message || '오류')); }
+      finally { URL.revokeObjectURL(local); bump(-1); e.target.value = ''; }
     });
 
-    on(fileLogo,'change', async (e)=>{
-      const f=e.target.files?.[0]; if(!f) return; if(!isImgOk(f)){ e.target.value=''; return; }
-      const local=URL.createObjectURL(f); prevLogo.src=local; bump(+1);
-      try{ say('로고 업로드 중…'); const url=withTransform(await uploadImage(f), THUMB.logo);
-        state.logoUrl=url; elLogoURL.value=url; prevLogo.src=url; say('업로드 완료',true);
-      }catch(err){ console.error('[logo upload]',err); say('업로드 실패: '+(err.message||'오류')); }
-      finally{ URL.revokeObjectURL(local); bump(-1); e.target.value=''; }
+    logoFile?.addEventListener('change', async (e) => {
+      const f = e.target.files?.[0]; if (!f) return; if (!isImgOk(f)) { e.target.value = ''; return; }
+      const local = URL.createObjectURL(f); if (logoPrev) logoPrev.src = local; bump(+1);
+      try { say('로고 업로드 중…'); const url = await uploadImage(f); state.logoUrl = withTransform(url, THUMB.logo); if (logoPrev) logoPrev.src = state.logoUrl; say('업로드 완료', true); }
+      catch (err) { console.error('[logo upload]', err); say('업로드 실패: ' + (err.message || '오류')); }
+      finally { URL.revokeObjectURL(local); bump(-1); e.target.value = ''; }
     });
 
-    // pricing
-    function renderPlans(){
-      plans.innerHTML = state.pricing.map((p,i)=>`
-        <div class="plan-row" data-i="${i}">
-          <div class="grid">
-            <input class="input p-name" placeholder="상품명" value="${p.name||''}">
-            <input class="input p-price" type="number" min="0" placeholder="가격(원)" value="${p.price||''}">
-            <input class="input p-dur" placeholder="소요시간 예: 2시간" value="${p.duration||''}">
-            <button type="button" class="ic rm">✕</button>
-          </div>
-          <div class="grid">
-            <input class="input p-inc" placeholder="포함사항(쉼표 구분)" value="${(p.includes||[]).join(', ')}">
-            <input class="input p-opt" placeholder="옵션: 이름+금액 (쉼표 구분)" value="${(p.options||[]).map(o=>`${o.name}+${o.price||0}`).join(', ')}">
-          </div>
+    // ---- 멀티 업로드 + 그리드
+    function drawGrid(gridEl, arr) {
+      if (!gridEl) return;
+      gridEl.innerHTML = arr.map((u, i) =>
+        `<div class="sub"><img src="${u}" alt="img-${i}"><button type="button" class="rm" data-i="${i}" aria-label="삭제">×</button></div>`
+      ).join('') || '<div class="note">이미지를 추가하세요</div>';
+    }
+    studioGrid?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.rm'); if (!btn) return; state.studioPhotos.splice(Number(btn.dataset.i), 1); drawGrid(studioGrid, state.studioPhotos);
+    });
+    pfGrid?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.rm'); if (!btn) return; state.portfolioPhotos.splice(Number(btn.dataset.i), 1); drawGrid(pfGrid, state.portfolioPhotos);
+    });
+
+    studioFile?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []); if (!files.length) return;
+      for (const f of files) {
+        if (!isImgOk(f)) continue;
+        bump(+1);
+        try { say('스튜디오 이미지 업로드 중…'); const url = withTransform(await uploadImage(f), THUMB.gallery); state.studioPhotos.push(url); drawGrid(studioGrid, state.studioPhotos); say('업로드 완료', true); }
+        catch (err) { console.error('[studio upload]', err); say('업로드 실패: ' + (err.message || '오류')); }
+        finally { bump(-1); }
+      }
+      e.target.value = '';
+    });
+
+    pfFile?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []); if (!files.length) return;
+      for (const f of files) {
+        if (!isImgOk(f)) continue;
+        bump(+1);
+        try { say('포트폴리오 이미지 업로드 중…'); const url = withTransform(await uploadImage(f), THUMB.gallery); state.portfolioPhotos.push(url); drawGrid(pfGrid, state.portfolioPhotos); say('업로드 완료', true); }
+        catch (err) { console.error('[pf upload]', err); say('업로드 실패: ' + (err.message || '오류')); }
+        finally { bump(-1); }
+      }
+      e.target.value = '';
+    });
+
+    // ---- 가격
+    function addPlanRow(p = { name: '', price: '', duration: '', includes: [], options: [] }) {
+      const row = document.createElement('div'); row.className = 'plan-row';
+      row.innerHTML = `
+        <div class="grid">
+          <input class="input p-name" placeholder="상품명" value="${p.name || ''}">
+          <input class="input p-price" type="number" min="0" placeholder="가격(원)" value="${p.price || ''}">
+          <input class="input p-dur" placeholder="소요시간" value="${p.duration || ''}">
+          <button type="button" class="ic rm" aria-label="삭제">✕</button>
         </div>
-      `).join('') || '<div class="note">패키지를 추가하세요</div>';
+        <div class="grid">
+          <input class="input p-inc" placeholder="포함사항(쉼표)" value="${(p.includes || []).join(', ')}">
+          <input class="input p-opt" placeholder="옵션 예) 추가컷+30000, 헤어+50000" value="${(p.options || []).map(o => `${o.name}+${o.price || 0}`).join(', ')}">
+        </div>`;
+      pricingWrap?.appendChild(row);
+      on(row.querySelector('.rm'), 'click', () => row.remove());
     }
-    function addPlanRow(p={name:'', price:'', duration:'', includes:[], options:[] }){ state.pricing.push(p); renderPlans(); }
-    on(plans,'click', (e)=>{
-      const row=e.target.closest('.plan-row'); if(!row) return;
-      if(e.target.closest('.rm')){ state.pricing.splice(Number(row.dataset.i),1); renderPlans(); }
-    });
-    on(btnAddPlan,'click', ()=> addPlanRow());
+    on(addPlanBtn, 'click', () => addPlanRow());
 
-    // availability
-    const splitCSV=(s)=> (s||'').split(',').map(x=>x.trim()).filter(Boolean);
-    const joinCSV=(arr)=> (arr||[]).join(', ');
-
-    // galleries (append urls to textarea)
-    function appendToTextarea(ta, urls){
-      const cur=(ta.value||'').trim();
-      const add=urls.filter(Boolean);
-      ta.value = cur ? (cur + '\n' + add.join('\n')) : add.join('\n');
+    function collectPlans() {
+      const rows = [...pricingWrap?.querySelectorAll('.plan-row') || []];
+      return rows.map(r => {
+        const name = r.querySelector('.p-name')?.value?.trim() || '';
+        const price = Number(r.querySelector('.p-price')?.value || 0);
+        const duration = r.querySelector('.p-dur')?.value?.trim() || '';
+        const includes = (r.querySelector('.p-inc')?.value || '').split(',').map(s => s.trim()).filter(Boolean);
+        const options = (r.querySelector('.p-opt')?.value || '').split(',').map(s => s.trim()).filter(Boolean)
+          .map(s => { const m = s.split('+'); return { name: (m[0] || '').trim(), price: Number(m[1] || 0) }; }).filter(o => o.name);
+        return { name, price, duration, includes, options };
+      }).filter(p => p.name);
     }
-    on(btnUpStudio,'click', ()=>fileStudio?.click());
-    on(btnUpPortfolio,'click', ()=>filePortfolio?.click());
 
-    on(fileStudio,'change', async (e)=>{
-      const files=Array.from(e.target.files||[]); if(!files.length) return;
-      bump(+files.length);
-      try{
-        say('스튜디오 이미지 업로드 중…');
-        const urls=[];
-        for(const f of files){ if(!isImgOk(f)) continue; const u=withTransform(await uploadImage(f), THUMB.gallery); urls.push(u); }
-        appendToTextarea(taStudio, urls);
-        say('업로드 완료', true);
-      }catch(err){ console.error('[studio upload]',err); say('업로드 실패: '+(err.message||'오류')); }
-      finally{ bump(-files.length); e.target.value=''; }
-    });
-
-    on(filePortfolio,'change', async (e)=>{
-      const files=Array.from(e.target.files||[]); if(!files.length) return;
-      bump(+files.length);
-      try{
-        say('포트폴리오 이미지 업로드 중…');
-        const urls=[];
-        for(const f of files){ if(!isImgOk(f)) continue; const u=withTransform(await uploadImage(f), THUMB.gallery); urls.push(u); }
-        appendToTextarea(taPortfolio, urls);
-        say('업로드 완료', true);
-      }catch(err){ console.error('[pf upload]',err); say('업로드 실패: '+(err.message||'오류')); }
-      finally{ bump(-files.length); e.target.value=''; }
-    });
-
-    // shorts
-    function renderShorts(){
-      shortsList.innerHTML = state.shorts.map((s,i)=>`
-        <div class="short-item" data-i="${i}">
-          <img src="${s.thumbnailUrl||''}" alt="">
-          <a class="url" href="${s.sourceUrl}" target="_blank" rel="noopener">${s.sourceUrl}</a>
-          <button type="button" class="ic rm">✕</button>
-        </div>
-      `).join('') || '<div class="note">링크를 입력 후 추가하세요</div>';
+    // ---- 예약
+    function addDateRow(wrap, val = '') {
+      if (!wrap) return;
+      const row = document.createElement('div'); row.className = 'date-row';
+      row.innerHTML = `<input type="date" class="input d" value="${val ? String(val).slice(0, 10) : ''}">
+                       <button type="button" class="ic rm" aria-label="삭제">✕</button>`;
+      wrap.appendChild(row);
+      on(row.querySelector('.rm'), 'click', () => row.remove());
     }
-    function addShortItem(url){
-      const u=(url||'').trim(); if(!u) return;
-      const p=detectProvider(u);
-      const embed=embedUrl(p,u);
-      if(!embed){ say('지원되지 않는 링크 형식입니다'); return; }
-      state.shorts.push({ sourceUrl:u, provider:p, embedUrl:embed, thumbnailUrl:thumbUrl(p,u) });
-      shortUrl.value=''; renderShorts();
-    }
-    on(btnAddShort,'click', ()=> addShortItem(shortUrl.value));
-    on(shortUrl,'keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); addShortItem(shortUrl.value); }});
-    on(shortsList,'click', (e)=>{
-      const item=e.target.closest('.short-item'); if(!item) return;
-      if(e.target.closest('.rm')){ state.shorts.splice(Number(item.dataset.i),1); renderShorts(); }
-    });
+    on(addBookedBtn, 'click', () => addDateRow(bookedWrap));
+    on(addClosedBtn, 'click', () => addDateRow(closedWrap));
+    const collectDates = (wrap) => [...wrap?.querySelectorAll('.d') || []].map(i => i.value).filter(Boolean);
+    const parseSlots = () => (timeslots?.value || '').split(',').map(s => s.trim()).filter(Boolean);
 
-    // FAQ
-    function renderFaq(){
-      faqList.innerHTML = state.faq.map((f,i)=>`
-        <div class="faq-row" data-i="${i}">
-          <input class="input f-q" placeholder="질문" value="${f.q||''}">
-          <textarea class="input f-a" rows="3" placeholder="답변">${f.a||''}</textarea>
-          <div class="row-end"><button type="button" class="ic rm">✕</button></div>
-        </div>
-      `).join('') || '<div class="note">FAQ를 추가하세요</div>';
+    // ---- FAQ
+    function addFaqRow(f = { q: '', a: '' }) {
+      const row = document.createElement('div'); row.className = 'faq-row';
+      row.innerHTML = `
+        <input class="input f-q" placeholder="질문" value="${f.q || ''}">
+        <textarea class="input f-a" rows="3" placeholder="답변">${f.a || ''}</textarea>
+        <div class="row-end"><button type="button" class="ic rm" aria-label="삭제">✕</button></div>`;
+      faqWrap?.appendChild(row);
+      on(row.querySelector('.rm'), 'click', () => row.remove());
     }
-    on(btnAddFaq,'click', ()=>{ state.faq.push({q:'',a:''}); renderFaq(); });
-    on(faqList,'click', (e)=>{
-      const row=e.target.closest('.faq-row'); if(!row) return;
-      if(e.target.closest('.rm')){ state.faq.splice(Number(row.dataset.i),1); renderFaq(); }
-    });
+    on(addFaqBtn, 'click', () => addFaqRow());
+    const collectFaq = () => ([...faqWrap?.querySelectorAll('.faq-row') || []]
+      .map(r => ({ q: r.querySelector('.f-q')?.value?.trim() || '', a: r.querySelector('.f-a')?.value?.trim() || '' }))
+      .filter(x => x.q && x.a));
 
-    // load existing
+    // ---- 숏폼
+    function addShortRow(url = '') {
+      const row = document.createElement('div'); row.className = 'short-row';
+      row.innerHTML = `
+        <div class="l-prev"><img alt=""></div>
+        <div class="l-body">
+          <input class="input s-url" type="url" placeholder="YouTube/Instagram/TikTok 링크" value="${url || ''}">
+          <button class="ic rm" type="button" aria-label="삭제">✕</button>
+        </div>`;
+      shortsWrap?.appendChild(row);
+      const input = row.querySelector('.s-url'); const img = row.querySelector('.l-prev img');
+      const ytId = (u='') => (u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/) || [])[1] || '';
+      const thumbUrl = (u='') => (ytId(u) ? `https://img.youtube.com/vi/${ytId(u)}/hqdefault.jpg` : '');
+      const update = () => { const u = input.value.trim(); img.src = u ? thumbUrl(u) : ''; };
+      on(input, 'input', update); on(row.querySelector('.rm'), 'click', () => row.remove()); update();
+    }
+    on(addShortBtn, 'click', () => addShortRow(shortUrlInp?.value || ''));
+
+    const collectShorts = () => ([...shortsWrap?.querySelectorAll('.short-row') || []]
+      .map(r => ({ sourceUrl: r.querySelector('.s-url')?.value?.trim() || '' }))
+      .filter(s => s.sourceUrl));
+
+    // ---- 로드
     state.id = new URLSearchParams(location.search).get('id') || '';
     await loadExisting();
 
-    async function loadExisting(){
-      try{
+    async function loadExisting() {
+      try {
         say('불러오는 중…');
+        let data = null;
 
-        let data=null;
-        if(state.id){
-          const r=await fetch(`${API_BASE}${ENTITY}/${state.id}`, { headers:headers(false) });
-          const j=await r.json().catch(()=>({}));
-          if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-          data=j.data||j;
-        }else{
-          let r=await fetch(`${API_BASE}${ENTITY}?slug=byhen&limit=1`, { headers:headers(false) });
-          let j=await r.json().catch(()=>({}));
-          if(r.ok){
-            const arr=j.items||j.data||j.docs||[];
-            if(Array.isArray(arr)&&arr.length){ data=arr[0]; state.id=data.id||data._id||''; }
-          }
-          if(!data){
-            r=await fetch(`${API_BASE}${ENTITY}?limit=1`, { headers:headers(false) });
-            j=await r.json().catch(()=>({}));
-            const arr=j.items||j.data||j.docs||[];
-            if(Array.isArray(arr)&&arr.length){ data=arr[0]; state.id=data.id||data._id||''; }
-          }
+        // 1) 서버에서 가져오기
+        const tryFetch = async (path) => {
+          try { const r = await fetch(path, { headers: headers(false) }); const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`); return j.data || j; }
+          catch { return null; }
+        };
+        if (state.id) data = await tryFetch(`${API_BASE}${ENTITY}/${state.id}`);
+        if (!data)   data = await (async () => {
+          const j = await tryFetch(`${API_BASE}${ENTITY}?slug=byhen&limit=1`); const arr = (j && (j.items || j.docs || j.data || [])) || [];
+          return Array.isArray(arr) && arr[0] ? arr[0] : null;
+        })();
+        if (!data)   data = await (async () => {
+          const j = await tryFetch(`${API_BASE}${ENTITY}?limit=1`); const arr = (j && (j.items || j.docs || j.data || [])) || [];
+          return Array.isArray(arr) && arr[0] ? arr[0] : null;
+        })();
+
+        // 2) 데모/로컬 저장분
+        if (!data) {
+          const saved = localStorage.getItem('byhen_admin_draft');
+          if (saved) data = JSON.parse(saved);
         }
 
-        if(!data){ say('새 페이지 작성 중', true); return; }
+        if (!data) { say('새 페이지 작성 중', true); return; }
 
-        // 기본
-        elName && (elName.value=data.name||'');
-        elSlug && (elSlug.value=data.slug||'byhen');
-        elTagline && (elTagline.value=data.tagline||'');
-        elLocation && (elLocation.value=data.location||'');
-        elHours && (elHours.value=data.hours||'');
-
-        elPhone && (elPhone.value=data.contact?.phone||'');
-        elKakao && (elKakao.value=data.contact?.kakaoUrl||'');
-        elEmail && (elEmail.value=data.contact?.email||'');
-
-        // hero/logo
+        // 바인딩
+        name && (name.value = data.name || '');
+        tagline && (tagline.value = data.tagline || '');
+        locationEl && (locationEl.value = data.location || '');
+        hours && (hours.value = data.hours || '');
+        phone && (phone.value = data.contact?.phone || '');
+        kakao && (kakao.value = data.contact?.kakaoUrl || '');
+        website && (website.value = data.links?.website || '');
+        mapUrl && (mapUrl.value = data.links?.map || '');
         state.heroImageUrl = data.hero?.image || '';
-        state.logoUrl      = data.hero?.logo  || '';
-        elHeroURL && (elHeroURL.value = state.heroImageUrl || '');
-        elLogoURL && (elLogoURL.value = state.logoUrl || '');
-        prevHero && (prevHero.src = state.heroImageUrl || '');
-        prevLogo && (prevLogo.src = state.logoUrl || '');
+        state.logoUrl = data.hero?.logo || '';
+        if (heroPrev && state.heroImageUrl) heroPrev.src = state.heroImageUrl;
+        if (logoPrev && state.logoUrl) logoPrev.src = state.logoUrl;
 
-        // galleries
-        state.studioPhotos    = Array.isArray(data.studioPhotos)? data.studioPhotos.slice(0,200):[];
-        state.portfolioPhotos = Array.isArray(data.portfolioPhotos)? data.portfolioPhotos.slice(0,200):[];
-        taStudio && (taStudio.value = state.studioPhotos.join('\n'));
-        taPortfolio && (taPortfolio.value = state.portfolioPhotos.join('\n'));
+        state.studioPhotos = Array.isArray(data.studioPhotos) ? data.studioPhotos.slice(0, 60) : [];
+        state.portfolioPhotos = Array.isArray(data.portfolioPhotos) ? data.portfolioPhotos.slice(0, 120) : [];
+        drawGrid(studioGrid, state.studioPhotos);
+        drawGrid(pfGrid, state.portfolioPhotos);
 
-        // pricing
-        state.pricing = Array.isArray(data.pricing)? data.pricing : [];
-        renderPlans();
-
-        // availability
-        state.availability = {
-          leadDays: Number(data.availability?.leadDays||0),
-          timeslots: Array.isArray(data.availability?.timeslots)? data.availability.timeslots : [],
-          booked: Array.isArray(data.availability?.booked)? data.availability.booked : [],
-          closed: Array.isArray(data.availability?.closed)? data.availability.closed : [],
-        };
-        elLeadDays && (elLeadDays.value = state.availability.leadDays);
-        elTimeslots && (elTimeslots.value = state.availability.timeslots.join(', '));
-        elBooked && (elBooked.value = state.availability.booked.join(', '));
-        elClosed && (elClosed.value = state.availability.closed.join(', '));
-
-        // FAQ / 정책
-        state.faq = Array.isArray(data.faq)? data.faq : [];
-        renderFaq();
-        elPolicy && (elPolicy.value = data.policy || '');
-
-        // Shorts
-        state.shorts = Array.isArray(data.shorts)? data.shorts : [];
-        renderShorts();
+        (Array.isArray(data.pricing) ? data.pricing : []).forEach(addPlanRow);
+        leadDays && (leadDays.value = data.availability?.leadDays ?? 0);
+        timeslots && (timeslots.value = (data.availability?.timeslots || []).join(', '));
+        (data.availability?.booked || []).forEach(d => addDateRow(bookedWrap, d));
+        (data.availability?.closed || []).forEach(d => addDateRow(closedWrap, d));
+        (Array.isArray(data.faq) ? data.faq : []).forEach(addFaqRow);
+        policy && (policy.value = data.policy || '');
+        (Array.isArray(data.shorts) ? data.shorts : []).forEach(s => addShortRow(s.sourceUrl || ''));
 
         say('로드 완료', true);
-      }catch(err){
+      } catch (err) {
         console.error('[byhen load]', err);
-        say('불러오기 실패: '+(err.message||'오류'));
+        say('불러오기 실패: ' + (err.message || '오류'));
       }
     }
 
-    function validate(){
-      if(state.pending>0){ say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
-      if(!(elName?.value||'').trim()){ say('브랜드명을 입력해주세요'); return false; }
-      const mustUrl=[elKakao?.value, elHeroURL?.value, elLogoURL?.value].filter(Boolean);
-      for(const u of mustUrl){ if(u.trim() && !/^https?:\/\//i.test(u.trim())){ say('URL은 http(s):// 로 시작해야 합니다'); return false; } }
+    // ---- 검증/페이로드/저장
+    function validate() {
+      if (state.pending > 0) { say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
+      if (!name?.value?.trim()) { say('브랜드명을 입력해주세요'); return false; }
       return true;
     }
 
-    function collectPayload(){
-      const contact = {
-        phone: (elPhone?.value||'').trim() || undefined,
-        kakaoUrl: (elKakao?.value||'').trim() || undefined,
-        email: (elEmail?.value||'').trim() || undefined,
-      };
-      const pricing = [...plans.querySelectorAll('.plan-row')].map(r=>{
-        const name=r.querySelector('.p-name')?.value?.trim()||''; if(!name) return null;
-        const price=Number(r.querySelector('.p-price')?.value||0);
-        const duration=r.querySelector('.p-dur')?.value?.trim()||'';
-        const includes=(r.querySelector('.p-inc')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-        const optRaw=(r.querySelector('.p-opt')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-        const options=optRaw.map(s=>{ const m=s.split('+'); return { name:(m[0]||'').trim(), price:Number(m[1]||0) }; }).filter(o=>o.name);
-        return { name, price, duration, includes, options };
-      }).filter(Boolean);
-
+    function collectPayload(status) {
+      const contact = { phone: phone?.value?.trim() || undefined, kakaoUrl: kakao?.value?.trim() || undefined };
+      const links = { website: website?.value?.trim() || undefined, map: mapUrl?.value?.trim() || undefined };
+      const pricing = collectPlans();
       const availability = {
-        leadDays: Number(elLeadDays?.value||0),
-        timeslots: (elTimeslots?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
-        booked: (elBooked?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
-        closed: (elClosed?.value||'').split(',').map(s=>s.trim()).filter(Boolean),
+        leadDays: Number(leadDays?.value || 0),
+        timeslots: parseSlots(),
+        booked: collectDates(bookedWrap),
+        closed: collectDates(closedWrap)
       };
-
-      const studioPhotos = (taStudio?.value||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
-      const portfolioPhotos = (taPortfolio?.value||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+      const shorts = collectShorts();
 
       return {
-        slug: (elSlug?.value||'byhen'),
+        slug: 'byhen',
         type: 'brand',
-        status: 'published',
-        name: (elName?.value||'').trim() || undefined,
-        tagline: (elTagline?.value||'').trim() || undefined,
-        location: (elLocation?.value||'').trim() || undefined,
-        hours: (elHours?.value||'').trim() || undefined,
-        hero: { image: (elHeroURL?.value||'').trim() || undefined, logo: (elLogoURL?.value||'').trim() || undefined },
-        contact,
-        studioPhotos, portfolioPhotos,
+        status,
+        name: name?.value?.trim() || undefined,
+        tagline: tagline?.value?.trim() || undefined,
+        location: locationEl?.value?.trim() || undefined,
+        hours: hours?.value?.trim() || undefined,
+        hero: { image: state.heroImageUrl || undefined, logo: state.logoUrl || undefined },
+        contact, links,
+        studioPhotos: state.studioPhotos,
+        portfolioPhotos: state.portfolioPhotos,
         pricing, availability,
-        faq: [...faqList.querySelectorAll('.faq-row')].map(r=>{
-          const q=r.querySelector('.f-q')?.value?.trim()||''; const a=r.querySelector('.f-a')?.value?.trim()||'';
-          return (q && a) ? { q, a } : null;
-        }).filter(Boolean),
-        policy: (elPolicy?.value||'').trim() || '',
-        shorts: state.shorts
+        faq: collectFaq(),
+        policy: policy?.value || '',
+        shorts
       };
     }
 
-    async function submit(){
-      if(!TOKEN){ location.href='login.html?returnTo='+here; return; }
-      if(!validate()) return;
-      try{
-        say('저장 중…');
+    async function submit(status) {
+      if (!validate()) return;
+      const payload = collectPayload(status);
+
+      // 데모/비로그인/서버 실패 → 로컬 저장
+      const localSave = (msg='로컬에 저장했습니다(데모).') => {
+        localStorage.setItem('byhen_admin_draft', JSON.stringify(payload));
+        say(msg, true);
+      };
+
+      // 데모 모드 또는 로그인 없음 → 로컬 저장
+      if (DEMO || !TOKEN) return localSave();
+
+      try {
+        say(status === 'published' ? '발행 중…' : '임시저장 중…');
         const url = state.id ? `${API_BASE}${ENTITY}/${state.id}` : `${API_BASE}${ENTITY}`;
         const method = state.id ? 'PUT' : 'POST';
-        const res = await fetch(url, { method, headers:headers(true), body:JSON.stringify(collectPayload()) });
-        const data = await res.json().catch(()=>({}));
-        if(!res.ok || data.ok===false) throw new Error((data && (data.message||data.error)) || `HTTP_${res.status}`);
-        say('저장 완료', true);
-        setTimeout(()=>location.href='byhen.html', 480);
-      }catch(err){
-        console.error('[byhen save]', err);
-        say('저장 실패: '+(err.message||'네트워크 오류'));
+        const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) throw new Error(data.message || `HTTP_${res.status}`);
+        say(status === 'published' ? '발행되었습니다' : '임시저장 완료', true);
+        setTimeout(() => location.href = 'byhen.html', 500);
+      } catch (e) {
+        console.warn('[byhen save]', e);
+        localSave('서버 오류로 로컬에 저장했습니다(오프라인/데모).');
       }
     }
 
-    on(btnSave,'click', (e)=>{ e.preventDefault(); submit(); });
+    on(saveBtn, 'click', (e) => { e.preventDefault(); submit('draft'); });
+    on(pubBtn,  'click', (e) => { e.preventDefault(); submit('published'); });
+
+    // 디버그
     window.BYHEN_ADMIN = { state, submit };
   }
 })();
+</script>
