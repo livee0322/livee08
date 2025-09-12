@@ -1,4 +1,8 @@
-/* byhen.page.js — v1.1.2 (fix: duplicate 'money', robust slug/id load) */
+/* byhen.page.js — v1.2.0
+ * - fix: duplicate identifier
+ * - robust load: id/slug/first + unwrap({data|items|docs})
+ * - schema tolerant: normalize keys (heroImage/logo/plans/studioGallery…)
+ */
 (function(w){
   'use strict';
 
@@ -9,26 +13,31 @@
   const SLUG = (QS.get('slug') || 'byhen').trim().toLowerCase();
   const ID   = (QS.get('id') || '').trim();
 
-  let D = {}; // 전역 데이터
+  let D = {}; // 원본 데이터
+  let N = {}; // 정규화 데이터
 
-  // ---------- helpers ----------
+  // ---------- tiny helpers ----------
   const $  = (s,el=document)=>el.querySelector(s);
   const on = (el,ev,fn)=>el && el.addEventListener(ev,fn);
   const pad2=(n)=>String(n).padStart(2,'0');
   const fmt=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   const money = (n)=>Number(n||0).toLocaleString('ko-KR'); // ✅ 한 번만 선언
 
+  const pickStr=(...v)=>{ for(const x of v){ if(typeof x==='string' && x.trim()) return x.trim(); } return ''; };
+  const pickArr=(...v)=>{ for(const x of v){ if(Array.isArray(x) && x.length) return x; } return []; };
+  const pickNum=(...v)=>{ for(const x of v){ const n=Number(x); if(!Number.isNaN(n)) return n; } return 0; };
+
   function toast(msg){
     let t=$('#bhToast'); if(!t){ t=document.createElement('div'); t.id='bhToast'; t.className='bh-toast'; document.body.appendChild(t); }
     t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1600);
   }
 
-  // 응답 객체 → 단일 문서로 언래핑
+  // ---------- fetch & unwrap ----------
   function unwrapDoc(j){
     if (!j) return null;
     const list = j.items || j.docs || (Array.isArray(j.data) ? j.data : null);
     if (Array.isArray(list) && list.length) return list[0];
-    return j.data || j; // {data: {...}} 또는 그냥 {...}
+    return j.data || j; // {data:{…}} 또는 바로 {…}
   }
   async function fetchJSON(url){
     const r = await fetch(url, { headers:{ Accept:'application/json' }});
@@ -37,34 +46,69 @@
     return j;
   }
 
-  // ---------- load ----------
   async function loadData(){
     // id 우선
     if (ID) {
-      try {
-        const j = await fetchJSON(`${API_BASE}/brands-test/${encodeURIComponent(ID)}`);
-        const doc = unwrapDoc(j); if (doc) return doc;
-      } catch(_) {}
+      try { const j = await fetchJSON(`${API_BASE}/brands-test/${encodeURIComponent(ID)}`); const d=unwrapDoc(j); if(d) return d; } catch(e){ console.warn('[brands id]', e); }
     }
-    // slug 우선
-    try {
-      const j = await fetchJSON(`${API_BASE}/brands-test?slug=${encodeURIComponent(SLUG)}&limit=1`);
-      const doc = unwrapDoc(j); if (doc) return doc;
-    } catch(_) {}
-    // 폴백: 첫 문서
-    try {
-      const j = await fetchJSON(`${API_BASE}/brands-test?limit=1`);
-      const doc = unwrapDoc(j); if (doc) return doc;
-    } catch(_) {}
-    // 최종 폴백: 정적
+    // slug
+    try { const j = await fetchJSON(`${API_BASE}/brands-test?slug=${encodeURIComponent(SLUG)}&limit=1`); const d=unwrapDoc(j); if(d) return d; } catch(e){ console.warn('[brands slug]', e); }
+    // 첫 문서
+    try { const j = await fetchJSON(`${API_BASE}/brands-test?limit=1`); const d=unwrapDoc(j); if(d) return d; } catch(e){ console.warn('[brands first]', e); }
+    // 정적 폴백
     return (w.BYHEN_DATA || {});
+  }
+
+  // ---------- normalize ----------
+  function normalize(d){
+    const contactObj = d.contact || {};
+    const heroObj    = d.hero || {};
+    const availObj   = d.availability || d.schedule || {};
+
+    const image = pickStr(
+      heroObj.image, d.heroImage, d.coverImage, d.image, (d.images||{}).hero
+    );
+    const logo  = pickStr(
+      heroObj.logo, d.logo, d.brandLogo, (d.images||{}).logo
+    );
+
+    const studio = pickArr(d.studioPhotos, d.studioGallery, (d.gallery||{}).studio);
+    const pf     = pickArr(d.portfolioPhotos, (d.gallery||{}).portfolio, d.portfolio);
+
+    const pricing = pickArr(d.pricing, d.plans);
+    const shorts  = pickArr(d.shorts, d.highlights, d.reels);
+
+    const phone   = pickStr(contactObj.phone, d.phone, d.contactPhone);
+    const kakao   = pickStr(contactObj.kakaoUrl, d.kakaoUrl, d.contactKakao);
+
+    return {
+      id: d._id || d.id || d.slug || 'byhen',
+      name: pickStr(d.name, d.brandName, 'BYHEN'),
+      tagline: pickStr(d.tagline, d.subtitle),
+      location: pickStr(d.location, d.address),
+      hours: pickStr(d.hours, d.businessHours),
+      hero:{ image, logo },
+      contact:{ phone, kakaoUrl:kakao },
+      studioPhotos: studio,
+      portfolioPhotos: pf,
+      pricing,
+      availability:{
+        leadDays: pickNum(availObj.leadDays, availObj.lead_days, d.leadDays),
+        booked:   pickArr(availObj.booked),
+        closed:   pickArr(availObj.closed),
+        timeslots:pickArr(availObj.timeslots, availObj.timeSlots)
+      },
+      shorts,
+      faq: pickArr(d.faq, d.faqs),
+      policy: pickStr(d.policy, (d.policies||{}).text)
+    };
   }
 
   // ---------- hero ----------
   function renderHero(){
     const root = $('#bh-hero'); if(!root) return;
-    const img = (D.hero && typeof D.hero.image==='string') ? D.hero.image : '';
-    const logo= (D.hero && typeof D.hero.logo==='string')  ? D.hero.logo  : '';
+    const img = N.hero?.image || '';
+    const logo= N.hero?.logo  || '';
     const bg = img ? `background-image:linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)),url('${img}')` : '';
     root.innerHTML = `
       <div class="media" style="${bg}"></div>
@@ -72,15 +116,15 @@
         <div class="row">
           <div class="logo">${ logo ? `<img src="${logo}" alt="">` : '' }</div>
           <div>
-            <div class="name">${D.name||'BYHEN'}</div>
-            <div class="tagline">${D.tagline||''}</div>
+            <div class="name">${N.name||'BYHEN'}</div>
+            <div class="tagline">${N.tagline||''}</div>
           </div>
         </div>
         <div class="row" style="gap:6px;flex-wrap:wrap">
-          ${D.location?`<span class="bh-chip"><i class="ri-map-pin-2-line"></i>${D.location}</span>`:''}
-          ${D.hours?`<span class="bh-chip"><i class="ri-time-line"></i>${D.hours}</span>`:''}
-          ${D.contact?.phone?`<a class="bh-chip" href="tel:${D.contact.phone}"><i class="ri-phone-line"></i>${D.contact.phone}</a>`:''}
-          ${D.contact?.kakaoUrl?`<a class="bh-chip" href="${D.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
+          ${N.location?`<span class="bh-chip"><i class="ri-map-pin-2-line"></i>${N.location}</span>`:''}
+          ${N.hours?`<span class="bh-chip"><i class="ri-time-line"></i>${N.hours}</span>`:''}
+          ${N.contact?.phone?`<a class="bh-chip" href="tel:${N.contact.phone}"><i class="ri-phone-line"></i>${N.contact.phone}</a>`:''}
+          ${N.contact?.kakaoUrl?`<a class="bh-chip" href="${N.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
         </div>
       </div>`;
   }
@@ -99,9 +143,9 @@
     const start = addDays(first, -((first.getDay()+6)%7)); // 월요일 시작
     const weeks = 6, days=7;
 
-    const booked = new Set(D.availability?.booked||[]);
-    const closed = new Set(D.availability?.closed||[]);
-    const lead   = Number(D.availability?.leadDays||0);
+    const booked = new Set(N.availability?.booked||[]);
+    const closed = new Set(N.availability?.closed||[]);
+    const lead   = Number(N.availability?.leadDays||0);
     const today  = new Date(); today.setHours(0,0,0,0);
     const earliest = addDays(today, lead);
 
@@ -137,7 +181,7 @@
     const card = $('#bhSlotCard'); if(!card) return;
     if(!calState.pickedDate){ card.hidden = true; return; }
     $('#bhPickedDate').textContent = calState.pickedDate;
-    const wrap = $('#bhSlots'); const slots = (D.availability?.timeslots||[]);
+    const wrap = $('#bhSlots'); const slots = (N.availability?.timeslots||[]);
     wrap.innerHTML = slots.map(t=>{
       const sel = (calState.pickedTime===t)?'is-sel':'';
       return `<button type="button" class="bh-chip2 ${sel}" data-t="${t}">${t}</button>`;
@@ -156,7 +200,8 @@
   // ---------- pricing ----------
   function renderPricing(){
     const root = $('#bhPricing'); if(!root) return;
-    const html = (D.pricing||[]).map(p=>`
+    const list = N.pricing||[];
+    const html = list.map(p=>`
       <article class="bh-plan">
         ${p.badge?`<span class="badge">${p.badge}</span>`:''}
         <div class="name">${p.name} · <span style="color:#64748b">${p.duration||''}</span></div>
@@ -172,7 +217,7 @@
   const galState = { tab:'studio', list:[] };
   function renderGallery(){
     const root = $('#bhGallery'); if(!root) return;
-    galState.list = (galState.tab==='studio') ? (D.studioPhotos||[]) : (D.portfolioPhotos||[]);
+    galState.list = (galState.tab==='studio') ? (N.studioPhotos||[]) : (N.portfolioPhotos||[]);
     root.innerHTML = galState.list.map((src,i)=>`<img src="${src}" alt="gallery-${i}" data-i="${i}" loading="lazy">`).join('');
   }
   function bindGallery(){
@@ -183,7 +228,6 @@
       galState.tab = btn.dataset.tab;
       renderGallery();
     });
-
     const root = $('#bhGallery');
     on(root,'click',(e)=>{
       const img=e.target.closest('img'); if(!img) return;
@@ -213,13 +257,13 @@
   // ---------- shorts ----------
   function renderShorts(){
     const root = $('#bhShorts'); if(!root) return;
-    const items = (D.shorts||[]).filter(s=>s.embedUrl);
-    root.innerHTML = items.map(s=>`
-      <article class="bh-clip" data-embed="${s.embedUrl}">
-        <img src="${s.thumbnailUrl||''}" alt="">
-        <span class="play"><i class="ri-play-fill"></i></span>
-      </article>
-    `).join('') || '<div style="color:#64748b">클립이 없습니다.</div>';
+    const items = (N.shorts||[]).filter(s=>s.embedUrl || s.sourceUrl);
+    root.innerHTML = items.map(s=>{
+      const embed = s.embedUrl || s.sourceUrl;
+      return `<article class="bh-clip" data-embed="${embed}">
+        <img src="${s.thumbnailUrl||''}" alt=""><span class="play"><i class="ri-play-fill"></i></span>
+      </article>`;
+    }).join('') || '<div style="color:#64748b">클립이 없습니다.</div>';
 
     ensureClipModal();
     on(root,'click',(e)=>{
@@ -245,10 +289,10 @@
     const r = $('#bhInfo'); if(!r) return;
     r.innerHTML = `
       <div class="row">
-        ${D.location?`<span class="bh-chip gray"><i class="ri-map-pin-2-line"></i>${D.location}</span>`:''}
-        ${D.hours?`<span class="bh-chip gray"><i class="ri-time-line"></i>${D.hours}</span>`:''}
-        ${D.contact?.phone?`<a class="bh-chip gray" href="tel:${D.contact.phone}"><i class="ri-phone-line"></i>${D.contact.phone}</a>`:''}
-        ${D.contact?.kakaoUrl?`<a class="bh-chip gray" href="${D.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
+        ${N.location?`<span class="bh-chip gray"><i class="ri-map-pin-2-line"></i>${N.location}</span>`:''}
+        ${N.hours?`<span class="bh-chip gray"><i class="ri-time-line"></i>${N.hours}</span>`:''}
+        ${N.contact?.phone?`<a class="bh-chip gray" href="tel:${N.contact.phone}"><i class="ri-phone-line"></i>${N.contact.phone}</a>`:''}
+        ${N.contact?.kakaoUrl?`<a class="bh-chip gray" href="${N.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
       </div>
       <div style="margin-top:8px">
         <a class="bh-btn ghost" href="https://map.naver.com/" target="_blank" rel="noopener"><i class="ri-map-2-line"></i> 지도에서 보기</a>
@@ -257,19 +301,22 @@
   }
   function renderFAQ(){
     const r = $('#bhFAQ'); if(!r) return;
-    const items = (D.faq||[]).map(f=>`<div class="item"><div class="q">Q. ${f.q}</div><div class="a">${f.a}</div></div>`).join('');
-    r.innerHTML = items + (D.policy?`<div class="item"><div class="q">정책</div><div class="a">${D.policy}</div></div>`:'');
+    const items = (N.faq||[]).map(f=>`<div class="item"><div class="q">Q. ${f.q}</div><div class="a">${f.a}</div></div>`).join('');
+    r.innerHTML = items + (N.policy?`<div class="item"><div class="q">정책</div><div class="a">${N.policy}</div></div>`:'');
   }
 
   // ---------- init ----------
   async function init(){
     try{
       D = await loadData();
-      w.BYHEN_DATA = D; // 외부 참고용
+      N = normalize(D);
+      w.BYHEN_DATA = D; // 원본도 유지
+      console.log('[byhen] loaded', {raw:D, normalized:N});
     }catch(e){
       console.warn('[byhen load error]', e);
       toast('데이터를 불러오지 못했습니다. 기본값으로 표시합니다.');
       D = w.BYHEN_DATA || {};
+      N = normalize(D);
     }
 
     renderHero();
