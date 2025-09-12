@@ -1,116 +1,73 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BYHEN 관리자</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BYHEN08 관리자</title>
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <style>
-    :root{ --line:#e5e7eb; --pri:#7c3aed; --ink:#0f172a; }
-    *{box-sizing:border-box} body{margin:0;background:#f6f7fb;font-family:SUIT,system-ui,-apple-system,BlinkMacSystemFont}
-    .ad-appbar{position:sticky;top:0;z-index:10;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:#fff}
-    .ad-title{font-weight:900}
-    .container{max-width:980px;margin:0 auto;padding:16px}
-    .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
-    .grid2{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-    .grid3{display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr}
-    @media (max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .input, textarea, select{width:100%;height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none}
-    textarea.input{height:auto;min-height:110px}
-    .btn{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:800;cursor:pointer}
-    .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
-    .btn.ghost{background:#fff}
-    .notice{display:none;margin:10px 0;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#f8fafc}
-    .notice.show{display:block} .notice.ok{border-color:#10b981;background:#ecfdf5;color:#065f46}
-    .upload-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .preview-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .preview-row img{width:240px;height:135px;object-fit:cover;border:1px solid var(--line);border-radius:12px;background:#eee}
-    .subgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));margin-top:8px}
-    .subgrid .sub{position:relative}
-    .subgrid img{width:100%;height:120px;object-fit:cover;border:1px solid var(--line);border-radius:12px;background:#f5f6f7}
-    .subgrid .rm{position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:#000a;color:#fff;border:0}
-    .plan-row{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;background:#fafafa}
-    .plan-row .grid{display:grid;gap:8px;grid-template-columns:1fr 160px 1fr 44px}
-    .plan-row .grid + .grid{grid-template-columns:1fr 1fr}
-    .date-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
-    .faq-row{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;background:#fafafa;display:grid;gap:8px}
-    .row-end{display:flex;justify-content:flex-end}
-    .short-row{display:grid;grid-template-columns:110px 1fr;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px;background:#fafafa}
-    .short-row .l-prev img{width:100%;height:110px;object-fit:cover;border-radius:10px;background:#eee;border:1px solid var(--line)}
-    .note{color:#64748b}
-  </style>
+  <link rel="stylesheet" href="css/byhen-admin.css?v=1.0.0" />
 </head>
 <body>
   <header class="ad-appbar">
     <div class="ad-title">BYHEN 관리자</div>
     <div class="ad-actions">
       <a class="btn ghost" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 미리보기</a>
-      <button id="saveDraftBtn" class="btn pri"><i class="ri-save-3-line"></i> 저장</button>
+      <button id="adSave" class="btn pri"><i class="ri-save-3-line"></i> 저장</button>
     </div>
   </header>
 
   <main class="container">
-    <div id="bhMsg" class="notice" aria-live="polite"></div>
+    <div id="adMsg" class="notice" aria-live="polite"></div>
 
-    <!-- 기본 정보 -->
+    <!-- 기본정보 -->
     <section class="card">
       <h3>기본 정보</h3>
       <div class="grid2">
-        <label class="field"><span>브랜드명</span><input id="bhName" class="input" placeholder="BYHEN"></label>
-        <label class="field"><span>태그라인</span><input id="bhTagline" class="input" placeholder="브랜드가 사랑하는 크리에이티브 스튜디오"></label>
+        <label class="field"><span>브랜드명</span><input id="name" class="input" placeholder="BYHEN"></label>
+        <label class="field"><span>슬러그</span><input class="input" value="byhen" disabled></label>
       </div>
+      <label class="field"><span>태그라인</span><input id="tagline" class="input" placeholder="브랜드가 사랑하는 크리에이티브 스튜디오"></label>
       <div class="grid2">
-        <label class="field"><span>지역</span><input id="bhLocation" class="input" placeholder="서울 성수동"></label>
-        <label class="field"><span>운영시간</span><input id="bhHours" class="input" placeholder="10:00–19:00 (일·공휴일 휴무)"></label>
+        <label class="field"><span>지역</span><input id="location" class="input" placeholder="서울 성수동"></label>
+        <label class="field"><span>운영시간</span><input id="hours" class="input" placeholder="10:00–19:00 (일·공휴일 휴무)"></label>
       </div>
       <div class="grid3">
-        <label class="field"><span>연락처(전화)</span><input id="bhPhone" class="input" placeholder="02-000-0000"></label>
-        <label class="field"><span>카카오톡 채널 URL</span><input id="bhKakao" class="input" placeholder="https://pf.kakao.com/..."></label>
-        <label class="field"><span>웹사이트</span><input id="bhWebsite" class="input" placeholder="https://..."></label>
+        <label class="field"><span>연락처(전화)</span><input id="phone" class="input" placeholder="02-000-0000"></label>
+        <label class="field"><span>카카오톡 채널 URL</span><input id="kakaoUrl" class="input" placeholder="https://pf.kakao.com/..."></label>
+        <label class="field"><span>이메일</span><input id="email" class="input" type="email" placeholder="brand@mail.com"></label>
       </div>
-      <label class="field"><span>지도 URL</span><input id="bhMapUrl" class="input" placeholder="https://map.naver.com/..."></label>
     </section>
 
-    <!-- 히어로 -->
+    <!-- 히어로 이미지 -->
     <section class="card">
-      <h3>히어로</h3>
+      <h3>히어로 이미지</h3>
+      <div class="grid2">
+        <label class="field"><span>배경 이미지 URL</span><input id="heroImage" class="input" placeholder="https://..."></label>
+        <label class="field"><span>로고 이미지 URL</span><input id="heroLogo" class="input" placeholder="https://..."></label>
+      </div>
       <div class="upload-row">
-        <button id="heroTrigger" class="btn"><i class="ri-upload-2-line"></i> 배경 업로드</button>
-        <button id="logoTrigger" class="btn"><i class="ri-upload-2-line"></i> 로고 업로드</button>
-        <input id="heroFile" type="file" accept="image/*" hidden>
-        <input id="logoFile" type="file" accept="image/*" hidden>
+        <button id="upHeroImage" class="btn"><i class="ri-upload-2-line"></i> 배경 업로드</button>
+        <button id="upHeroLogo" class="btn"><i class="ri-upload-2-line"></i> 로고 업로드</button>
+        <input id="fileHeroImage" type="file" accept="image/*" hidden />
+        <input id="fileHeroLogo"  type="file" accept="image/*" hidden />
       </div>
       <div class="preview-row">
-        <img id="heroPrev" alt="">
-        <img id="logoPrev" alt="">
+        <img id="prevHeroImage" alt="">
+        <img id="prevHeroLogo" alt="">
       </div>
-    </section>
-
-    <!-- 갤러리 -->
-    <section class="card">
-      <h3>갤러리</h3>
-      <div class="upload-row">
-        <button id="studioTrigger" class="btn"><i class="ri-image-add-line"></i> 스튜디오 업로드</button>
-        <button id="pfTrigger" class="btn"><i class="ri-image-add-line"></i> 포트폴리오 업로드</button>
-        <input id="studioFile" type="file" accept="image/*" multiple hidden>
-        <input id="pfFile" type="file" accept="image/*" multiple hidden>
-      </div>
-      <div class="subgrid" id="studioGrid"></div>
-      <div class="subgrid" id="pfGrid" style="margin-top:10px"></div>
     </section>
 
     <!-- 가격/패키지 -->
     <section class="card">
       <h3>가격 & 패키지</h3>
-      <div id="pricingWrap"></div>
-      <button id="addPlanBtn" class="btn"><i class="ri-add-line"></i> 패키지 추가</button>
+      <div id="plans"></div>
+      <button id="addPlan" class="btn"><i class="ri-add-line"></i> 패키지 추가</button>
     </section>
 
-    <!-- 예약 -->
+    <!-- 예약/캘린더 -->
     <section class="card">
       <h3>예약 설정</h3>
       <div class="grid3">
@@ -119,45 +76,46 @@
         <div></div>
       </div>
       <div class="grid2">
-        <div class="field"><span>마감일</span><div id="bookedWrap"></div><button id="addBookedBtn" class="btn"><i class="ri-add-line"></i> 추가</button></div>
-        <div class="field"><span>휴무일</span><div id="closedWrap"></div><button id="addClosedBtn" class="btn"><i class="ri-add-line"></i> 추가</button></div>
+        <label class="field"><span>마감일(쉼표)</span><textarea id="booked" class="input" rows="3" placeholder="2025-09-15, 2025-09-20"></textarea></label>
+        <label class="field"><span>휴무일(쉼표)</span><textarea id="closed" class="input" rows="3" placeholder="2025-09-22"></textarea></label>
+      </div>
+    </section>
+
+    <!-- 갤러리 -->
+    <section class="card">
+      <h3>갤러리 이미지</h3>
+      <div class="grid2">
+        <label class="field"><span>스튜디오 사진(URL, 줄바꿈)</span><textarea id="studioPhotos" class="input" rows="5"></textarea></label>
+        <label class="field"><span>포트폴리오 사진(URL, 줄바꿈)</span><textarea id="portfolioPhotos" class="input" rows="5"></textarea></label>
+      </div>
+      <div class="upload-row">
+        <button id="upStudio" class="btn"><i class="ri-upload-2-line"></i> 스튜디오 업로드</button>
+        <button id="upPortfolio" class="btn"><i class="ri-upload-2-line"></i> 포트폴리오 업로드</button>
+        <input id="fileStudio" type="file" accept="image/*" multiple hidden />
+        <input id="filePortfolio" type="file" accept="image/*" multiple hidden />
       </div>
     </section>
 
     <!-- 숏폼 -->
     <section class="card">
       <h3>하이라이트(숏폼)</h3>
-      <div id="shortsWrap"></div>
-      <div class="grid2" style="margin-top:8px">
-        <input id="shortUrl" class="input" placeholder="YouTube/Instagram/TikTok 링크 붙여넣기">
-        <button id="addShortBtn" class="btn"><i class="ri-add-line"></i> 추가</button>
+      <div id="shortsList"></div>
+      <div class="grid2">
+        <input id="shortUrl" class="input" placeholder="YouTube/Instagram/TikTok 링크 붙여넣기" />
+        <button id="addShort" class="btn"><i class="ri-add-line"></i> 추가</button>
       </div>
     </section>
 
-    <!-- FAQ/정책 -->
+    <!-- FAQ / 정책 -->
     <section class="card">
       <h3>FAQ / 정책</h3>
-      <div id="faqWrap"></div>
-      <button id="addFaqBtn" class="btn"><i class="ri-add-line"></i> FAQ 추가</button>
-      <label class="field" style="margin-top:10px"><span>정책</span><textarea id="policy" class="input" rows="4" placeholder="예약/취소/환불 정책 등"></textarea></label>
+      <div id="faqList"></div>
+      <button id="addFaq" class="btn"><i class="ri-add-line"></i> FAQ 추가</button>
+      <label class="field" style="margin-top:10px"><span>정책</span><textarea id="policy" class="input" rows="4"></textarea></label>
     </section>
   </main>
 
-  <!-- 환경설정 -->
-  <script>
-    window.LIVEE_CONFIG = window.LIVEE_CONFIG || {
-      // 서버가 막혀있거나 비로그인 시에도 동작하도록 데모 on
-      demo: true,
-      API_BASE: '/api/v1',
-      endpoints: { byhen: '/byhen-test' },
-      cloudinary: {
-        // 본인 클라우드 값으로 교체 가능(Unsigned Upload Preset 필요)
-        cloudName: 'demo',           // 예: 'dzxxx'
-        uploadPreset: 'unsigned'     // 예: 'unsigned_livee'
-      }
-    };
-  </script>
-  <!-- 페이지 JS -->
-  <script src="js/byhen-admin.page.js?v=2.1.1"></script>
+  <script src="js/config.js?v=2.11"></script>
+  <script src="js/byhen-admin.page.js?v=2.3"></script>
 </body>
 </html>
