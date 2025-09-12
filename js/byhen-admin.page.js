@@ -1,7 +1,8 @@
-/* byhen-admin.page.js — v2.2
- * - 엔드포인트: brands-test (slug=byhen 1건)
+
+/* byhen-admin.page.js — v2.3
+ * - 엔드포인트: /brands-test (slug=byhen 1건)
  * - API_BASE 절대값 강제(설정 미로드 시 Render 기본값 사용)
- * - Cloudinary: 서명(/uploads/signature) 우선, 실패(401/403/5xx) 시 unsigned preset 폴백
+ * - Cloudinary: 서버 서명(/uploads/signature) 방식만 사용 (폴백 제거)
  * - 현재 admin HTML의 id와 1:1 매칭
  */
 (function () {
@@ -11,8 +12,8 @@
   const CFG = window.LIVEE_CONFIG || {};
   const DEFAULT_API = 'https://main-server-ekgr.onrender.com/api/v1';
   const API_BASE = ((CFG.API_BASE && /^https?:\/\//.test(CFG.API_BASE)) ? CFG.API_BASE : DEFAULT_API).replace(/\/$/, '');
-  const EP = CFG.endpoints || {};
-  const ENTITY = EP.byhen || '/brands-test'; // ✅ 서버 라우터에 맞춤
+  const EP = Object.assign({ byhen: '/brands-test', uploadsSignature: '/uploads/signature' }, (CFG.endpoints||{}));
+  const ENTITY = EP.byhen;  // /brands-test
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
   // ------- helpers -------
@@ -20,8 +21,6 @@
   const on  = (el,ev,fn)=> el && el.addEventListener(ev,fn);
   const say = (t, ok=false)=>{ const el=$id('adMsg'); if(!el) return; el.textContent=t; el.classList.add('show'); el.classList.toggle('ok', ok); };
   const headers = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h['Authorization']=`Bearer ${TOKEN}`; return h; };
-  const pad2=(n)=>String(n).padStart(2,'0');
-  const todayISO=()=>{ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
 
   // Cloudinary 변환
   const THUMB = Object.assign({
@@ -33,40 +32,22 @@
   const withTransform=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{ return url; } };
   const isImgOk=(f)=>{ if(!/^image\//.test(f.type)){ say('이미지 파일만 업로드 가능'); return false; } if(f.size>8*1024*1024){ say('이미지는 8MB 이하'); return false; } return true; };
 
-  // Cloudinary 업로드 (서명 → unsigned 폴백)
+  // ------- Cloudinary: 서버 서명 방식만 -------
   async function getSignature(){
-    const url = API_BASE + (EP.uploadsSignature || '/uploads/signature');
+    const url = API_BASE + EP.uploadsSignature;
     const r = await fetch(url, { headers:headers(false) });
     const j = await r.json().catch(()=>({}));
     if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
     return j.data || j;
   }
   async function uploadImage(file, variant){
-    // 1) 서명 우선
-    if(CFG.uploads?.preferSigned !== false){
-      try{
-        const { cloudName, apiKey, timestamp, signature } = await getSignature();
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('api_key', apiKey);
-        fd.append('timestamp', timestamp);
-        fd.append('signature', signature);
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body:fd });
-        const j = await res.json().catch(()=>({}));
-        if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
-        return variant ? withTransform(j.secure_url, variant) : j.secure_url;
-      }catch(e){
-        // 계속 진행해 unsigned 폴백
-      }
-    }
-    // 2) unsigned 폴백
-    const u = CFG.uploads?.unsigned || {};
-    if(!u.cloudName || !u.uploadPreset) throw new Error('업로드 실패: 서버 서명 불가 & unsigned 미설정');
+    const { cloudName, apiKey, timestamp, signature } = await getSignature(); // 실패 시 throw
     const fd = new FormData();
     fd.append('file', file);
-    fd.append('upload_preset', u.uploadPreset);
-    if(u.folder) fd.append('folder', u.folder);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${u.cloudName}/image/upload`, { method:'POST', body:fd });
+    fd.append('api_key', apiKey);
+    fd.append('timestamp', timestamp);
+    fd.append('signature', signature);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method:'POST', body:fd });
     const j = await res.json().catch(()=>({}));
     if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
     return variant ? withTransform(j.secure_url, variant) : j.secure_url;
@@ -83,7 +64,6 @@
     bindUploads();
     bindDynamicLists();
     bindSave();
-
     await loadExisting(); // slug=byhen 우선 로드
   }
 
