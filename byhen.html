@@ -102,9 +102,9 @@
 
   <!-- 공통 모달(문의/예약/라이트박스/클립) -->
   <div id="bhModals"></div>
-
-  <!-- 데이터 & 페이지 스크립트 -->
-  <script src="js/byhen.data.js?v=1.0.0"></script>
-  <script src="js/byhen.page.js?v=1.0.0"></script>
+<!-- 데이터 & 페이지 스크립트 (순서 중요) -->
+  <script src="js/config.js?v=2.12"></script>
+  <script src="js/byhen.data.js?v=1.0.0"></script> <!-- 선택: API 실패시 폴백 -->
+  <script src="js/byhen.page.js?v=1.2.0"></script> <!-- 최신 버전 -->
 </body>
 </html>
