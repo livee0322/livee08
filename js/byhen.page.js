@@ -1,16 +1,35 @@
-/* byhen.page.js — v1.1.1 (slug/id 자동 로드, 캘린더/모달/갤러리/숏폼 동일) */
+/* byhen.page.js — v1.1.2 (fix: duplicate 'money', robust slug/id load) */
 (function(w){
   'use strict';
 
-  // ---------- config / data load ----------
+  // ---------- config ----------
   const CFG = w.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/,'');
   const QS = new URLSearchParams(location.search);
   const SLUG = (QS.get('slug') || 'byhen').trim().toLowerCase();
   const ID   = (QS.get('id') || '').trim();
 
-  let D = {}; // 페이지 전역 데이터 (로드 후 채움)
+  let D = {}; // 전역 데이터
 
+  // ---------- helpers ----------
+  const $  = (s,el=document)=>el.querySelector(s);
+  const on = (el,ev,fn)=>el && el.addEventListener(ev,fn);
+  const pad2=(n)=>String(n).padStart(2,'0');
+  const fmt=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const money = (n)=>Number(n||0).toLocaleString('ko-KR'); // ✅ 한 번만 선언
+
+  function toast(msg){
+    let t=$('#bhToast'); if(!t){ t=document.createElement('div'); t.id='bhToast'; t.className='bh-toast'; document.body.appendChild(t); }
+    t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1600);
+  }
+
+  // 응답 객체 → 단일 문서로 언래핑
+  function unwrapDoc(j){
+    if (!j) return null;
+    const list = j.items || j.docs || (Array.isArray(j.data) ? j.data : null);
+    if (Array.isArray(list) && list.length) return list[0];
+    return j.data || j; // {data: {...}} 또는 그냥 {...}
+  }
   async function fetchJSON(url){
     const r = await fetch(url, { headers:{ Accept:'application/json' }});
     const j = await r.json().catch(()=>({}));
@@ -18,52 +37,40 @@
     return j;
   }
 
+  // ---------- load ----------
   async function loadData(){
-    // 1) id가 있으면 /:id
+    // id 우선
     if (ID) {
       try {
         const j = await fetchJSON(`${API_BASE}/brands-test/${encodeURIComponent(ID)}`);
-        return j.data || j;
-      } catch (_) {}
+        const doc = unwrapDoc(j); if (doc) return doc;
+      } catch(_) {}
     }
-    // 2) slug 우선
+    // slug 우선
     try {
       const j = await fetchJSON(`${API_BASE}/brands-test?slug=${encodeURIComponent(SLUG)}&limit=1`);
-      return j.data || j;
-    } catch (_) {}
-
-    // 3) 폴백: 첫 문서
+      const doc = unwrapDoc(j); if (doc) return doc;
+    } catch(_) {}
+    // 폴백: 첫 문서
     try {
       const j = await fetchJSON(`${API_BASE}/brands-test?limit=1`);
-      const items = j.items || j.data || j.docs || [];
-      if (Array.isArray(items) && items.length) return items[0];
-    } catch (_) {}
-
-    // 4) 최종 폴백: 전역 상수
+      const doc = unwrapDoc(j); if (doc) return doc;
+    } catch(_) {}
+    // 최종 폴백: 정적
     return (w.BYHEN_DATA || {});
-  }
-
-  // ---------- utils ----------
-  const $ = (s,el=document)=>el.querySelector(s);
-  const on = (el,ev,fn)=>el && el.addEventListener(ev,fn);
-  const pad2=(n)=>String(n).padStart(2,'0');
-  const fmt=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  const money = (n)=>Number(n||0).toLocaleString('ko-KR');
-
-  function toast(msg){
-    let t=$('#bhToast'); if(!t){ t=document.createElement('div'); t.id='bhToast'; t.className='bh-toast'; document.body.appendChild(t); }
-    t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1600);
   }
 
   // ---------- hero ----------
   function renderHero(){
     const root = $('#bh-hero'); if(!root) return;
-    const bg = D.hero?.image ? `background-image:linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)),url('${D.hero.image}')` : '';
+    const img = (D.hero && typeof D.hero.image==='string') ? D.hero.image : '';
+    const logo= (D.hero && typeof D.hero.logo==='string')  ? D.hero.logo  : '';
+    const bg = img ? `background-image:linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)),url('${img}')` : '';
     root.innerHTML = `
       <div class="media" style="${bg}"></div>
       <div class="body">
         <div class="row">
-          <div class="logo">${ D.hero?.logo ? `<img src="${D.hero.logo}" alt="">` : '' }</div>
+          <div class="logo">${ logo ? `<img src="${logo}" alt="">` : '' }</div>
           <div>
             <div class="name">${D.name||'BYHEN'}</div>
             <div class="tagline">${D.tagline||''}</div>
@@ -89,7 +96,6 @@
     $('#bhMonTitle').textContent = `${y}-${pad2(m+1)}`;
 
     const first = new Date(y,m,1);
-    const last  = new Date(y,m+1,0);
     const start = addDays(first, -((first.getDay()+6)%7)); // 월요일 시작
     const weeks = 6, days=7;
 
@@ -103,7 +109,7 @@
     let grid = '';
     for(let i=0;i<weeks*days;i++){
       const d = addDays(start, i);
-      const inMon = (d.getMonth()===m);
+      const inMon = (d.getMonth()===calState.ym.getMonth());
       const iso = fmt(d);
       const isClosed = closed.has(iso);
       const isBooked = booked.has(iso);
@@ -116,11 +122,9 @@
     }
     root.innerHTML = `<div class="hd">${hd}</div><div class="grid">${grid}</div>`;
   }
-
   function bindCalendar(){
     on($('#bhPrevMon'),'click',()=>{ calState.ym.setMonth(calState.ym.getMonth()-1); renderCalendar(); });
     on($('#bhNextMon'),'click',()=>{ calState.ym.setMonth(calState.ym.getMonth()+1); renderCalendar(); });
-
     on($('#bhCalendar'),'click', (e)=>{
       const cell=e.target.closest('.cell.ok'); if(!cell) return;
       calState.pickedDate = cell.dataset.iso;
@@ -129,7 +133,6 @@
       renderSlots();
     });
   }
-
   function renderSlots(){
     const card = $('#bhSlotCard'); if(!card) return;
     if(!calState.pickedDate){ card.hidden = true; return; }
@@ -151,7 +154,6 @@
   }
 
   // ---------- pricing ----------
-  const money = (n)=>Number(n||0).toLocaleString('ko-KR');
   function renderPricing(){
     const root = $('#bhPricing'); if(!root) return;
     const html = (D.pricing||[]).map(p=>`
@@ -188,8 +190,6 @@
       openLightbox(galState.list, Number(img.dataset.i)||0);
     });
   }
-
-  // lightbox
   function openLightbox(list, idx){
     if(!list.length) return;
     let wrap=$('#bhLightbox');
@@ -261,77 +261,11 @@
     r.innerHTML = items + (D.policy?`<div class="item"><div class="q">정책</div><div class="a">${D.policy}</div></div>`:'');
   }
 
-  // ---------- modals ----------
-  function openModal(kind, payload={}){
-    let wrap=$('#bhModal'); if(!wrap){
-      wrap=document.createElement('div'); wrap.id='bhModal'; wrap.className='bh-modal';
-      document.body.appendChild(wrap);
-    }
-    if(kind==='inquiry'){
-      wrap.innerHTML = `
-        <div class="sheet" role="dialog" aria-modal="true" aria-label="문의하기">
-          <header><strong>문의하기</strong><button class="x" aria-label="닫기">✕</button></header>
-          <div class="bh-field"><label class="bh-label">문의 유형</label>
-            <select id="inqType" class="bh-input">
-              <option>일반 문의</option><option>견적 문의</option><option>촬영 문의</option><option>기타</option>
-            </select>
-          </div>
-          <div class="bh-field"><label class="bh-label">이름</label><input id="inqName" class="bh-input" placeholder="이름"></div>
-          <div class="bh-field"><label class="bh-label">연락처</label><input id="inqPhone" class="bh-input" placeholder="010-0000-0000"></div>
-          <div class="bh-field"><label class="bh-label">메시지</label><textarea id="inqMsg" class="bh-textarea" placeholder="문의 내용을 남겨주세요."></textarea></div>
-          <div class="bh-actions">
-            ${D.contact?.kakaoUrl?`<a class="bh-btn ghost" target="_blank" rel="noopener" href="${D.contact.kakaoUrl}"><i class="ri-kakao-talk-line"></i> 카카오톡</a>`:''}
-            <button class="bh-btn pri" id="inqSubmit"><i class="ri-send-plane-line"></i> 보내기</button>
-          </div>
-        </div>`;
-      const close=()=>wrap.classList.remove('show');
-      on($('.x',wrap),'click',close);
-      on(wrap,'click',e=>{ if(e.target===wrap) close(); });
-      on($('#inqSubmit',wrap),'click',()=>{
-        const name=$('#inqName').value.trim(), phone=$('#inqPhone').value.trim();
-        if(!name||!phone){ toast('이름/연락처를 입력해주세요'); return; }
-        close(); toast('문의가 전달되었습니다');
-      });
-      wrap.classList.add('show');
-    }
-    if(kind==='reserve'){
-      const date = payload.date||calState.pickedDate||'-';
-      const time = payload.time||calState.pickedTime||'';
-      wrap.innerHTML = `
-        <div class="sheet" role="dialog" aria-modal="true" aria-label="예약 요청">
-          <header><strong>예약 요청</strong><button class="x" aria-label="닫기">✕</button></header>
-          <div class="bh-field"><label class="bh-label">예약일자</label>
-            <input id="rvDate" class="bh-input" value="${date}" readonly>
-          </div>
-          <div class="bh-field"><label class="bh-label">시간</label>
-            <input id="rvTime" class="bh-input" value="${time}" placeholder="예: 14:00">
-          </div>
-          <div class="bh-field"><label class="bh-label">이름</label><input id="rvName" class="bh-input" placeholder="이름"></div>
-          <div class="bh-field"><label class="bh-label">연락처</label><input id="rvPhone" class="bh-input" placeholder="010-0000-0000"></div>
-          <div class="bh-field"><label class="bh-label">요청사항 (선택)</label><textarea id="rvMsg" class="bh-textarea" placeholder="세부 요청을 남겨주세요."></textarea></div>
-          <div class="bh-actions">
-            <button class="bh-btn" id="rvCancel">취소</button>
-            <button class="bh-btn pri" id="rvSubmit"><i class="ri-calendar-check-line"></i> 요청 보내기</button>
-          </div>
-        </div>`;
-      const close=()=>wrap.classList.remove('show');
-      on($('.x',wrap),'click',close);
-      on($('#rvCancel',wrap),'click',close);
-      on(wrap,'click',e=>{ if(e.target===wrap) close(); });
-      on($('#rvSubmit',wrap),'click',()=>{
-        const name=$('#rvName').value.trim(), phone=$('#rvPhone').value.trim();
-        if(!name||!phone){ toast('이름/연락처를 입력해주세요'); return; }
-        close(); toast('예약 요청이 접수되었습니다');
-      });
-      wrap.classList.add('show');
-    }
-  }
-
   // ---------- init ----------
   async function init(){
     try{
       D = await loadData();
-      w.BYHEN_DATA = D;
+      w.BYHEN_DATA = D; // 외부 참고용
     }catch(e){
       console.warn('[byhen load error]', e);
       toast('데이터를 불러오지 못했습니다. 기본값으로 표시합니다.');
