@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BYHEN — 브랜드 페이지</title>
+
+  <!-- 폰트 & 아이콘 -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+
+  <!-- 페이지 전용 CSS -->
+  <link rel="stylesheet" href="css/byhen.css?v=1.0.0">
+  <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+  <!-- 헤더(선택: 기존 공통 헤더가 있으면 제거 가능) -->
+  <header class="bh-appbar">
+    <button class="bh-icon" onclick="history.back()" aria-label="뒤로"><i class="ri-arrow-left-line"></i></button>
+    <div class="bh-title">BYHEN</div>
+    <a class="bh-icon" href="index.html" aria-label="홈"><i class="ri-home-2-line"></i></a>
+  </header>
+
+  <main id="byhen" class="bh-container" aria-live="polite">
+    <!-- Hero -->
+    <section id="bh-hero" class="bh-hero"></section>
+
+    <!-- 예약 가능일 -->
+    <section class="bh-section">
+      <div class="bh-sec-head">
+        <h2>예약 가능일</h2>
+        <div class="bh-cal-nav">
+          <button class="bh-btn ghost" id="bhPrevMon" aria-label="이전 달"><i class="ri-arrow-left-s-line"></i></button>
+          <strong id="bhMonTitle" class="bh-mon-title">0000-00</strong>
+          <button class="bh-btn ghost" id="bhNextMon" aria-label="다음 달"><i class="ri-arrow-right-s-line"></i></button>
+        </div>
+      </div>
+      <div id="bhCalendar" class="bh-cal"></div>
+
+      <div id="bhSlotCard" class="bh-slot-card" hidden>
+        <div class="bh-slot-date">
+          <i class="ri-calendar-line"></i>
+          <b id="bhPickedDate">-</b>
+        </div>
+        <div id="bhSlots" class="bh-chips"></div>
+        <button id="bhOpenReserve" class="bh-btn pri bh-slot-cta" disabled>
+          <i class="ri-calendar-check-line"></i> 예약 요청
+        </button>
+      </div>
+      <div class="bh-legend">
+        <span><i class="dot ok"></i>가능</span>
+        <span><i class="dot soon"></i>준비(리드타임)</span>
+        <span><i class="dot booked"></i>마감</span>
+        <span><i class="dot off"></i>휴무</span>
+      </div>
+    </section>
+
+    <!-- 가격/패키지 -->
+    <section class="bh-section">
+      <div class="bh-sec-head"><h2>가격 & 패키지</h2></div>
+      <div id="bhPricing" class="bh-pricing"></div>
+      <p class="bh-vat">* 부가세 별도, 옵션 추가 시 변동될 수 있습니다.</p>
+    </section>
+
+    <!-- 갤러리 -->
+    <section class="bh-section">
+      <div class="bh-sec-head">
+        <h2>갤러리</h2>
+        <div class="bh-tabs" id="bhGalTabs" role="tablist" aria-label="갤러리 탭">
+          <button data-tab="studio" class="is-active" role="tab" aria-selected="true">스튜디오</button>
+          <button data-tab="portfolio" role="tab" aria-selected="false">포트폴리오</button>
+        </div>
+      </div>
+      <div id="bhGallery" class="bh-grid"></div>
+    </section>
+
+    <!-- 하이라이트(숏폼) -->
+    <section class="bh-section">
+      <div class="bh-sec-head"><h2>하이라이트</h2></div>
+      <div id="bhShorts" class="bh-shorts"></div>
+    </section>
+
+    <!-- 위치/정보 -->
+    <section class="bh-section">
+      <div class="bh-sec-head"><h2>오시는 길 & 운영정보</h2></div>
+      <div id="bhInfo" class="bh-info"></div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="bh-section">
+      <div class="bh-sec-head"><h2>FAQ / 정책</h2></div>
+      <div id="bhFAQ" class="bh-faq"></div>
+    </section>
+  </main>
+
+  <!-- 스티키 CTA 바 -->
+  <div class="bh-cta">
+    <button id="bhOpenInquiry" class="bh-btn ghost"><i class="ri-chat-3-line"></i> 문의하기</button>
+    <button id="bhOpenReserveBottom" class="bh-btn pri"><i class="ri-calendar-check-line"></i> 예약하기</button>
+  </div>
+
+  <!-- 공통 모달(문의/예약/라이트박스/클립) -->
+  <div id="bhModals"></div>
+
+  <!-- 데이터 & 페이지 스크립트 -->
+  <script src="js/byhen.data.js?v=1.0.0"></script>
+  <script src="js/byhen.page.js?v=1.0.0"></script>
+</body>
+</html>
