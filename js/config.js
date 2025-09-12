@@ -1,4 +1,3 @@
-<script>
 (function () {
   const prev = window.LIVEE_CONFIG || {};
   const trim = (s) => (s || '').replace(/\/$/, '');
@@ -29,4 +28,3 @@
 
   window.LIVEE_CONFIG = Object.assign({}, prev, cfg);
 })();
-</script>
