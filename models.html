@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>모델 — Livee</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+  <link rel="stylesheet" href="css/models.css?v=1.0.0">
+</head>
+<body>
+  <header class="appbar">
+    <div class="title">모델</div>
+    <div class="actions">
+      <a class="btn ghost" href="index.html"><i class="ri-home-2-line"></i> 홈</a>
+      <a class="btn pri" href="model-new.html"><i class="ri-add-line"></i> 등록</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar">
+      <div class="search">
+        <i class="ri-search-line"></i>
+        <input id="mdlSearch" placeholder="이름, 태그, 지역으로 검색" />
+      </div>
+      <div class="filters">
+        <select id="mdlSort" class="input">
+          <option value="recent">최신순</option>
+          <option value="rating">평점순</option>
+          <option value="name">이름순</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="mdlGrid" class="grid"></section>
+
+    <div class="more-wrap">
+      <button id="mdlLoadMore" class="btn ghost" hidden><i class="ri-arrow-down-line"></i> 더보기</button>
+    </div>
+
+    <div id="mdlMsg" class="notice" aria-live="polite"></div>
+  </main>
+
+  <script src="js/config.js?v=2.12"></script>
+  <script src="js/models.page.js?v=1.0.0"></script>
+</body>
+</html>
