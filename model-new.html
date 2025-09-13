@@ -3,139 +3,129 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>모델 등록</title>
+  <title>모델 등록 — Livee</title>
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <link rel="stylesheet" href="css/portfolio-new.css?v=2.0"><!-- 기존 스타일 재활용 -->
-  <style>
-    /* 최소 차이만 보완 */
-    .section h2{font-weight:700;margin:16px 0 8px}
-    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .note.small{color:#64748b;font-size:12px}
-    .live-row .l-role{min-width:120px}
-  </style>
+  <link rel="stylesheet" href="css/model-new.css?v=1.0.0" />
 </head>
 <body>
-  <header class="appbar">
-    <a class="btn ghost" href="byhen.html"><i class="ri-arrow-left-line"></i> 돌아가기</a>
-    <div class="title">모델 등록</div>
-    <div class="actions">
-      <button id="saveDraftBtn" class="btn"><i class="ri-draft-line"></i> 임시저장</button>
-      <button id="publishBtn" class="btn pri"><i class="ri-upload-cloud-2-line"></i> 발행</button>
+  <header class="ad-appbar">
+    <button class="btn ghost" onclick="history.back()"><i class="ri-arrow-left-line"></i> 뒤로</button>
+    <div class="ad-title">모델 등록</div>
+    <div class="ad-actions">
+      <button id="saveDraftBtn" class="btn"><i class="ri-save-3-line"></i> 임시저장</button>
+      <button id="publishBtn" class="btn pri"><i class="ri-check-line"></i> 발행</button>
     </div>
   </header>
 
   <main class="container">
-    <div id="pfMsg" class="notice" aria-live="polite"></div>
+    <div id="mdlMsg" class="notice" aria-live="polite"></div>
 
-    <form id="pfForm">
-      <!-- 기본 정보 -->
-      <section class="section">
-        <h2>기본 정보</h2>
-        <div class="grid3">
-          <label class="field"><span>이름</span><input id="nickname" class="input" placeholder="모델 이름"></label>
-          <label class="field"><span>슬러그</span><input id="slug" class="input" placeholder="mari / juno 등(영문, 소문자)"></label>
-          <label class="field">
-            <span>공개 범위</span>
-            <select id="visibility" class="input">
-              <option value="public">공개</option>
-              <option value="private">비공개</option>
-            </select>
-          </label>
-        </div>
-        <label class="field"><span>한 줄 소개</span><input id="headline" class="input" placeholder="예: 뷰티/패션 중심의 라이브 전문"></label>
-        <label class="field"><span>소개</span><textarea id="bio" class="input" rows="6" placeholder="경력/강점/가능 분야 등을 간단히 적어주세요."></textarea></label>
-        <div class="grid4">
-          <label class="field"><span>성별</span>
-            <select id="gender" class="input"><option value="">선택</option><option>female</option><option>male</option><option>other</option></select>
-          </label>
-          <label class="field"><span>나이</span><input id="age" class="input" type="number" min="10" max="80" placeholder="예: 26"></label>
-          <label class="field"><span>경력(년)</span><input id="careerYears" class="input" type="number" min="0" max="50"></label>
-          <label class="field"><span>대표 링크</span><input id="primaryLink" class="input" type="url" placeholder="https://"></label>
-        </div>
-        <div class="grid4">
-          <label class="field"><span>키(cm)</span><input id="height" class="input" type="number" min="100" max="220"></label>
-          <label class="field"><span>몸무게(kg)</span><input id="weight" class="input" type="number" min="35" max="120"></label>
-          <label class="field"><span>상의</span><input id="sizeTop" class="input" placeholder="S/M/55 등"></label>
-          <label class="field"><span>하의</span><input id="sizeBottom" class="input" placeholder="26/28/M 등"></label>
-        </div>
-        <div class="grid3">
-          <label class="field"><span>신발(mm)</span><input id="shoe" class="input" type="number" min="200" max="320"></label>
-          <label class="field"><span>활동 도시</span><input id="regionCity" class="input" placeholder="서울"></label>
-          <label class="field"><span>활동 지역</span><input id="regionArea" class="input" placeholder="성수/강남 등"></label>
-        </div>
-        <div class="grid4">
-          <label class="field"><span>웹사이트</span><input id="linkWebsite" class="input" type="url" placeholder="https://"></label>
-          <label class="field"><span>Instagram</span><input id="linkInstagram" class="input" type="url" placeholder="https://instagram.com/..."></label>
-          <label class="field"><span>YouTube</span><input id="linkYouTube" class="input" type="url" placeholder="https://youtube.com/..."></label>
-          <label class="field"><span>TikTok</span><input id="linkTikTok" class="input" type="url" placeholder="https://tiktok.com/..."></label>
+    <!-- 기본 정보 -->
+    <section class="card">
+      <h3>기본 정보</h3>
+      <div class="grid2">
+        <label class="field"><span>이름(닉네임)</span><input id="nickname" class="input" placeholder="홍길동 / 닉네임"></label>
+        <label class="field"><span>공개 상태</span>
+          <select id="visibility" class="input">
+            <option value="public">공개</option>
+            <option value="unlisted">링크공개</option>
+            <option value="private">비공개</option>
+          </select>
+        </label>
+      </div>
+      <label class="field"><span>한 줄 소개</span><input id="headline" class="input" placeholder="간단한 소개 문구"></label>
+      <label class="field"><span>소개</span><textarea id="bio" class="input" rows="5" placeholder="활동, 경력 등"></textarea></label>
+      <div class="grid2">
+        <label class="field"><span>대표 링크</span><input id="primaryLink" class="input" placeholder="https://"></label>
+        <label class="field"><span>제안 받기</span><input id="openToOffers" type="checkbox" checked> 가능</label>
+      </div>
+    </section>
+
+    <!-- 지역/신체/사이즈 -->
+    <section class="card">
+      <h3>프로필</h3>
+      <div class="grid3">
+        <label class="field"><span>도시</span><input id="regionCity" class="input" placeholder="서울"></label>
+        <label class="field"><span>지역/구</span><input id="regionArea" class="input" placeholder="성동구"></label>
+        <label class="field"><span>나이</span><input id="age" class="input" type="number" min="1" placeholder="24"></label>
+      </div>
+      <div class="grid4">
+        <label class="field"><span>성별</span><input id="gender" class="input" placeholder="F/M"></label>
+        <label class="field"><span>키(cm)</span><input id="height" class="input" type="number" min="1"></label>
+        <label class="field"><span>몸무게(kg)</span><input id="weight" class="input" type="number" min="1"></label>
+        <label class="field"><span>신발</span><input id="shoe" class="input" placeholder="250"></label>
+      </div>
+      <div class="grid3">
+        <label class="field"><span>상의</span><input id="sizeTop" class="input" placeholder="S/M/L"></label>
+        <label class="field"><span>하의</span><input id="sizeBottom" class="input" placeholder="26/28…"></label>
+        <label class="field"><span>치수 공개</span><input id="sizePublic" type="checkbox"> 공개</label>
+      </div>
+    </section>
+
+    <!-- 소셜 -->
+    <section class="card">
+      <h3>소셜</h3>
+      <div class="grid4">
+        <label class="field"><span>웹사이트</span><input id="linkWebsite" class="input" placeholder="https://"></label>
+        <label class="field"><span>인스타그램</span><input id="linkInstagram" class="input" placeholder="https://instagram.com/..."></label>
+        <label class="field"><span>유튜브</span><input id="linkYouTube" class="input" placeholder="https://youtube.com/..."></label>
+        <label class="field"><span>틱톡</span><input id="linkTikTok" class="input" placeholder="https://tiktok.com/..."></label>
+      </div>
+    </section>
+
+    <!-- 이미지 -->
+    <section class="card">
+      <h3>이미지</h3>
+      <div class="grid2">
+        <div class="field">
+          <span>메인 썸네일</span>
+          <div class="upload-row">
+            <button id="mainTrigger" class="btn"><i class="ri-upload-2-line"></i> 업로드</button>
+            <input id="mainFile" type="file" accept="image/*" hidden>
+          </div>
+          <img id="mainPrev" class="prev" alt="">
         </div>
         <div class="field">
-          <span>태그</span>
-          <div class="tag-input">
-            <input id="tagInput" class="input" placeholder="엔터로 추가 (예: 패션, 뷰티, 홈쇼핑)">
-            <div id="tagList" class="chips"></div>
+          <span>커버(가로)</span>
+          <div class="upload-row">
+            <button id="coverTrigger" class="btn"><i class="ri-upload-2-line"></i> 업로드</button>
+            <input id="coverFile" type="file" accept="image/*" hidden>
           </div>
-          <div class="note small">최대 12개, 예: 패션 / 뷰티 / 홈쇼핑 / 피팅 / 라이브</div>
+          <img id="coverPrev" class="prev" alt="">
         </div>
-      </section>
+      </div>
+      <div class="field">
+        <span>갤러리(여러 장)</span>
+        <div class="upload-row">
+          <button id="subsTrigger" class="btn"><i class="ri-upload-2-line"></i> 업로드</button>
+          <input id="subsFile" type="file" accept="image/*" multiple hidden>
+        </div>
+        <div id="subsGrid" class="thumb-grid"></div>
+      </div>
+    </section>
 
-      <!-- 이미지 -->
-      <section class="section">
-        <h2>이미지</h2>
-        <div class="grid2">
-          <div class="field">
-            <span>대표(정사각형)</span>
-            <div class="filebox">
-              <button id="mainTrigger" class="btn ghost" type="button"><i class="ri-upload-2-line"></i> 업로드</button>
-              <input id="mainFile" type="file" accept="image/*" hidden>
-            </div>
-            <img id="mainPrev" class="preview" alt="" style="display:none">
-          </div>
-          <div class="field">
-            <span>커버(16:9)</span>
-            <div class="filebox">
-              <button id="coverTrigger" class="btn ghost" type="button"><i class="ri-upload-2-line"></i> 업로드</button>
-              <input id="coverFile" type="file" accept="image/*" hidden>
-            </div>
-            <img id="coverPrev" class="preview" alt="" style="display:none">
-          </div>
+    <!-- 태그 / 숏폼 링크 -->
+    <section class="card">
+      <h3>태그 & 쇼츠</h3>
+      <div class="grid2">
+        <div class="field">
+          <span>태그 (Enter/쉼표)</span>
+          <input id="tagInput" class="input" placeholder="패션, 뷰티, 라이브..." />
+          <div id="tagList" class="tags"></div>
         </div>
         <div class="field">
-          <span>갤러리(최대 20)</span>
-          <div class="filebox">
-            <button id="subsTrigger" class="btn ghost" type="button"><i class="ri-images-line"></i> 여러장 업로드</button>
-            <input id="subsFile" type="file" accept="image/*" multiple hidden>
-          </div>
-          <div id="subsGrid" class="subs-grid"></div>
+          <span>쇼츠 선택</span>
+          <div class="row-end"><button id="shortsRefresh" class="btn ghost"><i class="ri-refresh-line"></i> 불러오기</button></div>
+          <div id="shortsGrid" class="shorts-grid"></div>
         </div>
-      </section>
-
-      <!-- 숏폼 선택(선택) -->
-      <section class="section">
-        <h2>하이라이트(숏폼) 선택</h2>
-        <div class="bar">
-          <button id="shortsRefresh" type="button" class="btn"><i class="ri-refresh-line"></i> 내 쇼츠 불러오기</button>
-        </div>
-        <div id="shortsGrid" class="shorts-grid"><div class="note">버튼을 눌러 쇼츠를 불러오세요.</div></div>
-      </section>
-
-      <!-- 라이브 이력(선택) -->
-      <section class="section">
-        <h2>라이브 이력</h2>
-        <div id="linksWrap"></div>
-        <div style="margin-top:8px">
-          <button id="addLinkBtn" type="button" class="btn"><i class="ri-add-line"></i> 이력 추가</button>
-        </div>
-      </section>
-    </form>
+      </div>
+    </section>
   </main>
 
-  <!-- 설정/스크립트 -->
   <script src="js/config.js?v=2.12"></script>
-  <script src="js/model-new.js?v=1.0"></script>
+  <script src="js/model-new.page.js?v=1.0.0"></script>
 </body>
 </html>
