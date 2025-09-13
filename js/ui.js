@@ -1,4 +1,6 @@
-/* ui.js — v3.0.2 (Bottom fixed + underline tabs + common UI helpers) */
+/* ui.js — v3.0.3 (Bottom fixed + underline tabs + common UI helpers)
+ * 변경: 하단 탭의 '라이브러리' → '모델', 클릭 시 models.html 이동
+ */
 (() => {
   const ready = (fn) =>
     document.readyState === 'loading'
@@ -95,9 +97,6 @@
           el.style.fontWeight = '800';
           el.style.position = 'relative';
           el.style.color = el.dataset.tab === name ? '#111827' : '#64748b';
-          if (el.dataset.tab === name) {
-            el.style.setProperty('--u', '1');
-          }
           el.style.setProperty(
             'background',
             'linear-gradient(currentColor,currentColor) left calc(100% + 6px)/0 2px no-repeat'
@@ -134,19 +133,20 @@
              style="display:grid;grid-template-columns:repeat(5,1fr);
                     height:calc(64px + env(safe-area-inset-bottom));
                     padding-bottom:env(safe-area-inset-bottom)">
-          <a class="tbi" href="index.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
+          <a class="tbi" href="index.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="홈">
             <i class="ri-home-line" style="font-size:20px"></i><span style="font-size:12px">홈</span>
           </a>
-          <a class="tbi" href="recruit-list.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
+          <a class="tbi" href="recruit-list.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="모집캠페인">
             <i class="ri-archive-drawer-line" style="font-size:20px"></i><span style="font-size:12px">모집캠페인</span>
           </a>
-          <a class="tbi" href="#/library" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
-            <i class="ri-bookmark-2-line" style="font-size:20px"></i><span style="font-size:12px">라이브러리</span>
+          <!-- 변경된 탭: 라이브러리 → 모델 -->
+          <a class="tbi" href="models.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="모델">
+            <i class="ri-user-star-line" style="font-size:20px"></i><span style="font-size:12px">모델</span>
           </a>
-          <a class="tbi" href="influencer.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
+          <a class="tbi" href="influencer.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="인플루언서">
             <i class="ri-user-3-line" style="font-size:20px"></i><span style="font-size:12px">인플루언서</span>
           </a>
-          <a class="tbi" href="${myHref}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b">
+          <a class="tbi" href="${myHref}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="마이페이지">
             <i class="ri-user-settings-line" style="font-size:20px"></i><span style="font-size:12px">마이페이지</span>
           </a>
         </div>
