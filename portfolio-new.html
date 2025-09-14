@@ -4,9 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>포트폴리오 등록</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <link rel="stylesheet" href="css/portfolio-new.css?v=2.0">
+
+  <!-- Page CSS -->
+  <link rel="stylesheet" href="css/portfolio-new.css?v=2.0.1">
 </head>
 <body>
   <header class="lv-appbar"><div class="lv-title">포트폴리오 등록</div></header>
@@ -14,7 +19,7 @@
   <main class="container">
     <div id="pfMsg" class="notice" role="status" aria-live="polite"></div>
 
-    <form id="pfForm" class="pf-form">
+    <form id="pfForm" class="pf-form" novalidate>
       <!-- HERO -->
       <section class="pf-section pf-section--hero">
         <div class="pf-hero">
@@ -39,7 +44,7 @@
         <input id="coverFile" type="file" accept="image/*" class="file-ghost">
       </section>
 
-      <!-- 갤러리(이미지 여러 장) -->
+      <!-- 갤러리 -->
       <section class="pf-section">
         <h3>갤러리 이미지 (최대 12)</h3>
         <div id="subsGrid" class="subs-grid"></div>
@@ -128,7 +133,7 @@
         </div>
       </section>
 
-      <!-- 최근 라이브 링크(붙여넣기 미리보기) -->
+      <!-- 최근 라이브 링크 -->
       <section class="pf-section">
         <h3>최근 라이브 링크</h3>
         <div id="linksWrap" class="links-wrap"></div>
@@ -182,7 +187,12 @@
     </form>
   </main>
 
+  <!-- Scripts -->
   <script src="js/config.js"></script>
-  <script src="js/portfolio-new.js?v=2.0"></script>
+  <script>
+    // 폼 기본 submit 막기 (엔터 등)
+    document.addEventListener('submit', function (e) { e.preventDefault(); }, { capture: true });
+  </script>
+  <script src="js/portfolio-new.js?v=2.0.1"></script>
 </body>
 </html>
