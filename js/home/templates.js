@@ -50,14 +50,26 @@
          <div class="body"><div class="title">공고가 없습니다</div><div class="meta">새 공고를 등록해보세요</div></div>
        </article></div>`;
 
-  /* ----- news ----- */
-  const tplNewsList = (items) => items && items.length
-    ? '<div class="news-list">' + items.map(n =>
-      '<article class="news-item" onclick="location.href=\'news.html#/' + encodeURIComponent(n.id) + '\'">' +
-        '<div class="news-item__title">' + n.title + '</div>' +
-        '<div class="news-item__meta">' + (n.date ? (fmtDate(n.date) + ' · ') : '') + (n.summary || '소식') + '</div>' +
-      '</article>').join('') + '</div>'
-    : '<div class="news-list"><article class="news-item"><div class="news-item__title">표시할 뉴스가 없습니다</div></article></div>';
+  /* ----- news (좌본문 · 우썸네일) ----- */
+const tplNewsList = (items) => items && items.length
+  ? '<div class="news-list">' + items.map(n => {
+      const id = encodeURIComponent(n.id);
+      const thumb = n.thumb || n.image || n.img || '';
+      const dateTxt = (n.date ? (fmtDate(n.date) + ' · ') : '');
+      // 이미지 유무에 따라 noimg 클래스로 그리드 폭 자동 조정
+      return (
+        `<article class="news-item${thumb ? '' : ' noimg'}" onclick="location.href='news.html#/${id}'">
+           <div>
+             <div class="news-item__title">${n.title}</div>
+             <div class="news-item__meta">${dateTxt}${n.summary || '소식'}</div>
+           </div>
+           ${thumb ? (
+             `<div class="news-thumb"><img src="${thumb}" alt="" loading="lazy" decoding="async"></div>`
+           ) : ''}
+         </article>`
+      );
+    }).join('') + '</div>'
+  : '<div class="news-list"><article class="news-item noimg"><div class="news-item__title">표시할 뉴스가 없습니다</div></article></div>';
 
   /* ----- portfolios ----- */
   const tplPortfolios = (items) => items && items.length
