@@ -1,4 +1,9 @@
-/* portfolio-new.js — v2.0 (gallery+shorts link, live link preview, demographics) */
+/* portfolio-new.js — v2.1 (gallery+shorts link, live link preview, demographics)
+   - 폼 ID 없어도 초기화 중단되지 않도록 수정
+   - 발행/임시저장 위임 바인딩 추가(동적 렌더/다른 래퍼에서도 동작)
+   - 로그인 없을 때 안내 후 리다이렉트
+   - 제출 시 디버그 로그 출력
+*/
 (function () {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
@@ -66,14 +71,13 @@
   };
   const bump = (n) => { state.pending = Math.max(0, state.pending + n); };
 
-  // ---- Auth 가드(선택) ----
-  // if (!TOKEN) location.href = 'login.html?returnTo=' + here;
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 
   async function init() {
-    const form = $id('pfForm'); if (!form) return;
+    // 폼이 없어도 진행(버튼 위임 바인딩/기본 초기화는 동작)
+    const form = $id('pfForm');
+    if (!form) console.warn('[pfForm] not found — continue with defensive binding');
 
     // ----- element refs -----
     const mainFile = $id('mainFile'), coverFile = $id('coverFile'), subsFile = $id('subsFile');
@@ -372,7 +376,11 @@
     }
 
     async function submit(status) {
-      if (!TOKEN) { location.href = 'login.html?returnTo=' + here; return; }
+      if (!TOKEN) {
+        say('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+        location.href = 'login.html?returnTo=' + here;
+        return;
+      }
       const pub = (status === 'published');
       if (!validate(pub)) return;
 
@@ -380,7 +388,9 @@
         say(pub ? '발행 중…' : '임시저장 중…');
         const url = state.id ? `${API_BASE}/${ENTITY}/${state.id}` : `${API_BASE}/${ENTITY}`;
         const method = state.id ? 'PUT' : 'POST';
-        const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(collectPayload(status)) });
+        const payload = collectPayload(status);
+        console.log('[PF submit]', { method, url, status, payload });
+        const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(payload) });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data.ok === false) throw new Error(formatServerError(data) || `HTTP_${res.status}`);
         say(pub ? '발행되었습니다' : '임시저장 완료', true);
@@ -392,8 +402,17 @@
     }
 
     // ----- buttons -----
+    // 직접 바인딩(있으면 즉시 동작)
     $id('publishBtn')?.addEventListener('click', e => { e.preventDefault(); submit('published'); });
     $id('saveDraftBtn')?.addEventListener('click', e => { e.preventDefault(); submit('draft'); });
+
+    // 위임 바인딩(동적 삽입/다른 래퍼 내부여도 동작)
+    document.addEventListener('click', (e) => {
+      const pub = e.target.closest && e.target.closest('#publishBtn');
+      const draft = e.target.closest && e.target.closest('#saveDraftBtn');
+      if (pub) { e.preventDefault(); submit('published'); }
+      if (draft) { e.preventDefault(); submit('draft'); }
+    });
 
     // ----- edit mode -----
     state.id = new URLSearchParams(location.search).get('id') || '';
