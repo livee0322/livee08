@@ -1,4 +1,4 @@
-<script>
+
 /* home/templates.js — v2.12.2 */
 (function (w) {
   'use strict';
@@ -125,4 +125,3 @@
     tplImageBanner, sectionBlock
   };
 })(window);
-</script>
