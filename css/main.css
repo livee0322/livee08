@@ -280,3 +280,47 @@ ul,ol{list-style:none;margin:0;padding:0}
   .card-ed__title,.pf-name{font-size:16px}
   .card-ed__meta,.pf-intro{font-size:13.5px}
 }
+
+/* === Global horizontal gutter for home === */
+:root{ --gutter:20px; }
+
+/* 컨테이너 기본 여백 강제 */
+main.container,
+.container{
+  padding-left:var(--gutter) !important;
+  padding-right:var(--gutter) !important;
+}
+
+/* 각 섹션 자체에도 여백(스크롤형/풀폭 리스트 대비) */
+#home .section{
+  padding-left:var(--gutter) !important;
+  padding-right:var(--gutter) !important;
+}
+
+/* 가로 스크롤 섹션(브랜드 픽/핫클립)도 가장자리에 붙지 않도록 */
+#home .hscroll,
+#home .shorts-hscroll{
+  padding-left:var(--gutter) !important;
+  padding-right:var(--gutter) !important;
+}
+
+/* 뉴스/라인업 리스트 상단·하단 구분선만 남기고, 좌 우는 가터와 맞춤 */
+#home [data-sec="news"] .news-list,
+#home [data-sec="lineup"] .ed-grid{
+  padding-left:0 !important;   /* 섹션 가터가 이미 들어가므로 0 */
+  padding-right:0 !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+}
+
+/* 카드가 섹션 테두리를 침범하지 않도록 살짝 안쪽 여백 */
+#home [data-sec="recruits"] .card-vert,
+#home [data-sec="recruits"] .card-mini,
+#home [data-sec="lineup"] .card-ed,
+#home [data-sec="news"] .news-item{
+  margin-left:0;
+  margin-right:0;
+}
+
+/* 히어로는 원래 풀블리드 유지 */
+.hero-wrap{ width:100vw; margin-left:50%; transform:translateX(-50%); }
