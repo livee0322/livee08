@@ -428,3 +428,83 @@ ul,ol{list-style:none;margin:0;padding:0}
 
 /* ====== 기존 mini 카드(가로 2열) 안 쓰는 경우 대비 비활성화 느낌 줄이기 ====== */
 #home [data-sec="recruits"] .card-mini{ display:none; }
+
+/* =========================================================
+   지금 뜨는 쇼핑라이브 공고 — 좌썸네일 · 우본문 / 리스트형(구분선)
+   ========================================================= */
+#home [data-sec="lineup"] .ed-grid{
+  /* 그리드 → 리스트 */
+  display:block;
+  max-width:760px;
+  margin:0 auto;
+  padding:0 2px;                 /* 섹션 여백 살짝 */
+}
+
+#home [data-sec="lineup"] .card-ed{
+  /* 카드 느낌 제거 */
+  display:grid;
+  grid-template-columns:96px 1fr;
+  align-items:center;
+  gap:14px;
+
+  padding:14px 0;                /* 위아래 박스 여백 */
+  background:transparent;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  cursor:pointer;
+  position:relative;
+}
+
+/* 항목 하단 구분선 */
+#home [data-sec="lineup"] .card-ed::after{
+  content:"";
+  position:absolute;
+  left:0; right:0; bottom:0;
+  height:1px;
+  background:#EEF1F5;            /* 연한 회색 바 */
+}
+#home [data-sec="lineup"] .card-ed:last-child::after{ display:none; }
+
+/* 왼쪽 썸네일: 정사각형 */
+#home [data-sec="lineup"] .card-ed__media{
+  width:96px; height:96px; aspect-ratio:1/1;
+  border-radius:12px;
+  object-fit:cover;
+  background:#eee;
+}
+
+/* 오른쪽 본문 */
+#home [data-sec="lineup"] .card-ed__body{ padding:0; min-width:0; }
+#home [data-sec="lineup"] .card-ed__eyebrow{
+  font-size:13px; font-weight:800; color:#475569;
+}
+#home [data-sec="lineup"] .card-ed__title{
+  margin-top:2px;
+  font-weight:900; color:var(--text);
+  font-size:16px; line-height:1.32;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+#home [data-sec="lineup"] .card-ed__meta{
+  margin-top:6px; font-size:13px; color:var(--sub);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* 호버 효과는 아주 미세하게만 */
+#home [data-sec="lineup"] .card-ed:hover{ transform:none; box-shadow:none; background:transparent; }
+
+/* 반응형 */
+@media (min-width:768px){
+  #home [data-sec="lineup"] .card-ed{
+    grid-template-columns:112px 1fr; gap:16px; padding:16px 0;
+  }
+  #home [data-sec="lineup"] .card-ed__media{ width:112px; height:112px; border-radius:14px; }
+  #home [data-sec="lineup"] .card-ed__title{ font-size:17px; }
+}
+@media (min-width:992px){
+  #home [data-sec="lineup"] .ed-grid{ max-width:var(--container-w); }
+  #home [data-sec="lineup"] .card-ed{
+    grid-template-columns:132px 1fr; gap:18px; padding:18px 0;
+  }
+  #home [data-sec="lineup"] .card-ed__media{ width:132px; height:132px; }
+}
