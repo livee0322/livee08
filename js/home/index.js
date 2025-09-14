@@ -10,6 +10,7 @@
     tplPortfolios, tplHotClips, tplCtaBanner, sectionBlock
   } = tpl;
 
+  /* ---------- Hero ---------- */
   function renderHero(el){
     if(!el) return;
     const heroSrc = (H.CFG.BASE_PATH ? (H.CFG.BASE_PATH + '/bannertest.jpg') : 'bannertest.jpg');
@@ -22,16 +23,21 @@
     const media = el.querySelector('.hero-media');
     if (media) media.style.backgroundImage =
       'linear-gradient(to top, rgba(0,0,0,.35), rgba(0,0,0,.08)), url("' + heroSrc + '")';
-    const nav = document.querySelector('.hero-nav'); if (nav) nav.style.display = 'none';
+    const nav = document.querySelector('.hero-nav');
+    if (nav) nav.style.display = 'none';
   }
 
-  // HOT clip 아래 이미지 배너(루트: bannertest2.png → 링크: byhen.html)
+  /* ---------- HOT clip 아래 이미지 배너 ---------- */
   function bannerHTML(){
-    // 템플릿 모듈에 제공되는 경우 우선 사용
+    // 1) 템플릿 모듈(H.tpl)에 제공되면 우선
     if (H.tpl && typeof H.tpl.tplImageBanner === 'function') {
       return H.tpl.tplImageBanner();
     }
-    // 폴백: 간단한 스타일 1회 주입 후 정적 배너 반환
+    // 2) window.HomeTemplates 에 제공되는 폴백도 지원
+    if (w.HomeTemplates && typeof w.HomeTemplates.tplImageBanner === 'function') {
+      return w.HomeTemplates.tplImageBanner();
+    }
+    // 3) 최종 폴백: 간단한 정적 이미지 배너
     appendStyleOnce('img-banner-css', `
       .img-banner{display:block;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
       .img-banner img{width:100%;display:block;height:auto}
@@ -42,6 +48,7 @@
            '</a>';
   }
 
+  /* ---------- Render ---------- */
   async function render(){
     const root = $('#home') || $('main#home') || $('main') || document.body;
     const heroRoot = $('#hero') || document.querySelector('[data-hero]');
@@ -65,8 +72,15 @@
 
       if(root){
         root.innerHTML = html;
+
+        // 핫클립 바인딩
         hotclips.bindHotShorts();
-        apply.bindApply(document.getElementById('brandPickH') || root);
+
+        // 지원하기 바인딩 타깃: 브랜드 pick(=recruits) 섹션
+        const recruitsSec = root.querySelector('[data-sec="recruits"]')
+                           || document.getElementById('brandPickH')
+                           || root;
+        apply.bindApply(recruitsSec);
       }
     }catch(err){
       console.error('[home render error]', err);
