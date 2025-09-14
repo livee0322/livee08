@@ -299,21 +299,111 @@ ul,ol{list-style:none;margin:0;padding:0}
 }
 
 /* News — tplNewsList 출력 클래스 매핑(랭킹+썸네일 리스트) */
-#home [data-sec="news"] .news-list{ display:flex; flex-direction:column; border-top:1px solid var(--line) }
+/* === NEWS (좌본문 · 우썸네일 / 얕은 구분선) === */
+#home [data-sec="news"] .news-list{
+  display:block;
+  border-top:1px solid var(--line);
+  padding:0 2px;
+}
+
 #home [data-sec="news"] .news-item{
-  display:grid; grid-template-columns:28px 1fr 88px; align-items:center; gap:10px;
-  padding:14px 0; border-bottom:1px solid var(--line);
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 96px;    /* 왼쪽 본문, 오른쪽 썸네일 */
+  gap:12px;
+  padding:14px 0;
 }
-#home [data-sec="news"] .news-rank{
-  width:24px; height:24px; border-radius:999px; background:#e6f0ff; color:#1e293b;
-  display:grid; place-items:center; font-weight:900; font-size:12px;
+
+/* 마지막을 제외한 모든 항목에 구분선 */
+#home [data-sec="news"] .news-item::after{
+  content:"";
+  position:absolute; left:0; right:0; bottom:0;
+  height:1px; background:var(--line);
 }
-#home [data-sec="news"] .news-title{
-  font-weight:800; line-height:1.35;
+#home [data-sec="news"] .news-item:last-child::after{ display:none; }
+
+/* 본문(제목/메타) */
+#home [data-sec="news"] .news-item__title{
+  font-weight:900; color:var(--txt);
+  line-height:1.4; font-size:15px;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  word-break:keep-all;
 }
-#home [data-sec="news"] .news-thumb{ width:88px; aspect-ratio:1/1; border-radius:10px; overflow:hidden; background:#f3f4f6 }
-#home [data-sec="news"] .news-thumb img{ width:100%; height:100%; object-fit:cover }
+#home [data-sec="news"] .news-item__meta{
+  margin-top:6px; font-size:12.5px; color:var(--sub);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* 우측 썸네일 */
+#home [data-sec="news"] .news-thumb{
+  width:96px; aspect-ratio:1/1; border-radius:12px;
+  overflow:hidden; background:#f3f4f6; justify-self:end;
+}
+#home [data-sec="news"] .news-thumb img{
+  width:100%; height:100%; object-fit:cover; display:block;
+}
+
+/* 이미지가 없으면 본문만 한 줄로 */
+/* === NEWS (좌본문 · 우썸네일 / 얕은 구분선) === */
+#home [data-sec="news"] .news-list{
+  display:block;
+  border-top:1px solid var(--line);
+  padding:0 2px;
+}
+
+#home [data-sec="news"] .news-item{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 96px;    /* 왼쪽 본문, 오른쪽 썸네일 */
+  gap:12px;
+  padding:14px 0;
+}
+
+/* 마지막을 제외한 모든 항목에 구분선 */
+#home [data-sec="news"] .news-item::after{
+  content:"";
+  position:absolute; left:0; right:0; bottom:0;
+  height:1px; background:var(--line);
+}
+#home [data-sec="news"] .news-item:last-child::after{ display:none; }
+
+/* 본문(제목/메타) */
+#home [data-sec="news"] .news-item__title{
+  font-weight:900; color:var(--txt);
+  line-height:1.4; font-size:15px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  word-break:keep-all;
+}
+#home [data-sec="news"] .news-item__meta{
+  margin-top:6px; font-size:12.5px; color:var(--sub);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* 우측 썸네일 */
+#home [data-sec="news"] .news-thumb{
+  width:96px; aspect-ratio:1/1; border-radius:12px;
+  overflow:hidden; background:#f3f4f6; justify-self:end;
+}
+#home [data-sec="news"] .news-thumb img{
+  width:100%; height:100%; object-fit:cover; display:block;
+}
+
+/* 이미지가 없으면 본문만 한 줄로 */
+#home [data-sec="news"] .news-item.noimg{
+  grid-template-columns:1fr;
+}
+
+/* 반응형 살짝 키움 */
+@media (min-width:768px){
+  #home [data-sec="news"] .news-item{ grid-template-columns:1fr 112px; gap:14px; padding:16px 0; }
+  #home [data-sec="news"] .news-thumb{ width:112px; border-radius:14px; }
+}
+@media (min-width:992px){
+  #home [data-sec="news"] .news-item{ grid-template-columns:1fr 132px; gap:16px; padding:18px 0; }
+  #home [data-sec="news"] .news-thumb{ width:132px; }
+  #home [data-sec="news"] .news-item__title{ font-size:16px; }
+  #home [data-sec="news"] .news-item__meta{ font-size:13.5px; }
+}
 
 /* Portfolios — tplPortfolios 기본 구조 매핑 */
 #home [data-sec="pf"] .pf-hlist{ display:grid; gap:10px }
