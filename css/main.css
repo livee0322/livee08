@@ -258,3 +258,75 @@ ul,ol{list-style:none;margin:0;padding:0}
 #applyModal .hint{font-size:12px;color:#6b7280}
 #applyModal .warn{background:#f8fafc;border:1px solid #e2e8f0;color:#0f172a;padding:10px 12px;border-radius:12px;line-height:1.5}
 #applyModal .warn b{color:#8b5cf6}
+
+/* ===== v2.12 Compatibility Layer (templates.js 출력과 매칭) ===== */
+
+/* 섹션 앵커 */
+#home [data-sec="recruits"] .hscroll { display:flex; gap:14px; overflow-x:auto; padding:2px 2px 12px;
+  scroll-snap-type:x mandatory; overscroll-behavior-x:contain }
+#home [data-sec="recruits"] .hscroll::-webkit-scrollbar { display:none }
+
+/* BrandScroller: tplRecruitHScroll 기본 카드 매핑 */
+#home [data-sec="recruits"] .card-mini{        /* = brand-card */
+  position:relative; scroll-snap-align:start; min-width:82%;
+  display:grid; grid-template-columns:112px 1fr; gap:10px;
+  background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow-1);
+  padding:12px;
+}
+#home [data-sec="recruits"] .card-mini .mini-thumb{ /* = brand-hero */
+  width:112px; height:112px; aspect-ratio:1/1; border-radius:12px; object-fit:cover; background:#f3f4f6;
+}
+@media (min-width:992px){
+  #home [data-sec="recruits"] .card-mini{ grid-template-columns:160px 1fr; min-width:540px }
+  #home [data-sec="recruits"] .card-mini .mini-thumb{ width:160px; height:160px }
+}
+#home [data-sec="recruits"] .card-mini .mini-title{ /* = brand-title */
+  font-weight:800; font-size:15px; line-height:1.4;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+#home [data-sec="recruits"] .card-mini .mini-meta{ /* = brand-meta */
+  margin-top:8px; color:var(--sub); font-size:12px;
+}
+#home [data-sec="recruits"] .mini-actions { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
+#home [data-sec="recruits"] .btn.pri{ background:var(--primary); color:#fff; border-color:transparent }
+
+/* Lineup(지금 뜨는 공고) — tplLineupList가 ed 카드 쓰는 경우 보정 */
+#home [data-sec="lineup"] .card-ed{ display:grid; grid-template-columns:72px 1fr; gap:12px; padding:10px }
+#home [data-sec="lineup"] .card-ed__media{ width:72px; height:72px; border-radius:10px; object-fit:cover }
+@media (min-width:992px){
+  #home [data-sec="lineup"] .card-ed{ grid-template-columns:132px 1fr }
+  #home [data-sec="lineup"] .card-ed__media{ width:132px; height:132px; border-radius:14px }
+}
+
+/* News — tplNewsList 출력 클래스 매핑(랭킹+썸네일 리스트) */
+#home [data-sec="news"] .news-list{ display:flex; flex-direction:column; border-top:1px solid var(--line) }
+#home [data-sec="news"] .news-item{
+  display:grid; grid-template-columns:28px 1fr 88px; align-items:center; gap:10px;
+  padding:14px 0; border-bottom:1px solid var(--line);
+}
+#home [data-sec="news"] .news-rank{
+  width:24px; height:24px; border-radius:999px; background:#e6f0ff; color:#1e293b;
+  display:grid; place-items:center; font-weight:900; font-size:12px;
+}
+#home [data-sec="news"] .news-title{
+  font-weight:800; line-height:1.35;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+#home [data-sec="news"] .news-thumb{ width:88px; aspect-ratio:1/1; border-radius:10px; overflow:hidden; background:#f3f4f6 }
+#home [data-sec="news"] .news-thumb img{ width:100%; height:100%; object-fit:cover }
+
+/* Portfolios — tplPortfolios 기본 구조 매핑 */
+#home [data-sec="pf"] .pf-hlist{ display:grid; gap:10px }
+#home [data-sec="pf"] .pf-hcard{
+  display:grid; grid-template-columns:64px 1fr; gap:12px; padding:12px;
+  background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow-0);
+}
+#home [data-sec="pf"] .pf-avatar{ width:64px; height:64px; border-radius:50%; object-fit:cover; background:#f3f4f6 }
+#home [data-sec="pf"] .pf-name{ font-weight:800 }
+#home [data-sec="pf"] .pf-intro{ color:var(--sub); font-size:12.5px }
+
+/* HOT clips — tplHotClips(2-up) */
+#home [data-sec="hotclips"] .shorts-hscroll{ display:flex; gap:10px; overflow-x:auto; padding:2px 2px 0;
+  scroll-snap-type:x mandatory; overscroll-behavior-x:contain }
+#home [data-sec="hotclips"] .clip-card{ flex:0 0 calc(50% - 6px); border-radius:14px; overflow:hidden; background:#000; aspect-ratio:9/16 }
+#home [data-sec="hotclips"] .clip-thumb{ width:100%; height:100%; object-fit:cover }
