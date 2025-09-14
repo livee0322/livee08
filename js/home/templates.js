@@ -107,7 +107,7 @@
   const tplImageBanner = function () {
     const base = (w.LIVEE_HOME?.CFG?.BASE_PATH || '');
     // base가 있으면 base + /bannertest.jpg, 없으면 상대경로 bannertest.jpg
-    const src = base ? (base.replace(/\/$/, '') + '/bannertest2.jpg') : 'bannertest2.jpg';
+    const src = base ? (base.replace(/\/$/, '') + '/bannertest2.png') : 'bannertest2.png';
     return '<a class="img-banner" href="byhen.html" aria-label="BYHEN 안내 배너">' +
            '<img src="'+src+'" alt="BYHEN 배너">' +
            '</a>';
