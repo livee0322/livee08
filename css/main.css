@@ -359,3 +359,72 @@ ul,ol{list-style:none;margin:0;padding:0}
   #home [data-sec="news"] .news-item__title{ font-size:16px }
   #home [data-sec="news"] .news-item__meta{ font-size:13.5px }
 }
+
+/* ====== spacing refresh ====== */
+:root{
+  --space-xy: 20px;
+}
+.container{
+  padding: 0 var(--space-xy) calc(var(--tabbar-h) + var(--safe-b) + 28px);
+}
+.section{ margin: 22px 0 28px; }
+.section-head{ margin: 8px 4px 14px; }
+
+/* ====== Brand Pick: vertical card (thumb on top) ====== */
+.hscroll{ gap: 14px; padding: 4px 2px 0; }
+
+.card-vert{
+  position: relative;
+  flex: 0 0 88%;
+  scroll-snap-align: center;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;         /* 그림자 제거(=테두리형) */
+}
+
+.card-vert .thumb-wrap{ position:relative; }
+.card-vert .thumb{
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+  background: #eee;
+  /* 둥근 모서리 위쪽만 */
+}
+.card-vert .bm{
+  position:absolute; right:8px; top:8px;
+  width:36px; height:36px; border-radius:12px;
+  display:grid; place-items:center;
+  border:1px solid var(--line); background:rgba(255,255,255,.9);
+  color:#64748b;
+}
+
+/* body */
+.card-vert .body{ padding: 12px 14px 14px; }
+.card-vert .brand{ font-size:12px; font-weight:800; color:#111; }
+.card-vert .title{
+  margin-top:6px;
+  font-weight:900; color:var(--text);
+  line-height:1.35; font-size:15px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-vert .meta{
+  margin-top:8px; color:var(--sub); font-size:12.5px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.card-vert .actions{ margin-top:10px; display:flex; gap:8px; }
+.card-vert .actions .btn{ flex:0 0 auto; }
+.card-vert .actions .btn.pri{ background:var(--primary); color:#fff; border-color:transparent; }
+
+/* 작은 화면에서 한 카드가 조금 더 크게 보이도록 */
+@media (min-width:480px){
+  .card-vert{ flex-basis: 72%; }
+}
+@media (min-width:992px){
+  .card-vert{ flex-basis: 560px; }
+}
+
+/* ====== 기존 mini 카드(가로 2열) 안 쓰는 경우 대비 비활성화 느낌 줄이기 ====== */
+#home [data-sec="recruits"] .card-mini{ display:none; }
