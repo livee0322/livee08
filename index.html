@@ -1,54 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Livee — v2.9 · Home</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Livee — Home</title>
 
-  <!-- 아이콘 & 폰트 -->
+  <!-- font & icon -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
 
-  <!-- 메인 스타일 -->
-  <link rel="stylesheet" href="css/main.css?v=2.12.3">
+  <!-- styles -->
+  <link rel="stylesheet" href="css/reset-frame.css?v=1">
+  <link rel="stylesheet" href="css/main.css?v=2.13.0">
   <meta name="theme-color" content="#ffffff">
 </head>
-<body class="theme-artbook">
+<body>
   <!-- 상단바 / 상단탭 -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
- <main class="container">
-  <!-- 히어로: FULL-BLEED (라운드 없음) -->
-  <section class="section--hero">
-    <div class="hero-wrap" aria-label="메인 배너">
-      <div id="hero"></div>
-      <div class="hero-nav" aria-hidden="true" style="display:none">
-        <button class="hero-btn prev" aria-label="이전"><i class="ri-arrow-left-line"></i></button>
-        <button class="hero-btn next" aria-label="다음"><i class="ri-arrow-right-line"></i></button>
-      </div>
-    </div>
+  <!-- 히어로: 풀블리드 슬라이더 -->
+  <section class="hero-wrap" aria-label="메인 배너">
+    <div id="hero"></div>
   </section>
 
-  <!-- 실제 콘텐츠 영역(여백 적용) -->
-  <section id="home" class="section section--ed"></section>
-</main>
+  <!-- 본문(여백 있는 영역) -->
+  <main id="content" class="container">
+    <section id="home"></section>
+  </main>
 
-  <!-- 하단탭 -->
+  <!-- 하단 탭 -->
   <footer id="bottom-tabs"></footer>
 
-  <!-- 스크립트: 순서 매우 중요! -->
-  <!-- 공통 -->
-  <script src="js/config.js?v=20250909"></script>
-  <script src="js/ui.js?v=3.0.3"></script>
+  <!-- 스크립트 -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
 
-  <!-- 홈 전용 (모듈 구조) -->
-  <script src="js/home/helpers.js?v=3.0.0"></script>
-  <script src="js/home/fetchers.js?v=3.0.0"></script>
-  <script src="js/home/templates.js?v=3.0.0"></script>
-  <script src="js/home/apply-modal.js?v=3.0.0"></script>
-  <script src="js/home/hotclips.js?v=3.0.0"></script>
-  <script src="js/home/index.js?v=3.0.0"></script>
+  <script src="js/home/helpers.js"></script>
+  <script src="js/home/fetchers.js"></script>
+  <script src="js/home/templates.js"></script>
+  <script src="js/home/apply-modal.js"></script>
+  <script src="js/home/hotclips.js"></script>
+  <script src="js/home/index.js"></script>
 </body>
 </html>
