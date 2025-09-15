@@ -1,0 +1,14 @@
+/* 프레임/뷰포트 안정화 */
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; }
+html { overflow-x:hidden; }
+body {
+  margin:0;
+  font-family:SUIT,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  line-height:1.55;
+  color:#111827; background:#fff;
+}
+
+/* 공통: 어떤 요소도 뷰포트 밖으로 못 나가게 */
+img, video, canvas { max-width:100%; height:auto; display:block; }
+[style*="width:100vw"] { max-width:100%; }   /* 외부 위젯 예방 */
