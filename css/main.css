@@ -41,7 +41,7 @@ ul,ol{margin:0;padding:0;list-style:none}
 
 /* ===== Hero (텍스트+배경 이미지) ===== */
 .hero-wrap{margin:0 0 12px}
-.hero-card{position:relative;min-height:200px;border-radius:16px;overflow:hidden;background:#eaf2ff}
+.hero-card{position:relative;min-height:200px;border-radius:0px;overflow:hidden;background:#eaf2ff}
 .hero-bg, .hero-card::before{
   content:""; position:absolute; inset:0; background-size:cover; background-position:center;
   display:block; width:100%; height:100%; object-fit:cover; filter:saturate(1.02);
@@ -115,3 +115,17 @@ ul,ol{margin:0;padding:0;list-style:none}
   #home [data-sec="news"] .news-item{grid-template-columns:1fr 132px;gap:16px;padding:18px 0}
   #home [data-sec="news"] .news-thumb{width:132px;border-radius:14px}
 }
+
+/* 1) 히어로는 컨테이너 안에서만 */
+.hero-wrap{ margin:0 0 12px; }
+.hero-card{ border-radius:16px; overflow:hidden; }
+
+/* 2) 리스트 구분선이 컨테이너 패딩 안쪽에 끊기도록 */
+.card-ed::after,
+#home [data-sec="news"] .news-item::after{
+  left:16px; right:16px;    /* ← 컨테이너 padding과 맞춤 */
+}
+
+/* 3) 섹션 공통: 내부 그리드·리스트는 좌우 패딩 ‘추가’ 금지 */
+.section > .ed-grid,
+.section > .news-list{ padding-left:0; padding-right:0; }
