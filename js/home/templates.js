@@ -70,20 +70,52 @@
       }).join('') + '</div>'
     : '<div class="news-list"><article class="news-item"><div class="news-item__title">표시할 뉴스가 없습니다</div></article></div>';
 
-  const tplPortfolios = (items) => items && items.length
-    ? '<div class="pf-hlist">' + items.slice(0, 6).map(p =>
-      '<article class="pf-hcard">' +
-        '<img class="pf-avatar" src="' + (p.thumb || FALLBACK_IMG) + '" alt="" loading="lazy" decoding="async">' +
-        '<div class="pf-info">' +
-          '<div class="pf-name">' + (p.nickname || '쇼호스트') + '</div>' +
-          '<div class="pf-intro">' + (p.headline || '소개 준비 중') + '</div>' +
-          '<div class="pf-actions">' +
-            '<a class="btn" href="outbox-proposals.html?to=' + encodeURIComponent(p.id) + '"><i class="ri-mail-send-line"></i> 제안하기</a>' +
-            '<a class="btn" href="portfolio-detail.html?id=' + encodeURIComponent(p.id) + '"><i class="ri-user-line"></i> 프로필 보기</a>' +
-          '</div>' +
-        '</div>' +
-      '</article>').join('') + '</div>'
-    : '<div class="ed-grid"><article class="card-ed"><div class="card-ed__title">포트폴리오가 없습니다</div><div class="card-ed__meta">첫 포트폴리오를 등록해보세요</div></article></div>';
+  /* ----- 포트폴리오(쇼호스트) : 둥근 썸네일 + 본문 중앙정렬 ----- */
+const tplPortfolios = (items) => {
+  if(!items || !items.length){
+    return '<div class="pf-hlist"><article class="pf-card"><div class="pf-body"><div class="pf-name">포트폴리오가 없습니다</div><div class="pf-intro">첫 포트폴리오를 등록해보세요</div></div></article></div>';
+  }
+
+  // 공개 여부 선택된 데이터만 메타에 표기: career, age, height, region
+  const fmtMeta = (p) => {
+    const parts = [];
+    if(p.careerPublic && p.career) parts.push(p.career);      // 예) 3년차
+    if(p.agePublic && p.age) parts.push(p.age+'세');
+    if(p.heightPublic && p.height) parts.push(p.height+'cm');
+    if(p.regionPublic && p.region) parts.push(p.region);
+    if(!parts.length) return '';
+    return '<div class="pf-meta">' +
+      parts.map((t,i)=> (i?'<span class="dot"></span>':'') + '<span>'+t+'</span>').join('') +
+      '</div>';
+  };
+
+  return '<div class="pf-hlist">' + items.slice(0, 6).map(p => {
+    const id = encodeURIComponent(p.id);
+    const name = p.nickname || '쇼호스트';
+    const intro = p.headline || '';   // 한줄소개
+    const thumb = (p.thumb || (p.thumbnailUrl || p.avatarUrl || 'default.jpg'));
+    return `
+      <article class="pf-card">
+        <img class="pf-thumb" src="${thumb}" alt="" loading="lazy" decoding="async">
+        <div class="pf-body">
+          <div>
+            <div class="pf-name">${name}</div>
+            ${intro ? `<div class="pf-intro">${intro}</div>` : ''}
+            ${fmtMeta(p)}
+          </div>
+          <div class="pf-actions">
+            <a class="pf-btn pri" href="outbox-proposals.html?to=${id}">
+              <i class="ri-send-plane-line"></i> 제안
+            </a>
+            <a class="pf-btn" href="portfolio-detail.html?id=${id}">
+              <i class="ri-user-line"></i> 프로필 보기
+            </a>
+          </div>
+        </div>
+      </article>`;
+  }).join('') + '</div>';
+};
+
 
   const tplHotClips = (items) => items && items.length
     ? `<div class="shorts-hscroll" id="hotShorts">
