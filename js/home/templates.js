@@ -1,4 +1,3 @@
-
 /* home/templates.js — v2.12.2 */
 (function (w) {
   'use strict';
@@ -31,7 +30,7 @@
         const rid = String(r.id);
         return `
         <article class="card-vert" data-id="${rid}">
-          <div class="thumb-wrap">
+          <div class="thumb-wrap" style="position:relative">
             <img class="thumb" src="${r.thumb || FALLBACK_IMG}" alt="" loading="lazy" decoding="async">
             <button class="bm" type="button" aria-label="북마크"><i class="ri-bookmark-line"></i></button>
           </div>
@@ -82,7 +81,7 @@
           '</div>' +
         '</div>' +
       '</article>').join('') + '</div>'
-    : '<div class="ed-grid"><article class="card-ed"><div class="card-ed__body"><div class="card-ed__title">포트폴리오가 없습니다</div><div class="card-ed__meta">첫 포트폴리오를 등록해보세요</div></div></article></div>';
+    : '<div class="pf-hlist"><article class="pf-hcard" aria-disabled="true"><div class="pf-info"><div class="pf-name">포트폴리오가 없습니다</div><div class="pf-intro">첫 포트폴리오를 등록해보세요</div></div></article></div>';
 
   /* ----- HOT clips ----- */
   const tplHotClips = (items) => items && items.length
@@ -95,19 +94,25 @@
       </div>`
     : '<div class="shorts-hscroll"><div class="clip-empty">등록된 클립이 없습니다</div></div>';
 
-  /* ----- CTA banner (이미지 배너) ----- */
-  const tplCtaBanner =
-    '<div class="cta-banner" role="region" aria-label="상담 배너"><div class="cta-copy">' +
-      '<div class="cta-kicker">무료 상담</div><div class="cta-title">지금 바로 라이브 커머스 시작해보세요</div>' +
-      '<div class="cta-sub">기획 · 섭외 · 계약 · 결제까지 도와드립니다</div></div>' +
-      '<div class="cta-actions"><a class="btn" href="recruit-new.html"><i class="ri-megaphone-line"></i> 공고 올리기</a>' +
-      '<a class="btn" href="help.html#contact"><i class="ri-chat-1-line"></i> 빠른 문의</a></div></div>';
+  /* ===== 상단 슬라이딩 배너 (banner1.jpg / banner2.jpg, 루트 경로) ===== */
+  H.tplHeroSlider = function () {
+    const imgs = ['banner1.jpg','banner2.jpg']; // 루트 경로
+    const slides = imgs.map(src => `
+      <div class="hero-card">
+        <img class="hero-bg" src="${src}" alt="" loading="eager" decoding="async">
+        <div class="hero-body"><!-- 텍스트 제거 요청 --></div>
+      </div>`).join('');
+    // 간단한 스크롤형 슬라이더 래퍼(터치 스와이프)
+    return `<div class="hero-wrap">
+      <div class="hscroll" style="gap:12px;padding:0">
+        ${slides}
+      </div>
+    </div>`;
+  };
 
-  /* 이미지 배너(Hot clip 아래) — bannertest.jpg 사용 */
+  /* ----- CTA 배너 (하단 BYHEN 이동) : ad_banner.jpg 사용 ----- */
   const tplImageBanner = function () {
-    const base = (w.LIVEE_HOME?.CFG?.BASE_PATH || '');
-    // base가 있으면 base + /bannertest.jpg, 없으면 상대경로 bannertest.jpg
-    const src = base ? (base.replace(/\/$/, '') + '/bannertest2.png') : 'bannertest2.png';
+    const src = 'ad_banner.jpg'; // 루트 경로 이미지
     return '<a class="img-banner" href="byhen.html" aria-label="BYHEN 안내 배너">' +
            '<img src="'+src+'" alt="BYHEN 배너">' +
            '</a>';
@@ -121,7 +126,7 @@
 
   H.tpl = {
     tplLineupList, tplRecruitHScroll, tplNewsList,
-    tplPortfolios, tplHotClips, tplCtaBanner,
-    tplImageBanner, sectionBlock
+    tplPortfolios, tplHotClips, tplImageBanner,
+    sectionBlock, tplHeroSlider
   };
 })(window);
