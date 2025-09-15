@@ -1,34 +1,24 @@
-/* ===== Livee main.css — v2.12.4 (Core Layout) ===== */
+/* ===== Livee main.css — v2.12.4 (full-bleed hero & padded sections) ===== */
 
-/* ---------- Tokens ---------- */
+/* Tokens */
 :root{
   --bg:#fff; --card:#fff; --txt:#111827; --ink:#0f172a;
   --sub:#6b7280; --line:#eef1f4; --accent:#8B5CF6; --primary:#0f172a;
-  --container-w:980px;
-  --appbar-h:56px; --tabbar-h:64px; --safe-b:env(safe-area-inset-bottom,0px);
+  --container-w:980px; --appbar-h:56px; --tabbar-h:64px; --safe-b:env(safe-area-inset-bottom,0px);
   --shadow-0:0 1px 0 rgba(16,24,40,.02); --shadow-1:0 6px 24px rgba(16,24,40,.06);
-  --gap-h:10px; /* 수평 스크롤 gap 기준 */
 }
 
-/* ---------- Base / Reset (overflow-x 방지) ---------- */
-*,*::before,*::after{box-sizing:border-box}
-html{width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
-body{
-  margin:0; min-height:100%; width:100%; overflow-x:hidden;
-  background:var(--bg); color:var(--txt);
-  font-family:SUIT,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  line-height:1.55;
-}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--txt)}
+body{margin:0;font-family:SUIT,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55}
 a{color:inherit;text-decoration:none}
-img,video,canvas{max-width:100%;height:auto;display:block}
+img{display:block;max-width:100%}
 ul,ol{margin:0;padding:0;list-style:none}
 
-/* ---------- AppBar / TopTabs ---------- */
-.lv-appbar{
-  position:sticky;top:0;z-index:30;height:var(--appbar-h);
+/* ---------- Full-bleed bars (header/top-tabs/hero/footer) ---------- */
+.lv-appbar{position:sticky;top:0;z-index:30;height:var(--appbar-h);
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;background:#fff;border-bottom:1px solid var(--line)
-}
+  padding:0 16px;background:#fff;border-bottom:1px solid var(--line)}
 .lv-title{font-size:18px;font-weight:900;color:var(--ink)}
 
 .lv-topTabs{position:sticky;top:var(--appbar-h);z-index:29;background:#fff;border-bottom:1px solid var(--line)}
@@ -38,43 +28,42 @@ ul,ol{margin:0;padding:0;list-style:none}
 .lv-topTabs .tab.is-active{color:var(--ink)}
 .lv-topTabs .tab.is-active::after{content:"";display:block;height:2px;background:var(--accent);border-radius:2px;margin-top:6px}
 
-/* ---------- Container & Sections ---------- */
-.container{
-  width:100%; max-width:var(--container-w); margin:0 auto;
-  padding:0 16px calc(var(--tabbar-h)+var(--safe-b)+20px); /* ← 하단탭 여유 */
-}
-.section{margin:18px 0 24px}
+/* ---------- Main layout ---------- */
+/* 섹션 컨테이너: “히어로 제외 모든 섹션”에만 좌우 패딩을 준다 */
+.container{max-width:var(--container-w);margin:0 auto}
+.section{margin:18px 0 24px;padding:0 16px}
 .section:first-of-type{margin-top:0}
 .section-head{display:flex;align-items:flex-end;gap:8px;margin:0 0 12px 2px}
 .section-head h2{margin:0;font-size:18px;font-weight:900}
 .section-head .hl{color:var(--accent)}
 .section-head .more{margin-left:auto;font-size:12px;color:#98A2B3}
 
-/* ---------- Hero (컨테이너 내부, 풀블리드 금지) ---------- */
-.hero-wrap{margin:0 0 12px;overflow:hidden;border-radius:16px}
-.hero-card{position:relative;min-height:200px;background:#eaf2ff}
-.hero-media{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.02)}
+/* ---------- Hero (FULL BLEED, no radius) ---------- */
+/* hero-wrap은 섹션 패딩 영향 안 받도록 가로를 화면에 맞춤 */
+.section--hero{margin:0 0 12px;padding:0}     /* ← 섹션 패딩 제거(풀블리드) */
+.hero-wrap{width:100vw;margin-left:50%;transform:translateX(-50%);}
+.hero-card{position:relative;min-height:200px;border-radius:0;overflow:hidden;background:#eaf2ff}
+.hero-bg,.hero-card::before{content:"";position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.02)}
+.hero-bg{z-index:0}
+.hero-card::before{z-index:0}
 .hero-body{position:relative;z-index:1;color:#fff;display:flex;flex-direction:column;gap:10px;justify-content:center;min-height:200px;padding:22px}
 .hero-kicker{font-size:12px;font-weight:800;opacity:.95}
 .hero-title{font-size:22px;font-weight:900;letter-spacing:-.01em;text-shadow:0 2px 12px rgba(0,0,0,.28)}
 .hero-sub{font-size:13.5px;opacity:.95}
 
-/* ---------- 공고 리스트(좌썸/우본문 · 구분선) ---------- */
+/* ---------- Cards / Lists (섹션 안쪽 전용) ---------- */
 .ed-grid{display:grid;gap:12px}
-.card-ed{
-  position:relative;display:grid;grid-template-columns:96px 1fr;gap:14px;
-  padding:14px 0;border:none;background:transparent;box-shadow:none;border-radius:0
-}
-.card-ed::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:1px;background:var(--line)} /* 컨테이너 안쪽에 정렬 */
+.card-ed{position:relative;display:grid;grid-template-columns:96px 1fr;gap:14px;padding:14px 0;border:none;border-radius:0;background:transparent;box-shadow:none}
+.card-ed::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line)}
 .card-ed:last-child::after{display:none}
 .card-ed__media{width:96px;height:96px;border-radius:12px;object-fit:cover;background:#eee}
 .card-ed__body{min-width:0}
 .card-ed__eyebrow{font-size:13px;font-weight:800;color:#475569}
-.card-ed__title{margin-top:2px;font-weight:900;font-size:16px;line-height:1.32;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere}
+.card-ed__title{margin-top:2px;font-weight:900;font-size:16px;line-height:1.32;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-ed__meta{margin-top:6px;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ---------- Brand pick (세로 카드) ---------- */
-.hscroll{display:flex;gap:12px;overflow-x:auto;padding:2px 0 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+/* Brand pick (vertical) */
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 0;scroll-snap-type:x mandatory;overscroll-behavior-x:contain}
 .hscroll::-webkit-scrollbar{display:none}
 .card-vert{flex:0 0 86%;scroll-snap-align:center;border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
 .card-vert .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:#eee}
@@ -84,46 +73,50 @@ ul,ol{margin:0;padding:0;list-style:none}
 .card-vert .title{margin-top:6px;font-weight:900;line-height:1.35;font-size:15px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-vert .meta{margin-top:8px;color:var(--sub);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ---------- Hosts (원형 좌/본문 우) ---------- */
+/* Hosts */
 .pf-hlist{display:grid;gap:10px}
 .pf-hcard{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow-0)}
 .pf-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#f3f4f6}
 .pf-name{font-weight:800}
 .pf-intro{color:var(--sub);font-size:12.5px}
 .pf-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Buttons */
 .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:800}
 .btn.pri{background:var(--primary);color:#fff;border-color:transparent}
 
-/* ---------- News (좌본문/우썸, 1줄 meta, 내부 구분선) ---------- */
+/* News */
 #home [data-sec="news"] .news-list{display:block;border-top:1px solid var(--line)}
 #home [data-sec="news"] .news-item{position:relative;display:grid;grid-template-columns:1fr 96px;gap:12px;padding:14px 0}
-#home [data-sec="news"] .news-item::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:1px;background:var(--line)}
+#home [data-sec="news"] .news-item::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line)}
 #home [data-sec="news"] .news-item:last-child::after{display:none}
-#home [data-sec="news"] .news-item__title{font-weight:900;line-height:1.35;font-size:15px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all;overflow-wrap:anywhere}
+#home [data-sec="news"] .news-item__title{font-weight:900;line-height:1.35;font-size:15px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #home [data-sec="news"] .news-item__meta{margin-top:6px;font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #home [data-sec="news"] .news-thumb{width:96px;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f3f4f6;justify-self:end}
 #home [data-sec="news"] .news-thumb img{width:100%;height:100%;object-fit:cover}
 
-/* ---------- Shorts(2-up, 가로 스크롤 오차 방지) ---------- */
-.shorts-hscroll{display:flex;gap:var(--gap-h);overflow-x:auto;padding:2px 0 0;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+/* Shorts */
+.shorts-hscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 0;scroll-snap-type:x mandatory}
 .shorts-hscroll::-webkit-scrollbar{display:none}
-.clip-card{position:relative;flex:0 0 calc((100% - var(--gap-h)) / 2);border-radius:14px;overflow:hidden;background:#000;aspect-ratio:9/16;scroll-snap-align:center}
+.clip-card{position:relative;flex:0 0 calc(50% - 6px);border-radius:14px;overflow:hidden;background:#000;aspect-ratio:9/16}
 .clip-thumb{width:100%;height:100%;object-fit:cover}
 
-/* ---------- 이미지 배너 ---------- */
+/* CTA image banner */
 .img-banner{display:block;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
 .img-banner img{width:100%;display:block;height:auto}
 
-/* ---------- Bottom Tabbar (잘림 방지) ---------- */
-.lv-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:1000;background:#fff;border-top:1px solid var(--line);width:100%}
-.lv-tabbar__in{height:calc(var(--tabbar-h)+var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+/* Bottom Tabbar (full-bleed, safe area) */
+.lv-tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid var(--line)}
+.lv-tabbar__in{height:calc(var(--tabbar-h)+var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(5,1fr)}
 .tbi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#98A2B3;font-size:11px}
-.tbi i{font-size:22px;line-height:1}
+.tbi i{font-size:22px}
 .tbi.is-active{color:var(--accent)}
 
-/* ---------- Desktop tweaks ---------- */
+/* Page bottom padding so content never hides under the tabbar */
+main{padding-bottom:calc(var(--tabbar-h) + var(--safe-b) + 20px)}
+
+/* Desktop */
 @media (min-width:992px){
-  .container{padding:0 20px calc(var(--tabbar-h)+var(--safe-b)+24px)}
   .hero-card{min-height:260px}
   .hero-body{min-height:260px;padding:26px}
   .card-ed{grid-template-columns:132px 1fr;gap:18px;padding:18px 0}
