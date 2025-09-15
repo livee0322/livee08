@@ -19,22 +19,21 @@
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
-  <main class="container">
-    <!-- 히어로: 이미지형 배너(하단 버튼 제거) -->
-    <section class="section">
-      <div class="hero-wrap" aria-label="메인 배너">
-        <div id="hero"></div>
-        <!-- 내비 버튼은 기본 숨김, 필요하면 CSS로 표시 -->
-        <div class="hero-nav" aria-hidden="true" style="display:none">
-          <button class="hero-btn prev" aria-label="이전"><i class="ri-arrow-left-line"></i></button>
-          <button class="hero-btn next" aria-label="다음"><i class="ri-arrow-right-line"></i></button>
-        </div>
+ <main class="container">
+  <!-- 히어로: FULL-BLEED (라운드 없음) -->
+  <section class="section--hero">
+    <div class="hero-wrap" aria-label="메인 배너">
+      <div id="hero"></div>
+      <div class="hero-nav" aria-hidden="true" style="display:none">
+        <button class="hero-btn prev" aria-label="이전"><i class="ri-arrow-left-line"></i></button>
+        <button class="hero-btn next" aria-label="다음"><i class="ri-arrow-right-line"></i></button>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- 홈 섹션(렌더 타깃) -->
-    <section id="home" class="section section--ed"></section>
-  </main>
+  <!-- 실제 콘텐츠 영역(여백 적용) -->
+  <section id="home" class="section section--ed"></section>
+</main>
 
   <!-- 하단탭 -->
   <footer id="bottom-tabs"></footer>
