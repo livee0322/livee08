@@ -99,44 +99,22 @@ html,body{background:var(--bg);color:var(--txt);font-family:SUIT,system-ui,-appl
   #home [data-sec="news"] .news-thumb{width:132px;border-radius:14px}
 }
 
-/* ===== PF: 이런 쇼호스트는 어떠세요? v2.13 ===== */
-.pf-hlist{display:grid;gap:14px}
-
-.pf-card{
-  display:grid; grid-template-columns:72px 1fr; gap:14px;
-  padding:16px; border:1px solid var(--line); border-radius:20px;
-  background:#fff; box-shadow:var(--shadow-0);
+/* === PF: 하단 텍스트 링크(레퍼런스 스타일) === */
+.pf-moreRow{
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
 }
-
-.pf-thumb{
-  width:72px; height:72px; border-radius:50%; object-fit:cover;
-  background:#f3f4f6; justify-self:center; align-self:center;
+.pf-moreRow a{
+  color: #475569;        /* 기본 잿빛 텍스트 */
+  text-decoration: none; /* 버튼 아님! */
+  font-weight: 700;
 }
-
-.pf-body{min-width:0; display:flex; flex-direction:column; gap:10px}
-
-.pf-name{font-size:18px; font-weight:900; color:var(--ink); text-align:left}
-.pf-intro{font-size:13px; color:var(--sub); line-height:1.45}
-
-.pf-meta{
-  margin-top:-6px;
-  font-size:13px; color:#475569;
-  display:flex; flex-wrap:wrap; gap:8px;
-}
-.pf-meta .dot{width:3px;height:3px;border-radius:50%;background:#cbd5e1;align-self:center}
-
-.pf-actions{display:flex; gap:10px; flex-wrap:wrap}
-.pf-btn{
-  display:inline-flex; align-items:center; gap:6px;
-  height:40px; padding:0 14px; border-radius:12px;
-  border:1px solid var(--line); background:#fff; font-weight:800;
-}
-.pf-btn.pri{background:var(--primary); color:#fff; border-color:transparent}
-.pf-btn i{font-size:18px}
-
-/* 데스크탑 살짝 키움 */
-@media (min-width: 992px){
-  .pf-card{grid-template-columns:84px 1fr; padding:18px}
-  .pf-thumb{width:84px; height:84px}
-  .pf-name{font-size:20px}
-}
+.pf-moreRow a:active,
+.pf-moreRow a:focus,
+.pf-moreRow a:hover{ color: var(--ink); }
+.pf-moreRow .arrow{ font-size: 18px; line-height: 1; opacity:.55 }
