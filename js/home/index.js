@@ -1,38 +1,41 @@
-/* home/index.js — v3.0.1 */
+/* home/index.js — glue: hero + sections + binds */
 (function (w) {
   'use strict';
   const H = w.LIVEE_HOME;
   const { util, fetchers, tpl, hotclips, apply } = H;
   const { $, on } = util;
   const { fetchRecruits, fetchPortfolios, fetchNews, fetchShorts } = fetchers;
-  const { tplHeroSlider, sectionBlock, tplLineupList, tplRecruitHScroll, tplNewsList, tplPortfolios, tplHotClips, tplCtaBanner, tplImageBanner } = tpl;
+  const { tplHeroSlider, tplLineupList, tplRecruitHScroll, tplNewsList,
+          tplPortfolios, tplHotClips, tplCtaBanner, tplImageBanner, sectionBlock } = tpl;
 
-  /* ----- Hero 렌더 ----- */
-  function renderHero(el){
-    if(!el) return;
-    el.innerHTML = tplHeroSlider();
-    const slider = el.querySelector('.hero-slider');
-    const cards = [...slider.querySelectorAll('.hero-card')];
-    const dots  = [...slider.querySelectorAll('.dot')];
-    let cur = 0;
+  /* Hero render */
+  function renderHero(root){
+    if(!root) return;
+    root.innerHTML = tplHeroSlider();
 
+    // 간단한 슬라이더(자동/도트)
+    const track = root.querySelector('.hero-track');
+    const dots  = [...root.querySelectorAll('.hero-dot')];
+    let idx = 0, total = dots.length;
     function go(i){
-      cur = (i+cards.length)%cards.length;
-      cards.forEach((c,idx)=>{ c.style.display = (idx===cur)?'block':'none'; });
-      dots.forEach((d,idx)=>{ d.classList.toggle('is-active', idx===cur); });
+      idx = (i+total)%total;
+      track.style.transform = `translateX(-${idx*100}%)`;
+      dots.forEach((d,k)=>d.classList.toggle('is-on',k===idx));
     }
-    dots.forEach(d => on(d,'click',()=>go(Number(d.dataset.idx))));
-    go(0);                         // 첫 장 보이기
-    setInterval(()=>go(cur+1), 5000); // 5초 자동 슬라이드
+    let tm = setInterval(()=>go(idx+1), 4000);
+    on(root, 'touchstart', ()=>{ clearInterval(tm); tm=null; }, {passive:true});
+    dots.forEach((d,i)=> on(d,'click',()=>go(i)));
   }
 
   async function render(){
-    const root = $('#home') || document.body;
-    const heroRoot = $('#hero') || document.querySelector('[data-hero]');
-    const [recruits, portfolios, shorts] = await Promise.all([fetchRecruits(), fetchPortfolios(), fetchShorts()]);
-    const news = await fetchNews(recruits);
-
+    const heroRoot = document.getElementById('hero');
     renderHero(heroRoot);
+
+    const root = document.getElementById('home');
+    const [recruits, portfolios, shorts] = await Promise.all([
+      fetchRecruits(), fetchPortfolios(), fetchShorts()
+    ]);
+    const news = await fetchNews(recruits);
 
     const html =
       sectionBlock('<span class="hl">지금 뜨는</span> 쇼핑라이브 공고','recruit-list.html', tplLineupList(recruits.slice(0,6)),'lineup')+
@@ -47,11 +50,12 @@
 
     // 바인딩
     hotclips.bindHotShorts();
-    const recruitsSec = root.querySelector('[data-sec="recruits"]') || root;
-    apply.bindApply(recruitsSec);
+    apply.bindApply(root.querySelector('[data-sec="recruits"]') || root);
   }
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded', render, { once:true });
-  } else { render(); }
+  } else {
+    render();
+  }
 })(window);
