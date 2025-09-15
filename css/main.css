@@ -116,16 +116,35 @@ ul,ol{margin:0;padding:0;list-style:none}
   #home [data-sec="news"] .news-thumb{width:132px;border-radius:14px}
 }
 
-/* 1) 히어로는 컨테이너 안에서만 */
-.hero-wrap{ margin:0 0 12px; }
-.hero-card{ border-radius:16px; overflow:hidden; }
-
-/* 2) 리스트 구분선이 컨테이너 패딩 안쪽에 끊기도록 */
-.card-ed::after,
-#home [data-sec="news"] .news-item::after{
-  left:16px; right:16px;    /* ← 컨테이너 padding과 맞춤 */
+/* ====== HOTFIX: container padding 강제 복구 ====== */
+/* 테마 클래스가 있을 때 우선순위가 높도록 선택자 강화 */
+body.theme-artbook main.container{
+  padding-left:16px !important;
+  padding-right:16px !important;
+  max-width: var(--container-w);
+  margin-left:auto; margin-right:auto;
 }
 
-/* 3) 섹션 공통: 내부 그리드·리스트는 좌우 패딩 ‘추가’ 금지 */
-.section > .ed-grid,
-.section > .news-list{ padding-left:0; padding-right:0; }
+/* 데스크탑 값 */
+@media (min-width:992px){
+  body.theme-artbook main.container{
+    padding-left:20px !important;
+    padding-right:20px !important;
+  }
+}
+
+/* 구분선이 컨테이너 안쪽에서 끊기도록(섹션 내부 리스트만) */
+body.theme-artbook main.container .card-ed::after,
+body.theme-artbook main.container [data-sec="news"] .news-item::after{
+  left:16px; right:16px;
+}
+@media (min-width:992px){
+  body.theme-artbook main.container .card-ed::after,
+  body.theme-artbook main.container [data-sec="news"] .news-item::after{
+    left:20px; right:20px;
+  }
+}
+
+/* 히어로는 컨테이너 내부 카드 형태 유지(만약 다른 곳에서 100vw 쓰면 무시) */
+body.theme-artbook main.container .hero-wrap{ margin:0 0 12px; }
+body.theme-artbook main.container .hero-card{ border-radius:16px; overflow:hidden; }
