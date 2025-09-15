@@ -124,3 +124,57 @@ main{padding-bottom:calc(var(--tabbar-h) + var(--safe-b) + 20px)}
   #home [data-sec="news"] .news-item{grid-template-columns:1fr 132px;gap:16px;padding:18px 0}
   #home [data-sec="news"] .news-thumb{width:132px;border-radius:14px}
 }
+
+/* ===== v2.12.4 Hotfix: layout clamp & full-bleed guards (paste at very bottom) ===== */
+
+/* 0) 어떤 요소도 가로로 넘치지 않도록 전역 클램프 */
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+
+/* 1) 풀블리드 영역(헤더/상단탭/히어로/하단탭바)은 뷰포트에 딱 맞춤 */
+#appbar,
+#top-tabs,
+.hero-wrap,
+#bottom-tabs { margin-left:0; margin-right:0; width:100%; }
+
+/* 히어로는 라운드 없이 꽉 차게 */
+.hero-card { border-radius:0 !important; }
+
+/* 2) 본문 컨테이너만 좌우 패딩(=여백) 유지 */
+.container {
+  box-sizing:border-box;
+  width:100%;
+  max-width:var(--container-w);
+  margin:0 auto;
+  padding-left:16px; padding-right:16px;
+}
+
+/* 3) 리스트형 구분선은 컨테이너 안에서만 보이게(넘침 방지) */
+.card-ed::after,
+#home [data-sec="news"] .news-item::after { left:16px; right:16px; }
+
+/* 4) 본문 그리드/리스트는 절대 가로로 늘어나지 않도록 고정 */
+.section, .ed-grid, .news-list, .pf-hlist { max-width:100%; overflow-x:hidden; }
+.card-ed, #home [data-sec="news"] .news-item { min-width:0; }
+
+/* 5) 쇼츠/가로 스크롤 컴포넌트: 반올림으로 100% 초과되는 상황 방지 */
+:root { --hgap:10px; }
+.shorts-hscroll, .hscroll { gap:var(--hgap); padding-left:0; padding-right:0; }
+.shorts-hscroll > *, .hscroll > * {
+  min-width:0;
+  flex:1 1 calc((100% - var(--hgap)) / 2); /* 2-up일 때 정확히 100% 맞춤 */
+}
+.clip-card { flex-basis: calc((100% - var(--hgap)) / 2); }
+
+/* 6) 이미지/미디어는 절대 컨테이너 밖으로 안 나가게 */
+img, video, canvas, iframe { max-width:100%; height:auto; }
+
+/* 7) 하단 탭바 잘림 방지: 안전영역 + 내부 높이 보장 */
+.lv-tabbar {
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  background:#fff; border-top:1px solid var(--line);
+}
+.lv-tabbar__in {
+  height:calc(var(--tabbar-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+}
+body { padding-bottom:calc(var(--tabbar-h) + var(--safe-b)); } /* 콘텐츠가 탭바 뒤로 안 들어가도록 */
