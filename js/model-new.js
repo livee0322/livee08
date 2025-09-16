@@ -1,8 +1,4 @@
-/* model-new.js — v2.1.1
-   포트폴리오 신규 폼 로직 재사용 (쇼츠/최근라이브 제외)
-   - endpoints.model / uploadsSignature 사용
-   - role: brand | admin | showhost 업로드 허용
-*/
+/* model-new.js — v2.2.0 (단수 엔드포인트: /model-test, 토큰 만료 처리) */
 (function () {
   'use strict';
 
@@ -14,12 +10,13 @@
     : (location.origin + (RAW_BASE.startsWith('/') ? RAW_BASE : '/' + RAW_BASE)).replace(/\/+$/, '');
 
   const EP = CFG.endpoints || {};
-  // 최근 스펙: 단수 model 엔드포인트 사용
-  const ENTITY = (EP.model || '/model-test').replace(/\/+$/,'');
-  const SIGN_EP = (EP.uploadsSignature || '/uploads/signature');
+  // ✅ 단수 엔드포인트만 사용
+  const ENTITY = (EP.modelBase || '/model-test').replace(/\/+$/, '');
 
-  // 토큰 (둘 중 하나라도 있으면 사용)
-  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+  const TOKEN =
+    localStorage.getItem('livee_token') ||
+    localStorage.getItem('liveeToken') ||
+    '';
 
   // Cloudinary 변환 프리셋
   const THUMB = {
@@ -29,16 +26,24 @@
 
   // ---- utils -----------------------------------------------------
   const $id = (s) => document.getElementById(s);
+  const here = encodeURIComponent(location.pathname + location.search + location.hash);
+  const goLogin = () => location.href = `login.html?returnTo=${here}`;
+
   const say = (t, ok = false) => {
-    const el = $id('pfMsg'); if (!el) return;
-    el.textContent = t; el.classList.add('show'); el.classList.toggle('ok', ok);
+    const el = $id('pfMsg');
+    if (!el) return;
+    el.textContent = t;
+    el.classList.add('show');
+    el.classList.toggle('ok', ok);
   };
+
   const headers = (json = true) => {
     const h = { Accept: 'application/json' };
     if (json) h['Content-Type'] = 'application/json';
     if (TOKEN) h['Authorization'] = `Bearer ${TOKEN}`;
     return h;
   };
+
   const withTransform = (url, t) => {
     try {
       if (!url || !/\/upload\//.test(url)) return url || '';
@@ -46,6 +51,7 @@
       return url.slice(0, i + 8) + t + '/' + url.slice(i + 8);
     } catch { return url; }
   };
+
   const strOrU = (v) => (v && String(v).trim()) ? String(v).trim() : undefined;
 
   // ---- state -----------------------------------------------------
@@ -65,25 +71,22 @@
   else init();
 
   async function init() {
-    // 자동 높이
+    // textarea auto height
     const bio = $id('bio');
     const autoGrow = (el) => { if (!el) return; el.style.height = 'auto'; el.style.height = Math.min(800, Math.max(180, el.scrollHeight)) + 'px'; };
     if (bio) { bio.addEventListener('input', () => autoGrow(bio)); setTimeout(() => autoGrow(bio), 0); }
 
-    // 파일 트리거
+    // triggers
     $id('mainTrigger')?.addEventListener('click', () => $id('mainFile')?.click());
     $id('coverTrigger')?.addEventListener('click', () => $id('coverFile')?.click());
     $id('subsTrigger')?.addEventListener('click', () => $id('subsFile')?.click());
 
-    // 업로드(Cloudinary 사인)
+    // Cloudinary 서명 업로드
     async function getSignature() {
-      const r = await fetch(`${API_BASE}${SIGN_EP}`, { headers: headers(false) });
+      const r = await fetch(`${API_BASE}${EP.uploadsSignature || '/uploads/signature'}`, { headers: headers(false) });
+      if (r.status === 401) { say('로그인이 필요합니다'); goLogin(); return Promise.reject(new Error('UNAUTHORIZED')); }
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || j.ok === false) {
-        // 401/403 → 토큰 없음/역할 미스매치
-        if (r.status === 401 || r.status === 403) throw new Error('로그인이 필요하거나 권한이 없습니다.');
-        throw new Error(j.message || `HTTP_${r.status}`);
-      }
+      if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
       return j.data || j;
     }
     async function uploadImage(file) {
@@ -95,16 +98,20 @@
       if (!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
       return j.secure_url;
     }
-    const isImgOk = (f) => { if (!/^image\//.test(f.type)) { say('이미지 파일만 업로드 가능'); return false; } if (f.size > 8 * 1024 * 1024) { say('이미지는 8MB 이하'); return false; } return true; };
+    const isImgOk = (f) => {
+      if (!/^image\//.test(f.type)) { say('이미지 파일만 업로드 가능'); return false; }
+      if (f.size > 8 * 1024 * 1024) { say('이미지는 8MB 이하'); return false; }
+      return true;
+    };
 
-    // 프리뷰
+    // preview helpers
     function setPreview(kind, url) {
       if (!url) return;
-      if (kind === 'main') { const img = $id('mainPrev'); img.src = url; img.style.display = 'block'; $id('mainTrigger')?.classList.remove('is-empty'); }
-      if (kind === 'cover') { const img = $id('coverPrev'); img.src = url; img.style.display = 'block'; $id('coverTrigger')?.classList.remove('is-empty'); }
+      if (kind === 'main') { const img = $id('mainPrev'); if (img) { img.src = url; img.style.display = 'block'; } $id('mainTrigger')?.classList.remove('is-empty'); }
+      if (kind === 'cover') { const img = $id('coverPrev'); if (img) { img.src = url; img.style.display = 'block'; } $id('coverTrigger')?.classList.remove('is-empty'); }
     }
 
-    // 업로드 바인딩
+    // uploads
     $id('mainFile')?.addEventListener('change', async e => {
       const f = e.target.files?.[0]; if (!f) return; if (!isImgOk(f)) { e.target.value = ''; return; }
       const local = URL.createObjectURL(f); setPreview('main', local); bump(+1);
@@ -112,6 +119,7 @@
       catch (err) { console.error('[main upload]', err); say('업로드 실패: ' + (err.message || '오류')); }
       finally { URL.revokeObjectURL(local); e.target.value = ''; bump(-1); }
     });
+
     $id('coverFile')?.addEventListener('change', async e => {
       const f = e.target.files?.[0]; if (!f) return; if (!isImgOk(f)) { e.target.value = ''; return; }
       const local = URL.createObjectURL(f); setPreview('cover', local); bump(+1);
@@ -120,9 +128,10 @@
       finally { URL.revokeObjectURL(local); e.target.value = ''; bump(-1); }
     });
 
-    // 서브 갤러리
+    // sub gallery
     const subsGrid = $id('subsGrid');
     function drawSubs() {
+      if (!subsGrid) return;
       subsGrid.innerHTML = state.subThumbnails.map((u, i) => `
         <div class="sub">
           <img src="${u}" alt="sub-${i}">
@@ -145,27 +154,27 @@
       e.target.value = '';
     });
 
-    // 첨부 파일 메타표시
+    // attachments (메타만)
     const attachments = $id('attachments'), attachList = $id('attachList');
     attachments?.addEventListener('change', () => {
       const files = Array.from(attachments.files || []);
-      attachList.innerHTML = files.map(f => `<li><i class="ri-file-line"></i>${f.name}</li>`).join('');
+      attachList && (attachList.innerHTML = files.map(f => `<li><i class="ri-file-line"></i>${f.name}</li>`).join(''));
       state.attachments = files;
     });
 
-    // 미리보기 텍스트
-    $id('nickname')?.addEventListener('input', () => $id('nicknamePreview').textContent = ($id('nickname').value.trim() || '닉네임'));
-    $id('headline')?.addEventListener('input', () => $id('headlinePreview').textContent = ($id('headline').value.trim() || '한 줄 소개'));
+    // inline previews
+    $id('nickname')?.addEventListener('input', () => $id('nicknamePreview') && ($id('nicknamePreview').textContent = ($id('nickname').value.trim() || '닉네임')));
+    $id('headline')?.addEventListener('input', () => $id('headlinePreview') && ($id('headlinePreview').textContent = ($id('headline').value.trim() || '한 줄 소개')));
 
-    // 액션
+    // actions
     $id('publishBtn')?.addEventListener('click', (e) => { e.preventDefault(); submit('published'); });
     $id('saveDraftBtn')?.addEventListener('click', (e) => { e.preventDefault(); submit('draft'); });
 
-    // 수정 모드
+    // edit mode
     state.id = new URLSearchParams(location.search).get('id') || '';
     if (state.id) await loadExisting();
 
-    // 디버그
+    // expose for debug
     window.MODEL_APP = { state };
   }
 
@@ -196,17 +205,17 @@
       regionPublic: !!$id('regionPublic')?.checked,
       careerPublic: !!$id('careerPublic')?.checked
     };
+
     const links = {
       youtube:   strOrU($id('linkYouTube')?.value),
       instagram: strOrU($id('linkInstagram')?.value),
-      website:   strOrU($id('primaryLink')?.value)
+      website:   strOrU($id('primaryLink')?.value) // 대표 URL을 website로도 보관
     };
 
     return {
       type: 'model',
       status,
-      // 공개 범위: public | private 만 사용
-      visibility: ($id('visibility')?.value === 'private') ? 'private' : 'public',
+      visibility: $id('visibility')?.value || 'public',
       nickname: strOrU($id('nickname')?.value),
       headline: strOrU($id('headline')?.value),
       bio: strOrU($id('bio')?.value),
@@ -218,76 +227,88 @@
       region, demographics, links,
       openToOffers: !!$id('openToOffers')?.checked,
       tags: state.tags
-      // attachments: state.attachments  // 업로드 파이프라인 붙이면 사용
+      // attachments: state.attachments // 실제 서버 업로드 붙일 때 사용
     };
   }
 
-  // ---- submit / load --------------------------------------------
+  // ---- submit/load ------------------------------------------------
   async function submit(status) {
     const pub = (status === 'published');
     if (!validate(pub)) return;
 
     try {
+      if (!TOKEN) { say('로그인이 필요합니다'); return goLogin(); }
+
       say(pub ? '발행 중…' : '임시저장 중…');
       const url = state.id
         ? `${API_BASE}${ENTITY}/${encodeURIComponent(state.id)}`
         : `${API_BASE}${ENTITY}`;
       const method = state.id ? 'PUT' : 'POST';
+
       const res = await fetch(url, { method, headers: headers(true), body: JSON.stringify(collectPayload(status)) });
+
+      if (res.status === 401) { say('로그인이 만료되었습니다'); return goLogin(); }
+
       const j = await res.json().catch(() => ({}));
       if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
+
       state.id = j.data?.id || j.id || state.id;
       say(pub ? '발행되었습니다' : '임시저장 완료', true);
+      // setTimeout(()=>location.href='mypage.html', 400);
     } catch (err) {
       console.error('[model save]', err);
-      // Render 등에서 401/403은 토큰/권한 문제
-      if (/401|403/.test(String(err.message))) say('로그인이 필요하거나 권한이 없습니다.');
-      else say('저장 실패: ' + (err.message || '네트워크 오류'));
+      say('저장 실패: ' + (err.message || '네트워크 오류'));
     }
   }
 
   async function loadExisting() {
     try {
+      if (!TOKEN) { say('로그인이 필요합니다'); return goLogin(); }
+
       say('불러오는 중…');
       const r = await fetch(`${API_BASE}${ENTITY}/${encodeURIComponent(state.id)}`, { headers: headers(false) });
+      if (r.status === 401) { say('로그인이 만료되었습니다'); return goLogin(); }
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
+
       const d = j.data || j;
 
       // 기본
-      $id('nickname').value = d.nickname || '';
-      $id('headline').value = d.headline || '';
-      $id('bio').value = d.bio || '';
-      $id('careerYears').value = d.careerYears || '';
-      $id('age').value = d.age || '';
-      $id('visibility').value = (d.visibility === 'private') ? 'private' : 'public';
-      $id('openToOffers').checked = d.openToOffers !== false;
-      $id('primaryLink').value = d.links?.website || d.primaryLink || '';
-      $id('linkYouTube').value = d.links?.youtube || '';
-      $id('linkInstagram').value = d.links?.instagram || '';
+      $id('nickname') && ($id('nickname').value = d.nickname || '');
+      $id('headline') && ($id('headline').value = d.headline || '');
+      $id('bio') && ($id('bio').value = d.bio || '');
+      $id('careerYears') && ($id('careerYears').value = d.careerYears || '');
+      $id('age') && ($id('age').value = d.age || '');
+      $id('visibility') && ($id('visibility').value = d.visibility || 'public');
+      $id('openToOffers') && ($id('openToOffers').checked = d.openToOffers !== false);
+      $id('primaryLink') && ($id('primaryLink').value = d.links?.website || d.primaryLink || '');
+      $id('linkYouTube') && ($id('linkYouTube').value = d.links?.youtube || '');
+      $id('linkInstagram') && ($id('linkInstagram').value = d.links?.instagram || '');
 
       // 지역/디모그래픽
-      $id('regionCity').value = d.region?.city || '';
-      $id('gender').value = d.demographics?.gender || '';
-      $id('height').value = d.demographics?.height || '';
-      $id('sizeTop').value = d.demographics?.sizeTop || '';
-      $id('sizeBottom').value = d.demographics?.sizeBottom || '';
-      $id('shoe').value = d.demographics?.shoe || '';
-      $id('sizePublic').checked = !!d.demographics?.sizePublic;
-      $id('agePublic').checked = !!d.demographics?.agePublic;
-      $id('genderPublic').checked = !!d.demographics?.genderPublic;
-      $id('regionPublic').checked = !!d.demographics?.regionPublic;
-      $id('careerPublic').checked = !!d.demographics?.careerPublic;
+      $id('regionCity') && ($id('regionCity').value = d.region?.city || '');
+      $id('gender') && ($id('gender').value = d.demographics?.gender || '');
+      $id('height') && ($id('height').value = d.demographics?.height || '');
+      $id('sizeTop') && ($id('sizeTop').value = d.demographics?.sizeTop || '');
+      $id('sizeBottom') && ($id('sizeBottom').value = d.demographics?.sizeBottom || '');
+      $id('shoe') && ($id('shoe').value = d.demographics?.shoe || '');
+      $id('sizePublic') && ($id('sizePublic').checked = !!d.demographics?.sizePublic);
+      $id('agePublic') && ($id('agePublic').checked = !!d.demographics?.agePublic);
+      $id('genderPublic') && ($id('genderPublic').checked = !!d.demographics?.genderPublic);
+      $id('regionPublic') && ($id('regionPublic').checked = !!d.demographics?.regionPublic);
+      $id('careerPublic') && ($id('careerPublic').checked = !!d.demographics?.careerPublic);
 
       // 이미지
       state.mainThumbnailUrl = d.mainThumbnailUrl || d.mainThumbnail || '';
       state.coverImageUrl    = d.coverImageUrl || d.coverImage || '';
       state.subThumbnails    = Array.isArray(d.subThumbnails) ? d.subThumbnails.slice(0, 5)
-                               : (Array.isArray(d.subImages) ? d.subImages.slice(0, 5) : []);
+                                : (Array.isArray(d.subImages) ? d.subImages.slice(0, 5) : []);
+
       setPreview('main', state.mainThumbnailUrl);
       setPreview('cover', state.coverImageUrl);
       (function drawSubs() {
         const subsGrid = $id('subsGrid');
+        if (!subsGrid) return;
         subsGrid.innerHTML = state.subThumbnails.map((u, i) => `
           <div class="sub">
             <img src="${u}" alt="sub-${i}">
@@ -295,9 +316,9 @@
           </div>`).join('');
       })();
 
-      // 미리보기 텍스트
-      $id('nicknamePreview').textContent = ($id('nickname').value.trim() || '닉네임');
-      $id('headlinePreview').textContent = ($id('headline').value.trim() || '한 줄 소개');
+      // inline preview text
+      $id('nicknamePreview') && ($id('nicknamePreview').textContent = ($id('nickname').value.trim() || '닉네임'));
+      $id('headlinePreview') && ($id('headlinePreview').textContent = ($id('headline').value.trim() || '한 줄 소개'));
 
       say('로드 완료', true);
     } catch (err) {
