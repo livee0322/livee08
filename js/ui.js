@@ -1,4 +1,4 @@
-/* ui.js — v3.0.4 (Top tabs nowrap + scroll, bottom tabs, helpers) */
+/* ui.js — v3.0.5 (Top tabs nowrap + scroll, bottom tabs, helpers, logo.png in AppBar) */
 (() => {
   const ready = (fn) =>
     document.readyState === 'loading'
@@ -31,21 +31,33 @@
       localStorage.getItem('livee_token') ||
       localStorage.getItem('liveeToken') || '';
 
-    /* ---------- AppBar ---------- */
+    /* ---------- AppBar (logo.png) ---------- */
     const appbar = document.getElementById('appbar');
     if (appbar) {
       const isLogin = !!getToken();
-      appbar.innerHTML = `
-        <div class="lv-appbar" role="banner" style="display:flex;align-items:center;gap:8px;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eef1f5;background:#fff;position:sticky;top:0;z-index:900">
-          <div class="lv-title" style="font-weight:900;font-size:20px">라이비</div>
+
+      // 로고 사이즈/정렬은 여기서 통일 관리
+      const appbarHTML = `
+        <div class="lv-appbar" role="banner"
+             style="display:flex;align-items:center;gap:8px;justify-content:space-between;
+                    padding:12px 16px;border-bottom:1px solid #eef1f5;background:#fff;
+                    position:sticky;top:0;z-index:900">
+          <a href="index.html" class="lv-logo" aria-label="라이비 홈"
+             style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit">
+            <img src="/logo.png" alt="라이비" width="112" height="28"
+                 style="display:block;height:28px;width:auto;object-fit:contain"/>
+          </a>
           <div class="lv-actions" role="group" aria-label="빠른 작업" style="display:flex;gap:10px">
             <a class="lv-action" href="#/alerts" aria-label="알림"><i class="ri-notification-3-line" style="font-size:20px"></i></a>
             <a class="lv-action" href="#/search" aria-label="검색"><i class="ri-search-line" style="font-size:20px"></i></a>
-            <a class="lv-action" href="${isLogin ? 'login.html?logout=1' : 'login.html'}" aria-label="${isLogin ? '로그아웃' : '로그인'}">
+            <a class="lv-action" href="${isLogin ? 'login.html?logout=1' : 'login.html'}"
+               aria-label="${isLogin ? '로그아웃' : '로그인'}">
               <i class="${isLogin ? 'ri-logout-box-r-line' : 'ri-login-box-line'}" style="font-size:20px"></i>
             </a>
           </div>
         </div>`;
+
+      appbar.innerHTML = appbarHTML;
     }
 
     /* ---------- Top Tabs (underline + nowrap scroll) ---------- */
@@ -64,15 +76,14 @@
             <a class="tab" data-tab="service" href="index.html#/service">서비스</a>
           </div>
         </nav>`;
-      // iOS/Android 브라우저에서 탭 줄바꿈 방지
       top.querySelectorAll('.tab').forEach((el)=>{
-        el.style.display = 'inline-block';
-        el.style.marginRight = '18px';
-        el.style.padding = '10px 2px';
-        el.style.fontWeight = '800';
-        el.style.position = 'relative';
-        el.style.textDecoration = 'none';
-        el.style.userSelect = 'none';
+        el.style.display='inline-block';
+        el.style.marginRight='18px';
+        el.style.padding='10px 2px';
+        el.style.fontWeight='800';
+        el.style.position='relative';
+        el.style.textDecoration='none';
+        el.style.userSelect='none';
       });
       const setActive = (name) => {
         top.querySelectorAll('.tab').forEach((el) => {
@@ -106,7 +117,6 @@
           <a class="tbi" href="${myHref}"             style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-user-settings-line" style="font-size:20px"></i><span style="font-size:12px">마이페이지</span></a>
         </div>
       </nav>`;
-    // 본문 하단 여백 보정
     const root = document.querySelector('main') || document.body;
     const pb = parseInt(getComputedStyle(root).paddingBottom || '0', 10);
     root.style.paddingBottom = 'calc('+ Math.max(pb, 88) +'px + env(safe-area-inset-bottom))';
