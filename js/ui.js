@@ -143,8 +143,8 @@
           <a class="tbi" href="models.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="모델">
             <i class="ri-user-star-line" style="font-size:20px"></i><span style="font-size:12px">모델</span>
           </a>
-          <a class="tbi" href="influencer.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="인플루언서">
-            <i class="ri-user-3-line" style="font-size:20px"></i><span style="font-size:12px">인플루언서</span>
+          <a class="tbi" href="portfolio-list.html" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="포트폴리오">
+            <i class="ri-user-3-line" style="font-size:20px"></i><span style="font-size:12px">포트폴리오</span>
           </a>
           <a class="tbi" href="${myHref}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b" aria-label="마이페이지">
             <i class="ri-user-settings-line" style="font-size:20px"></i><span style="font-size:12px">마이페이지</span>
