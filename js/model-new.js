@@ -1,28 +1,51 @@
-/* model-new.js — v2.1.0 (포트폴리오 신규 폼 로직 재사용 / 쇼츠·최근라이브 제외) */
+/* model-new.js — v2.1.1
+   포트폴리오 신규 폼 로직 재사용 (쇼츠/최근라이브 제외)
+   - endpoints.model / uploadsSignature 사용
+   - role: brand | admin | showhost 업로드 허용
+*/
 (function () {
   'use strict';
 
   // ---- Config ----------------------------------------------------
   const CFG = window.LIVEE_CONFIG || {};
   const RAW_BASE = (CFG.API_BASE || '/api/v1').toString().trim() || '/api/v1';
-  const API_BASE = /^https?:\/\//i.test(RAW_BASE) ? RAW_BASE.replace(/\/+$/,'')
-                  : (location.origin + (RAW_BASE.startsWith('/') ? RAW_BASE : '/' + RAW_BASE)).replace(/\/+$/,'');
-  const EP = CFG.endpoints || {};
-  const ENTITY = (EP.models || '/models-test').replace(/\/+$/,'');
+  const API_BASE = /^https?:\/\//i.test(RAW_BASE)
+    ? RAW_BASE.replace(/\/+$/, '')
+    : (location.origin + (RAW_BASE.startsWith('/') ? RAW_BASE : '/' + RAW_BASE)).replace(/\/+$/, '');
 
+  const EP = CFG.endpoints || {};
+  // 최근 스펙: 단수 model 엔드포인트 사용
+  const ENTITY = (EP.model || '/model-test').replace(/\/+$/,'');
+  const SIGN_EP = (EP.uploadsSignature || '/uploads/signature');
+
+  // 토큰 (둘 중 하나라도 있으면 사용)
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
-  // 이미지 변환 프리셋(Cloudinary)
+  // Cloudinary 변환 프리셋
   const THUMB = {
     square:  'c_fill,g_auto,w_600,h_600,f_auto,q_auto',
     cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto'
   };
 
-  // ---- tiny utils ------------------------------------------------
+  // ---- utils -----------------------------------------------------
   const $id = (s) => document.getElementById(s);
-  const say = (t, ok = false) => { const el = $id('pfMsg'); if (!el) return; el.textContent = t; el.classList.add('show'); el.classList.toggle('ok', ok); };
-  const headers = (json = true) => { const h = { Accept: 'application/json' }; if (json) h['Content-Type'] = 'application/json'; if (TOKEN) h['Authorization'] = `Bearer ${TOKEN}`; return h; };
-  const withTransform = (url, t) => { try { if (!url || !/\/upload\//.test(url)) return url || ''; const i = url.indexOf('/upload/'); return url.slice(0, i + 8) + t + '/' + url.slice(i + 8); } catch { return url; } };
+  const say = (t, ok = false) => {
+    const el = $id('pfMsg'); if (!el) return;
+    el.textContent = t; el.classList.add('show'); el.classList.toggle('ok', ok);
+  };
+  const headers = (json = true) => {
+    const h = { Accept: 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (TOKEN) h['Authorization'] = `Bearer ${TOKEN}`;
+    return h;
+  };
+  const withTransform = (url, t) => {
+    try {
+      if (!url || !/\/upload\//.test(url)) return url || '';
+      const i = url.indexOf('/upload/');
+      return url.slice(0, i + 8) + t + '/' + url.slice(i + 8);
+    } catch { return url; }
+  };
   const strOrU = (v) => (v && String(v).trim()) ? String(v).trim() : undefined;
 
   // ---- state -----------------------------------------------------
@@ -42,7 +65,7 @@
   else init();
 
   async function init() {
-    // textarea 자동 높이
+    // 자동 높이
     const bio = $id('bio');
     const autoGrow = (el) => { if (!el) return; el.style.height = 'auto'; el.style.height = Math.min(800, Math.max(180, el.scrollHeight)) + 'px'; };
     if (bio) { bio.addEventListener('input', () => autoGrow(bio)); setTimeout(() => autoGrow(bio), 0); }
@@ -54,9 +77,13 @@
 
     // 업로드(Cloudinary 사인)
     async function getSignature() {
-      const r = await fetch(`${API_BASE}${EP.uploadsSignature || '/uploads/signature'}`, { headers: headers(false) });
+      const r = await fetch(`${API_BASE}${SIGN_EP}`, { headers: headers(false) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
+      if (!r.ok || j.ok === false) {
+        // 401/403 → 토큰 없음/역할 미스매치
+        if (r.status === 401 || r.status === 403) throw new Error('로그인이 필요하거나 권한이 없습니다.');
+        throw new Error(j.message || `HTTP_${r.status}`);
+      }
       return j.data || j;
     }
     async function uploadImage(file) {
@@ -70,14 +97,14 @@
     }
     const isImgOk = (f) => { if (!/^image\//.test(f.type)) { say('이미지 파일만 업로드 가능'); return false; } if (f.size > 8 * 1024 * 1024) { say('이미지는 8MB 이하'); return false; } return true; };
 
-    // 프리뷰 유틸
+    // 프리뷰
     function setPreview(kind, url) {
       if (!url) return;
       if (kind === 'main') { const img = $id('mainPrev'); img.src = url; img.style.display = 'block'; $id('mainTrigger')?.classList.remove('is-empty'); }
       if (kind === 'cover') { const img = $id('coverPrev'); img.src = url; img.style.display = 'block'; $id('coverTrigger')?.classList.remove('is-empty'); }
     }
 
-    // 메인/커버 업로드
+    // 업로드 바인딩
     $id('mainFile')?.addEventListener('change', async e => {
       const f = e.target.files?.[0]; if (!f) return; if (!isImgOk(f)) { e.target.value = ''; return; }
       const local = URL.createObjectURL(f); setPreview('main', local); bump(+1);
@@ -118,7 +145,7 @@
       e.target.value = '';
     });
 
-    // 첨부 파일(메타만 표시; 업로드는 서버 정책에 맞춰 후처리)
+    // 첨부 파일 메타표시
     const attachments = $id('attachments'), attachList = $id('attachList');
     attachments?.addEventListener('change', () => {
       const files = Array.from(attachments.files || []);
@@ -126,11 +153,11 @@
       state.attachments = files;
     });
 
-    // 미리보기 닉네임/한줄소개
+    // 미리보기 텍스트
     $id('nickname')?.addEventListener('input', () => $id('nicknamePreview').textContent = ($id('nickname').value.trim() || '닉네임'));
     $id('headline')?.addEventListener('input', () => $id('headlinePreview').textContent = ($id('headline').value.trim() || '한 줄 소개'));
 
-    // 저장 버튼
+    // 액션
     $id('publishBtn')?.addEventListener('click', (e) => { e.preventDefault(); submit('published'); });
     $id('saveDraftBtn')?.addEventListener('click', (e) => { e.preventDefault(); submit('draft'); });
 
@@ -142,7 +169,7 @@
     window.MODEL_APP = { state };
   }
 
-  // 유효성 & 페이로드
+  // ---- validation & payload -------------------------------------
   function validate(pub) {
     if (state.pending > 0) { say('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.'); return false; }
     if (pub) {
@@ -169,17 +196,17 @@
       regionPublic: !!$id('regionPublic')?.checked,
       careerPublic: !!$id('careerPublic')?.checked
     };
-
     const links = {
       youtube:   strOrU($id('linkYouTube')?.value),
       instagram: strOrU($id('linkInstagram')?.value),
-      website:   strOrU($id('primaryLink')?.value)   // 대표 링크를 website로도 같이 전송 (백엔드 매핑 용이)
+      website:   strOrU($id('primaryLink')?.value)
     };
 
     return {
       type: 'model',
       status,
-      visibility: $id('visibility')?.value || 'public',
+      // 공개 범위: public | private 만 사용
+      visibility: ($id('visibility')?.value === 'private') ? 'private' : 'public',
       nickname: strOrU($id('nickname')?.value),
       headline: strOrU($id('headline')?.value),
       bio: strOrU($id('bio')?.value),
@@ -191,10 +218,11 @@
       region, demographics, links,
       openToOffers: !!$id('openToOffers')?.checked,
       tags: state.tags
-      // attachments: state.attachments (※ 실제 업로드 스트리밍을 붙일 경우 사용)
+      // attachments: state.attachments  // 업로드 파이프라인 붙이면 사용
     };
   }
 
+  // ---- submit / load --------------------------------------------
   async function submit(status) {
     const pub = (status === 'published');
     if (!validate(pub)) return;
@@ -210,10 +238,11 @@
       if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
       state.id = j.data?.id || j.id || state.id;
       say(pub ? '발행되었습니다' : '임시저장 완료', true);
-      // 필요 시 이동: setTimeout(()=>location.href='mypage.html', 400);
     } catch (err) {
       console.error('[model save]', err);
-      say('저장 실패: ' + (err.message || '네트워크 오류'));
+      // Render 등에서 401/403은 토큰/권한 문제
+      if (/401|403/.test(String(err.message))) say('로그인이 필요하거나 권한이 없습니다.');
+      else say('저장 실패: ' + (err.message || '네트워크 오류'));
     }
   }
 
@@ -231,7 +260,7 @@
       $id('bio').value = d.bio || '';
       $id('careerYears').value = d.careerYears || '';
       $id('age').value = d.age || '';
-      $id('visibility').value = d.visibility || 'public';
+      $id('visibility').value = (d.visibility === 'private') ? 'private' : 'public';
       $id('openToOffers').checked = d.openToOffers !== false;
       $id('primaryLink').value = d.links?.website || d.primaryLink || '';
       $id('linkYouTube').value = d.links?.youtube || '';
@@ -253,7 +282,8 @@
       // 이미지
       state.mainThumbnailUrl = d.mainThumbnailUrl || d.mainThumbnail || '';
       state.coverImageUrl    = d.coverImageUrl || d.coverImage || '';
-      state.subThumbnails    = Array.isArray(d.subThumbnails) ? d.subThumbnails.slice(0, 5) : (Array.isArray(d.subImages) ? d.subImages.slice(0, 5) : []);
+      state.subThumbnails    = Array.isArray(d.subThumbnails) ? d.subThumbnails.slice(0, 5)
+                               : (Array.isArray(d.subImages) ? d.subImages.slice(0, 5) : []);
       setPreview('main', state.mainThumbnailUrl);
       setPreview('cover', state.coverImageUrl);
       (function drawSubs() {
