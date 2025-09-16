@@ -53,7 +53,7 @@
                   position:sticky;top:0;z-index:900">
         <a href="index.html" class="lv-logo" aria-label="라이비 홈"
            style="display:flex;align-items:center;gap:10px;text-decoration:none">
-          <img src="${logoSrc}" alt="라이비" width="112" height="28"
+          <img src="${logoSrc}" alt="라이비" width="124" height="32"
                style="display:block;height:28px;width:auto;object-fit:contain"/>
         </a>
         <div class="lv-actions" role="group" aria-label="빠른 작업" style="display:flex;gap:10px">
