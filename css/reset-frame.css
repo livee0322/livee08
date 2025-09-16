@@ -1,25 +1,100 @@
-/* Frame reset — block horizontal scroll & remove default link underline */
-/* === NexonLv1Gothic: Light / Regular / Bold === */
+/* reset-frame.css
+   - Global font: NexonLv1Gothic (Light/Regular/Bold)
+   - Block horizontal scroll
+   - Remove default link underline
+   - Mobile tap highlight off
+   - Image max-width fix
+   - System emoji/number fallback 유지
+*/
+
+/* === NexonLv1Gothic: 300 / 400 / 700 === */
 @font-face{
   font-family:'NexonLv1Gothic';
   src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/NEXON%20Lv1%20Gothic%20OTF%20Light.woff') format('woff');
   font-weight:300;
+  font-style:normal;
   font-display:swap;
 }
 @font-face{
   font-family:'NexonLv1Gothic';
   src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/NEXON%20Lv1%20Gothic%20OTF.woff') format('woff');
   font-weight:400;
+  font-style:normal;
   font-display:swap;
 }
 @font-face{
   font-family:'NexonLv1Gothic';
   src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/NEXON%20Lv1%20Gothic%20OTF%20Bold.woff') format('woff');
   font-weight:700;
+  font-style:normal;
   font-display:swap;
 }
 
-html,body{margin:0;padding:0;height:100%;overflow-x:hidden}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-a{color:inherit;text-decoration:none}
-img{max-width:100%;display:block}
+/* Base reset */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;               /* 가로 스크롤 방지 */
+  -webkit-text-size-adjust: 100%;   /* iOS 글자 확대 방지 */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+}
+
+/* Global font (서비스 전체 적용) */
+:root {
+  --font-body: 'NexonLv1Gothic', system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.5;
+  color: inherit;
+  background: #fff;
+}
+
+/* Links */
+a {
+  color: inherit;         /* 파란 기본색 제거 */
+  text-decoration: none;  /* 밑줄 제거 */
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;         /* 하단 여백(인라인 갭) 제거 */
+}
+
+/* Form elements inherit font */
+input, select, textarea, button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Remove default list styles (안쓰는 페이지도 안전) */
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Headings margin normalize */
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+}
+
+/* Accessible focus outline는 유지하되 브라우저별 일관성 */
+:focus-visible {
+  outline: 2px solid #94a3ff; /* 접근성 고려 색상 */
+  outline-offset: 2px;
+}
+
+/* Utility: container 기본 패딩(선택) */
+/* .container { padding-left: 16px; padding-right: 16px; } */
