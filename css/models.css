@@ -1,87 +1,83 @@
+/* models.css — v1.2.0 (라운드/그림자 제거, 2열 그리드, FAB) */
 :root{
-  --bg:#f8fafc; --card:#ffffff; --text:#111827; --muted:#64748b;
-  --line:#eef1f5; --pri:#5b5bf0; --chip:#f2f4f8; --radius:16px;
-  --shadow:0 8px 20px rgba(17,24,39,.06);
+  --bg:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e5e7eb;
+  --ink-sub:#475569;
+  --pri:#5b5bf0;
 }
 *{box-sizing:border-box}
-html,body{margin:0;font-family:'SUIT',system-ui,'Noto Sans KR',sans-serif;color:var(--text);background:var(--bg)}
-/* ui.js 로드 시 앵커 밑줄 제거 호환 */
-a{text-decoration:none;color:inherit}
-.container{padding:16px 16px 24px}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',sans-serif}
+a{color:inherit;text-decoration:none}  /* 밑줄 제거 */
+.container{padding:16px 16px 28px}
+.section{margin:12px 0}
 
-/* hero */
-.mdl-hero{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(160deg,#eef2ff 0%,#fff 50%,#f9fafb 100%);border:1px solid var(--line);box-shadow:var(--shadow);min-height:160px}
-.mdl-hero__body{padding:22px}
-.mdl-hero .kicker{font-weight:900;color:#7c83ff;font-size:12px;letter-spacing:.06em;margin-bottom:6px}
-.mdl-hero .ttl{margin:0 0 6px;font-size:22px;line-height:1.2}
-.mdl-hero .sub{margin:0 0 14px;color:var(--muted)}
-.mdl-hero .btn{padding:10px 14px;border-radius:12px}
+/* 카운트 */
+.mdl-count{font-weight:800;color:var(--muted);padding:4px 2px}
 
-/* toolbar */
-.mdl-toolbar{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow)}
-.chips{display:flex;gap:8px;overflow:auto}
-.chip{border:1px solid var(--line);background:var(--chip);padding:8px 12px;border-radius:999px;font-weight:800;color:var(--muted);white-space:nowrap}
-.chip.on{background:#eef2ff;color:#333;border-color:#d9ddff}
-.actions .btn{padding:8px 12px;border-radius:12px}
-
-/* count */
-.mdl-count{color:var(--muted);font-weight:800;margin:10px 4px}
-
-/* GRID — 항상 2열 */
+/* 2열 그리드 (모바일 기준) */
 .mdl-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:14px;
 }
-@media (min-width:880px){
-  .mdl-grid{gap:18px}
+@media (min-width:900px){ .mdl-grid{grid-template-columns:repeat(3,1fr)} }
+@media (min-width:1200px){ .mdl-grid{grid-template-columns:repeat(4,1fr)} }
+
+/* 카드: 각진 + 그림자/테두리 최소화 */
+.mdl-card{
+  display:block;
+  border:1px solid var(--line);
+  border-radius:0;      /* 라운드 제거 */
+  background:#fff;
+  overflow:hidden;
 }
 
-/* CARD — 이미지 위, 텍스트 아래 중앙정렬 */
-.mdl-card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
-}
+/* 썸네일: 3:4 비율 */
 .mdl-card .thumb{
-  aspect-ratio: 4/5; /* 인물 사진 비율 */
-  background:#e5e7eb center/cover no-repeat;
   width:100%;
+  aspect-ratio:3/4;
+  background:#f1f5f9 center/cover no-repeat;
 }
-.mdl-card .body{
-  text-align:center;
-  padding:12px 10px 14px;
-}
+
+/* 본문 */
+.mdl-card .body{padding:10px 8px 12px}
 .mdl-card .name{
   display:block;
   font-weight:900;
-  font-size:16px;
-  letter-spacing:.02em;
+  font-size:15px;
+  line-height:1.15;
+  margin-bottom:4px;
 }
 .mdl-card .headline{
-  color:#6b7280;
   font-size:13px;
-  margin-top:4px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:var(--ink-sub);
+  line-height:1.3;
+  height:2.6em;             /* 2줄 고정 */
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
 }
 
-/* 버튼/태그는 이번 디자인에서 숨김 */
-.mdl-card .ft, .mdl-card .tags, .mdl-card .meta{display:none}
-
-/* buttons */
-.btn{background:var(--pri);color:#fff;border:none;font-weight:900;cursor:pointer}
-.btn.ghost{background:#fff;color:#334155;border:1px solid var(--line)}
-.btn[disabled]{opacity:.6}
-
-/* more */
-.more-wrap{display:flex;justify-content:center;margin:16px 0}
-.btn.loading{position:relative;pointer-events:none}
-.btn.loading::after{
-  content:"";position:absolute;right:12px;top:50%;width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;transform:translateY(-50%);animation:spin .8s linear infinite}
+/* 더보기 버튼 */
+.more-wrap{display:flex;justify-content:center;margin:16px 0 8px}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:800;border:1px solid var(--line);background:#fff;color:#334155;padding:10px 14px;cursor:pointer}
+.btn.ghost{background:#fff}
+.btn.loading{position:relative;pointer-events:none;opacity:.7}
+.btn.loading::after{content:"";position:absolute;right:12px;top:50%;width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;transform:translateY(-50%);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
 
-/* helpers */
-.section{margin:16px 0}
-.btn.pri{background:var(--pri);color:#fff}
+/* FAB (모델 등록) */
+.fab{
+  position:fixed; right:18px; bottom:82px;
+  width:56px; height:56px; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:var(--pri); color:#fff; border:none;
+  box-shadow:0 8px 18px rgba(91,91,240,.35);
+  cursor:pointer;
+  z-index:20;
+}
+.fab i{font-size:22px}
+@media (min-width:1024px){ .fab{right:28px;bottom:28px} }
