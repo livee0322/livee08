@@ -1,72 +1,91 @@
-/* portfolio-list.css — v1.0.3 */
-:root{
-  --bg:#f7f8fb; --card:#fff; --line:#eef1f5; --ink:#111827; --muted:#64748b;
-  --pri:#5b5bf0; --radius:16px; --shadow:0 8px 20px rgba(17,24,39,.06);
-}
-html,body{background:var(--bg);color:var(--ink)}
-.container{max-width:1120px;margin:0 auto;padding:12px 16px 24px}
-.section{margin:10px 0}
+/* portfolio-list.css — v2.2.0 */
+/* 기본 레이아웃 */
+.container{max-width:1120px;margin:0 auto;padding:16px}
+.section{margin:14px 0}
 
-/* 상단 컨트롤 */
-.pl-controls{
-  display:grid; grid-template-columns:1fr auto; gap:10px;
-  position:sticky; top:56px; z-index:5; background:var(--bg); padding:8px 0;
+/* 컨트롤 영역 */
+.pl-head{display:flex;gap:10px;align-items:center}
+.pl-search{
+  flex:1;display:flex;align-items:center;gap:8px;
+  border:1px solid #e9eef5;border-radius:12px;background:#fff;
+  padding:10px 12px
 }
-@media(min-width:960px){ .pl-controls{ top:66px; } }
-.pl-controls .search{
-  display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line);
-  border-radius:999px; padding:8px 12px;
+.pl-search i{font-size:18px;color:#9aa7b2}
+.pl-search input{
+  outline:none;border:none;background:transparent;width:100%;
+  font-weight:700;color:#111827
 }
-.pl-controls .search .input{
-  border:none; outline:none; background:transparent; width:100%; font:inherit; color:inherit;
+.pl-sort{
+  position:relative;display:inline-flex;align-items:center;
+  border:1px solid #e9eef5;border-radius:12px;background:#fff;padding:0 10px
 }
-.pl-controls .search i{ color:#94a3b8; font-size:18px }
-.pl-controls .sort{
-  position:relative; display:flex; align-items:center;
-  background:#fff; border:1px solid var(--line); border-radius:12px; padding:0 12px;
+.pl-sort select{
+  appearance:none;border:none;background:transparent;height:40px;
+  padding:0 26px 0 4px;font-weight:800;color:#111827
 }
-.pl-controls .sort select{
-  appearance:none; border:none; background:transparent; padding:10px 18px 10px 4px; font:inherit; color:inherit;
-}
-.pl-controls .sort i{ position:absolute; right:10px; pointer-events:none; color:#94a3b8 }
+.pl-sort i{position:absolute;right:8px;pointer-events:none;color:#94a3b8}
 
-/* 그리드 (카드형 명함 1→2열) */
+/* 그리드(2열) */
 .pl-grid{
-  display:grid; grid-template-columns:1fr; gap:10px; margin-top:12px;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
 }
-@media(min-width:720px){ .pl-grid{ grid-template-columns:1fr 1fr; } }
-@media(min-width:1120px){ .pl-grid{ gap:12px; } }
+@media(min-width:900px){ .pl-grid{grid-template-columns:repeat(3,1fr)} }
+@media(min-width:1160px){ .pl-grid{grid-template-columns:repeat(4,1fr)} }
 
-/* 카드 */
+/* 카드: 명함형 */
 .pl-card{
-  display:grid; grid-template-columns:120px 1fr; gap:12px;
-  background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px;
+  position:relative;display:flex;gap:12px;align-items:flex-start;
+  background:#fff;border:1px solid #eef1f5;border-radius:16px;
+  padding:12px;overflow:hidden; /* 넘침 방지 */
 }
-@media(min-width:540px){ .pl-card{ grid-template-columns:140px 1fr; } }
 .pl-thumb{
-  width:100%; aspect-ratio:4/5; background:#e5e7eb center/cover no-repeat; border-radius:10px; overflow:hidden;
+  flex:0 0 110px;height:110px;border-radius:12px;overflow:hidden;
+  background:#f1f5f9;display:block
 }
-.pl-body{ display:flex; flex-direction:column; justify-content:center; gap:4px }
-.pl-name{ font-weight:900; font-size:18px; line-height:1.2 }
-.pl-sub{ color:var(--muted); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.pl-meta{ color:#94a3b8; font-size:12px }
-.pl-link{ margin-top:6px }
-.pl-link a{ color:#0b57d0; font-weight:800 }
-.pl-link i{ vertical-align:middle }
+.pl-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pl-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.pl-name{font-weight:900;font-size:18px;line-height:1.2;color:#111827}
+.pl-headline{color:#64748b;font-size:14px;line-height:1.35;max-height:3.0em;overflow:hidden}
+
+/* 공개 필드 배지 */
+.pl-facets{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.pl-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:#f7f8fb;border:1px solid #e9eef5;border-radius:999px;
+  padding:4px 8px;font-size:12px;color:#475569;font-weight:700
+}
+
+/* 상세보기 링크: 우하단 고정 */
+.pl-detail{
+  position:absolute;right:12px;bottom:10px;font-weight:900;
+  color:#0b5fff;display:inline-flex;align-items:center;gap:4px
+}
+.pl-detail i{font-size:18px}
+
+/* 즐겨찾기(스크랩) */
+.pl-fav{
+  position:absolute;right:10px;top:10px;border:none;background:#fff;
+  width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer
+}
+.pl-fav i{font-size:18px;color:#c7cdd7}
+.pl-fav.on i{color:#ffb400}
 
 /* 빈 상태 */
-.pl-empty{ text-align:center; color:#94a3b8; padding:36px 0 }
-.pl-empty i{ font-size:40px; display:block; margin:6px auto 4px }
-
-/* 더보기 */
-.more-wrap{ display:flex; justify-content:center; margin:16px 0 }
-.btn{ display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:900 }
-.btn.ghost{ background:#fff }
-
-/* FAB */
-.fab{
-  position:fixed; right:18px; bottom:calc(78px + env(safe-area-inset-bottom));
-  width:56px; height:56px; border-radius:999px; display:flex; align-items:center; justify-content:center;
-  background:var(--pri); color:#fff; box-shadow:var(--shadow); z-index:1001;
+.pl-empty{
+  text-align:center;color:#90a4b4;margin:24px 0
 }
-.fab i{ font-size:24px }
+.pl-empty i{font-size:36px;display:block;margin-bottom:8px}
+
+/* 버튼 & FAB */
+.more-wrap{display:flex;justify-content:center;margin:16px 0}
+.btn{display:inline-flex;gap:6px;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid #e9eef5;background:#111827;color:#fff;font-weight:900}
+.btn.ghost{background:#fff;color:#334155}
+.fab{
+  position:fixed;right:18px;bottom:calc(86px + env(safe-area-inset-bottom));
+  width:60px;height:60px;border-radius:999px;border:none;
+  display:flex;align-items:center;justify-content:center;
+  background:#5b5bf0;color:#fff;box-shadow:0 10px 26px rgba(91,91,240,.35);
+  cursor:pointer;z-index:1050
+}
+.fab i{font-size:26px}
