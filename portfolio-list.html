@@ -5,46 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>포트폴리오 - Livee</title>
 
-  <!-- 폰트/아이콘 & 공통 프레임 -->
+  <!-- 폰트/아이콘/리셋 -->
   <link rel="stylesheet" href="css/reset-frame.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"/>
 
-  <!-- 공통 UI (상단/하단 탭) -->
-  <script defer src="js/ui.js?v=3.0.3"></script>
+  <!-- 공통 UI -->
+  <link rel="stylesheet" href="css/main.css"/>
 
-  <!-- 이 페이지 전용 -->
-  <link rel="stylesheet" href="css/portfolio-list.css?v=1.0.3"/>
+  <!-- 페이지 전용 -->
+  <link rel="stylesheet" href="css/portfolio-list.css?v=2.2.0"/>
 </head>
-<body>
-  <!-- 상단바 / 상단탭은 ui.js가 렌더링 -->
+<body class="theme-artbook">
+  <!-- 상단바 & 상단탭 (ui.js가 렌더) -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
   <main class="container">
-    <section class="section">
-      <!-- 타이틀은 제거 요청으로 생략 -->
 
-      <!-- 컨트롤 -->
-      <div class="pl-controls" role="region" aria-label="포트폴리오 검색 및 정렬">
-        <label class="search">
-          <i class="ri-search-line" aria-hidden="true"></i>
-          <input id="plSearch" class="input" type="search" placeholder="닉네임·태그 검색" aria-label="포트폴리오 검색"/>
-        </label>
-        <label class="sort">
-          <select id="plSort" class="select" aria-label="정렬">
-            <option value="latest">최신순</option>
-            <option value="offers">제안 가능 우선</option>
-          </select>
-          <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
-        </label>
+    <!-- 컨트롤 -->
+    <section class="section pl-head">
+      <div class="pl-search">
+        <i class="ri-search-line"></i>
+        <input id="plSearch" type="search" placeholder="검색" aria-label="검색"/>
       </div>
+      <label class="pl-sort">
+        <select id="plSort" aria-label="정렬">
+          <option value="latest">최신순</option>
+          <option value="offers">제안 가능 우선</option>
+        </select>
+        <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+      </label>
+    </section>
 
-      <!-- 카드 그리드 -->
+    <!-- 그리드 -->
+    <section class="section">
       <div id="plGrid" class="pl-grid" aria-live="polite"></div>
 
-      <!-- 빈 상태 -->
+      <!-- 빈 상태 (목록 있으면 자동 감춤) -->
       <div id="plEmpty" class="pl-empty" hidden>
-        <i class="ri-emotion-happy-line" aria-hidden="true"></i>
+        <i class="ri-emotion-happy-line"></i>
         <p>아직 등록된 포트폴리오가 없어요.</p>
       </div>
 
@@ -55,13 +54,17 @@
     </section>
   </main>
 
-  <!-- FAB: 포트폴리오 등록 -->
-  <a href="portfolio-new.html" class="fab" aria-label="포트폴리오 등록">
-    <i class="ri-add-line" aria-hidden="true"></i>
-  </a>
+  <!-- FAB: 등록 -->
+  <button class="fab" aria-label="포트폴리오 등록" onclick="location.href='portfolio-new.html'">
+    <i class="ri-add-line"></i>
+  </button>
+
+  <!-- 하단 탭 -->
+  <footer id="bottom-tabs"></footer>
 
   <!-- 스크립트 -->
   <script src="js/config.js?v=20250909"></script>
-  <script src="js/portfolio-list.js?v=1.0.3"></script>
+  <script src="js/ui.js?v=3.0.3"></script>
+  <script src="js/portfolio-list.js?v=2.2.0"></script>
 </body>
 </html>
