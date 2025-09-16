@@ -1,167 +1,194 @@
-/* portfolio-detail.js — v1.1.0
- * - CTA 버튼(제안/수정) 커버 밖에 배치 → 하단 탭과 겹침 방지
- * - 링크가 있는 경우만 노출
- * - 공개 플래그(facts) 가로 스크롤
- * - 공유/스크랩
- */
+/* Portfolio Detail — robust fetch + safe fallbacks + CTA logic */
 (() => {
+  'use strict';
+
   const CFG = window.LIVEE_CONFIG || {};
   const API = (CFG.API_BASE || '/api/v1').replace(/\/+$/,'');
-  const EP   = (CFG.endpoints && (CFG.endpoints.portfolioBase || '/portfolio-test')) || '/portfolio-test';
+  const EP  = (CFG.endpoints && CFG.endpoints.portfolioBase) || '/portfolio-test'; // 단수 엔드포인트
+  const PH  = CFG.placeholderThumb || 'default.jpg';
 
-  const $ = (s,el=document)=>el.querySelector(s);
+  // Shortcuts
+  const $  = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => [...el.querySelectorAll(s)];
   const qs = new URLSearchParams(location.search);
   const id = qs.get('id') || '';
 
-  const token = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
-  const headers = { Accept:'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  // Elements
+  const coverBg    = $('#coverBg');
+  const avatarImg  = $('#avatarImg');
+  const nicknameT  = $('#nicknameTtl');
+  const headlineEl = $('#headlineSub');
+  const badgeWrap  = $('#pubBadges');
+  const hintEl     = $('#pdHint');
 
-  const el = {
-    cover: $('#pfCover'),
-    avatar: $('#pfAvatar'),
-    name: $('#pfName'),
-    headline: $('#pfHeadline'),
-    badges: $('#pfBadges'),
-    facts: $('#pfFacts'),
-    bio: $('#pfBio'),
-    bioWrap: $('#pfBioWrap'),
-    linksWrap: $('#pfLinksWrap'),
-    lnkWeb: $('#lnkWebsite'),
-    lnkInsta: $('#lnkInsta'),
-    lnkYT: $('#lnkYouTube'),
-    galleryWrap: $('#pfGalleryWrap'),
-    gallery: $('#pfGallery'),
-    cta: $('#pfCta'),
-    btnEdit: $('#btnEdit'),
-    btnPropose: $('#btnPropose'),
-    btnShare: $('#btnShare'),
-    btnBookmark: $('#btnBookmark'),
-    btnBack: $('#btnBack'),
+  const linkWrap   = $('#linkWrap');
+  const lnkInsta   = $('#lnkInsta');
+  const lnkYT      = $('#lnkYT');
+  const lnkSite    = $('#lnkSite');
+
+  const bioCard    = $('#bioCard');
+  const bioHtml    = $('#bioHtml');
+  const galleryCard= $('#galleryCard');
+  const subGrid    = $('#subGrid');
+  const liveCard   = $('#liveCard');
+  const liveList   = $('#liveList');
+
+  const backBtn    = $('#pdBack');
+  const shareBtn   = $('#pdShare');
+  const saveBtn    = $('#pdSave');
+
+  const ctaBar     = $('#ctaBar');
+  const ctaLeft    = $('#ctaLeft');  // 제안하기
+  const ctaRight   = $('#ctaRight'); // 수정하기
+
+  // Back
+  backBtn?.addEventListener('click', () => history.length > 1 ? history.back() : location.href='portfolio-list.html');
+
+  // Scrap (local)
+  const SCRAP_KEY = 'livee_portfolio_scraps';
+  const getScraps = () => {
+    try { return JSON.parse(localStorage.getItem(SCRAP_KEY) || '[]'); } catch { return []; }
   };
+  const setScraps = (arr) => localStorage.setItem(SCRAP_KEY, JSON.stringify(arr));
+  const isScrapped = (pid) => getScraps().includes(pid);
 
-  // helpers
-  const clean = (s)=> (s||'').toString().trim();
-  const has = (s)=> !!clean(s);
-  const fact = (icon, txt) => `<span class="fact-chip"><i class="${icon}"></i>${txt}</span>`;
-  const badge = (icon, txt) => `<span class="badge"><i class="${icon}"></i>${txt}</span>`;
+  const setSaveIcon = (on) => {
+    saveBtn.innerHTML = `<i class="${on?'ri-bookmark-fill':'ri-bookmark-line'}"></i>`;
+  };
+  saveBtn?.addEventListener('click', () => {
+    if (!id) return;
+    const arr = getScraps();
+    const i = arr.indexOf(id);
+    if (i >= 0) arr.splice(i,1); else arr.push(id);
+    setScraps(arr);
+    setSaveIcon(isScrapped(id));
+    UI?.toast(isScrapped(id) ? '스크랩에 저장했어요' : '스크랩을 해제했어요');
+  });
 
-  async function load() {
-    if (!id) { UI?.toast?.('잘못된 접근입니다'); history.back(); return; }
+  // Share
+  shareBtn?.addEventListener('click', async () => {
+    const url = location.href;
+    try{
+      if (navigator.share) await navigator.share({ title: document.title, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        UI?.toast('링크를 복사했어요');
+      }
+    }catch{ /* ignore */ }
+  });
+
+  // Load
+  ready(async function load() {
+    if (!id) { UI?.toast('프로필 ID가 없습니다'); return; }
     try {
-      const res = await fetch(`${API}${EP}/${encodeURIComponent(id)}`, { headers });
-      const j = await res.json().catch(()=> ({}));
-      if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
+      const r = await fetch(`${API}${EP}/${encodeURIComponent(id)}`, { headers: {Accept:'application/json'} });
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
+
       const d = j.data || j;
 
-      // hero
-      el.cover.src  = d.coverImageUrl || d.coverImage || d.mainThumbnailUrl || '';
-      el.avatar.src = d.mainThumbnailUrl || d.mainThumbnail || d.coverImageUrl || '';
-      el.name.textContent = d.nickname || d.displayName || d.name || '이름 미상';
-      el.headline.textContent = d.headline || '';
+      // ---- Safe mapping / fallbacks ----
+      const nick = d.nickname || d.displayName || d.name || '닉네임';
+      const head = d.headline || d.oneLiner || '';
+      const avatar = d.mainThumbnailUrl || d.mainThumbnail || PH;
+      const cover  = d.coverImageUrl || d.coverImage || avatar || PH;
 
-      // badges (예: 나이 공개)
-      el.badges.innerHTML = '';
-      if (typeof d.age === 'number') {
-        // 나이는 개별 공개 플래그로 판단 (demographics.agePublic or agePublic)
-        const isPublic = d.agePublic === true || d.demographics?.agePublic === true;
-        if (isPublic) el.badges.insertAdjacentHTML('beforeend', badge('ri-cake-2-line', `${d.age}세`));
-      }
+      nicknameT.textContent = nick;
+      headlineEl.textContent = head || ' ';
+      avatarImg.src = avatar;
+      coverBg.style.backgroundImage = `url("${cover}")`;
 
-      // facts (공개 설정된 항목만)
-      const facts = [];
+      // Public badges from schema flags
+      const bdgs = [];
+      const age = d.age;
+      if (d.agePublic && age) bdgs.push({icon:'ri-cake-2-line', text:`${age}세`});
+
       const demo = d.demographics || {};
-      if (demo.genderPublic && has(demo.gender)) {
-        const gmap = { female:'여성', male:'남성', other:'기타' };
-        facts.push(fact('ri-user-3-line', gmap[demo.gender] || demo.gender));
-      }
-      if (demo.heightPublic && demo.height) facts.push(fact('ri-ruler-line', `${demo.height}cm`));
-      if (demo.sizePublic) {
-        const pieces = [];
-        if (has(demo.sizeTop)) pieces.push(`상의 ${demo.sizeTop}`);
-        if (has(demo.sizeBottom)) pieces.push(`하의 ${demo.sizeBottom}`);
-        if (has(demo.shoe)) pieces.push(`신발 ${demo.shoe}`);
-        if (pieces.length) facts.push(fact('ri-t-shirt-2-line', pieces.join(' · ')));
+      if (d.genderPublic && demo.gender)  bdgs.push({icon:'ri-user-3-line', text:(demo.gender==='male'?'남성':demo.gender==='female'?'여성':'기타')});
+      if (d.heightPublic && demo.height)  bdgs.push({icon:'ri-ruler-line', text:`${demo.height}cm`});
+      if (demo.sizePublic && (demo.sizeTop || demo.sizeBottom)) {
+        const sizeTxt = [demo.sizeTop, demo.sizeBottom].filter(Boolean).join('/');
+        bdgs.push({icon:'ri-t-shirt-line', text:sizeTxt});
       }
       if (d.regionPublic && d.region?.city) {
-        const city = d.region.city;
-        const area = d.region.area ? ` ${d.region.area}` : '';
-        facts.push(fact('ri-map-pin-2-line', `${city}${area}`));
+        bdgs.push({icon:'ri-map-pin-2-line', text:[d.region.city, d.region.area].filter(Boolean).join(' ')});
       }
-      if (d.careerPublic && typeof d.careerYears === 'number') {
-        facts.push(fact('ri-briefcase-2-line', `경력 ${d.careerYears}년`));
-      }
-      el.facts.innerHTML = facts.join('') || '';
 
-      // 링크
+      badgeWrap.innerHTML = bdgs.map(b=>`<span class="bdg"><i class="${b.icon}"></i>${b.text}</span>`).join('');
+
+      // Links (show when exists)
       const links = d.links || {};
-      const hasAnyLink = [links.website, links.instagram, links.youtube].some(Boolean);
-      if (hasAnyLink) {
-        el.linksWrap.hidden = false;
-        if (has(links.website)) { el.lnkWeb.href = links.website; el.lnkWeb.hidden = false; }
-        if (has(links.instagram)) { el.lnkInsta.href = links.instagram; el.lnkInsta.hidden = false; }
-        if (has(links.youtube)) { el.lnkYT.href = links.youtube; el.lnkYT.hidden = false; }
+      let hasLink = false;
+      if (links.instagram) { hasLink = true; lnkInsta.href = links.instagram; lnkInsta.removeAttribute('hidden'); }
+      else lnkInsta.setAttribute('hidden','');
+
+      if (links.youtube)   { hasLink = true; lnkYT.href = links.youtube; lnkYT.removeAttribute('hidden'); }
+      else lnkYT.setAttribute('hidden','');
+
+      if (links.website || d.primaryLink) {
+        hasLink = true; lnkSite.href = links.website || d.primaryLink; lnkSite.removeAttribute('hidden');
+      } else lnkSite.setAttribute('hidden','');
+
+      linkWrap.hidden = !hasLink;
+
+      // Bio
+      if (d.bio && String(d.bio).trim()) {
+        bioHtml.textContent = '';    // sanitize: 프론트는 텍스트로만; 서버에서 sanitize된 html을 주는 경우 아래 한 줄 사용
+        // bioHtml.innerHTML = d.bio; // 서버에서 sanitize된 경우에만 사용
+        bioHtml.textContent = d.bio;
+        bioCard.hidden = false;
       }
 
-      // 소개
-      if (has(d.bio)) { el.bio.textContent = d.bio; el.bioWrap.hidden = false; }
-
-      // 갤러리
-      const subs = Array.isArray(d.subThumbnails) ? d.subThumbnails : (Array.isArray(d.subImages) ? d.subImages : []);
+      // Sub gallery
+      const subs = Array.isArray(d.subThumbnails) ? d.subThumbnails : Array.isArray(d.subImages) ? d.subImages : [];
       if (subs.length) {
-        el.galleryWrap.hidden = false;
-        el.gallery.innerHTML = subs.map(u=> `<img src="${u}" alt="gallery">`).join('');
+        subGrid.innerHTML = subs.map(u=>`<img src="${u}" alt="">`).join('');
+        galleryCard.hidden = false;
       }
 
-      // CTA: 본인일 때 수정, 아니면 제안
-      const me = await loadMeSafely();
-      const isOwner = me?.id && d.createdBy && (me.id === (d.createdBy._id || d.createdBy));
-      el.btnEdit.style.display = isOwner ? '' : 'none';
-      el.btnPropose.style.display = isOwner ? 'none' : '';
+      // Recent lives (optional)
+      if (Array.isArray(d.liveLinks) && d.liveLinks.length) {
+        liveList.innerHTML = d.liveLinks.slice(0,6).map(x=>`
+          <div class="pd-liveItem">
+            <div style="font-weight:900">${x.title||'라이브'}</div>
+            <div class="muted" style="font-size:13px">${x.role==='guest'?'게스트':'호스트'} · ${x.date?new Date(x.date).toLocaleDateString():'-'}</div>
+          </div>
+        `).join('');
+        liveCard.hidden = false;
+      }
 
-    } catch (e) {
-      console.error('[portfolio-detail] load error', e);
-      UI?.toast?.('프로필을 불러오지 못했습니다');
-    }
-  }
+      // CTA (owner vs guest)
+      const token = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+      const meReq = token ? fetch(`${API}/users/me`, { headers:{Authorization:`Bearer ${token}`} }).then(r=>r.json()).catch(()=>null) : null;
+      const me = await meReq;
 
-  async function loadMeSafely(){
-    try{
-      if (!token) return null;
-      const r = await fetch(`${API}/users/me`, { headers });
-      const j = await r.json().catch(()=> ({}));
-      if (!r.ok || j.ok === false) return null;
-      return j;
-    }catch{ return null; }
-  }
+      const isOwner = me && (me.id === String(d.createdBy || '').replace(/^ObjectId\("(.*)"\)$/, '$1'));
+      // 좌측: 제안하기 (항상 표시), 우측: 내 소유면 '수정하기', 아니면 숨김
+      ctaLeft.href = `mailto:?subject=[Livee] ${encodeURIComponent(nick)}님에게 제안&body=${encodeURIComponent(location.href)}`;
+      ctaLeft.innerHTML = `<i class="ri-send-plane-line"></i> 제안하기`;
 
-  // actions
-  el.btnBack?.addEventListener('click', ()=> history.length > 1 ? history.back() : location.href='portfolio-list.html');
-  el.btnShare?.addEventListener('click', async ()=>{
-    try{
-      if (navigator.share) {
-        await navigator.share({ title: document.title, url: location.href });
+      if (isOwner) {
+        ctaRight.href = `portfolio-new.html?id=${encodeURIComponent(id)}`;
+        ctaRight.innerHTML = `<i class="ri-edit-2-line"></i> 수정하기`;
+        ctaRight.style.display = '';
       } else {
-        await navigator.clipboard.writeText(location.href);
-        UI?.toast?.('링크가 복사되었습니다');
+        ctaRight.style.display = 'none';
       }
-    }catch{}
-  });
-  el.btnBookmark?.addEventListener('click', ()=>{
-    const on = el.btnBookmark.classList.toggle('on');
-    el.btnBookmark.innerHTML = `<i class="${on ? 'ri-bookmark-fill':'ri-bookmark-line'}"></i>`;
-    UI?.toast?.(on ? '스크랩에 추가' : '스크랩 해제');
+      ctaBar.hidden = false;
+
+      // Scrap icon initial
+      setSaveIcon(isScrapped(id));
+      hintEl.style.display = ''; // 안내문구는 상단 한 번만
+    } catch (err) {
+      console.error('[portfolio detail load]', err);
+      UI?.toast('프로필을 불러오지 못했습니다.');
+      // 최소한의 안전 레이아웃
+      coverBg.style.background = '#e5e7eb';
+    }
   });
 
-  el.btnPropose?.addEventListener('click', ()=> {
-    // 향후 제안 폼으로 이동/모달
-    UI?.toast?.('제안하기 폼으로 이동합니다');
-    // location.href = 'proposal-new.html?target='+encodeURIComponent(id);
-  });
-  el.btnEdit?.addEventListener('click', ()=> location.href = 'portfolio-new.html?id='+encodeURIComponent(id));
-
-  // boot
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', load, { once:true });
-  } else load();
+  function ready(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, {once:true});
+    else fn();
+  }
 })();
