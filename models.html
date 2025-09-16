@@ -5,66 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Livee — 모델</title>
 
+  <!-- 폰트 & 아이콘 -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
 
+  <!-- 스타일 -->
   <link rel="stylesheet" href="css/models.css?v=1.2.0">
   <meta name="theme-color" content="#ffffff">
 </head>
-<body class="theme-artbook">
+<body>
+  <!-- 공통 바 (ui.js가 렌더링) -->
   <header id="appbar"></header>
-  <nav id="top-tabs"></nav>
 
-  <main class="container">
-    <!-- hero -->
+  <main class="container" aria-live="polite">
+    <!-- 상단 카운트 -->
     <section class="section">
-      <div class="mdl-hero" role="img" aria-label="모델 섹션 배너">
-        <div class="mdl-hero__body">
-          <div class="kicker">LIVE MODEL</div>
-          <h1 class="ttl">브랜드와 호스트를 잇는 모델</h1>
-          <p class="sub">프로필을 등록하고 쇼핑라이브/촬영 기회를 받아보세요.</p>
-          <div class="cta">
-            <a class="btn pri" href="model-new.html"><i class="ri-user-add-line"></i> 모델 등록</a>
-          </div>
-        </div>
-      </div>
+      <div id="mdlCount" class="mdl-count">모델 0명</div>
     </section>
 
-    <!-- 툴바(필요 시 유지) -->
+    <!-- 모델 카드 그리드 -->
     <section class="section">
-      <div class="mdl-toolbar">
-        <div class="chips" id="mdlFilters" role="tablist" aria-label="카테고리">
-          <button class="chip on" data-k="">전체</button>
-          <button class="chip" data-k="beauty">뷰티</button>
-          <button class="chip" data-k="fashion">패션</button>
-          <button class="chip" data-k="mc">쇼호스트</button>
-          <button class="chip" data-k="male">남성</button>
-          <button class="chip" data-k="female">여성</button>
-        </div>
-        <div class="actions">
-          <a class="btn ghost" href="model-new.html"><i class="ri-add-line"></i> 등록</a>
-        </div>
-      </div>
-    </section>
+      <div id="mdlGrid" class="mdl-grid" role="list"></div>
 
-    <section class="section">
-      <div class="mdl-count" id="mdlCount">모델 0명</div>
-    </section>
-
-    <!-- 2열 카드 -->
-    <section class="section">
-      <div id="mdlGrid" class="mdl-grid" aria-live="polite"></div>
       <div id="mdlMoreWrap" class="more-wrap">
-        <button id="mdlMore" class="btn ghost"><i class="ri-more-line"></i> 더 보기</button>
+        <button id="mdlMore" class="btn ghost" type="button" aria-label="더 보기">
+          <i class="ri-more-line" aria-hidden="true"></i> 더 보기
+        </button>
       </div>
     </section>
   </main>
 
+  <!-- FAB: 모델 등록 -->
+  <button id="fabNew" class="fab" aria-label="모델 등록">
+    <i class="ri-user-add-line" aria-hidden="true"></i>
+  </button>
+
+  <!-- 하단 탭 -->
   <footer id="bottom-tabs"></footer>
 
+  <!-- 스크립트 (순서 중요) -->
   <script src="js/config.js?v=20250909"></script>
-  <script src="js/ui.js?v=3.0.4"></script>
+  <script src="js/ui.js?v=3.0.3"></script>
   <script src="js/models.js?v=1.2.0"></script>
 </body>
 </html>
