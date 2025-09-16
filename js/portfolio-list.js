@@ -1,177 +1,88 @@
-/* Portfolio List – v3.0 (card UI + real actions) */
-(() => {
+/* portfolio-list.js — v1.0.0 (명함형 카드 렌더) */
+(function(){
+  'use strict';
   const CFG = window.LIVEE_CONFIG || {};
-  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP = CFG.endpoints || {};
-  // 기본은 내 포트폴리오 목록(액션 버튼 표시 목적)
-  const LIST_PATH = EP.portfolios || '/portfolio-test?mine=1&limit=24';
+  const API = (CFG.API_BASE || '/api/v1').replace(/\/$/,'');
+  const EP_LIST = (CFG.endpoints && CFG.endpoints.portfolios) || '/portfolio-test?status=published&limit=24';
+  const BASE = (CFG.endpoints && CFG.endpoints.portfolioBase) || '/portfolio-test';
+  const PH = CFG.placeholderThumb || 'default.jpg';
 
-  const TOKEN =
-    localStorage.getItem('livee_token') ||
-    localStorage.getItem('liveeToken') || '';
+  const $ = (s,el=document)=>el.querySelector(s);
+  const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+  const qs = (o)=>Object.entries(o).filter(([,v])=>v!==undefined&&v!=='').map(([k,v])=>`${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
 
-  const $  = (s) => document.querySelector(s);
-  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  let page = 1, key='', sort='latest', done=false;
 
-  // === 이미지 선택/변환 ===
-  const FALLBACK =
-    CFG.placeholderThumb ||
-    (CFG.BASE_PATH ? `${CFG.BASE_PATH}/default.jpg` : 'default.jpg');
+  function card(d){
+    const id = d.id || d._id;
+    const img = d.mainThumbnailUrl || d.coverImageUrl || PH;
+    const name = d.nickname || d.displayName || d.name || '크리에이터';
+    const headline = d.headline || d.intro || d.summary || '';
+    const region = d.region?.city ? `${d.region.city}${d.region.area?(' · '+d.region.area):''}` : '';
+    const meta = [region, d.careerYears?`경력 ${d.careerYears}y`:null].filter(Boolean).join(' · ');
+    const tags = (Array.isArray(d.tags)? d.tags.slice(0,3):[]).map(t=>`<span class="pl-tag">#${t}</span>`).join('');
 
-  const pickImage = (p) =>
-    p.mainThumbnailUrl ||
-    (Array.isArray(p.subThumbnails) && p.subThumbnails[0]) ||
-    p.coverImageUrl || '';
-
-  const isCloudinary = (u) =>
-    /https?:\/\/res\.cloudinary\.com\/.+\/image\/upload\//.test(u);
-  const hasTransform = (u) => {
-    if (!isCloudinary(u)) return false;
-    const tail = u.split('/upload/')[1] || '';
-    const first = tail.split('/')[0] || '';
-    return /^([a-z]+_[^/]+,?)+$/.test(first);
-  };
-  const PRESET =
-    (CFG.thumb && CFG.thumb.square) || 'c_fill,g_auto,w_400,h_400,f_auto,q_auto';
-  const cldSquare = (u) => {
-    if (!isCloudinary(u)) return u;
-    try {
-      if (hasTransform(u)) return u;
-      const [head, tail] = u.split('/upload/');
-      return `${head}/upload/${PRESET}/${tail}`;
-    } catch { return u; }
-  };
-  const thumbSrc = (u) => (u ? cldSquare(u) : FALLBACK);
-
-  // === API ===
-  const headers = (json=true) => {
-    const h = {};
-    if (json) h['Content-Type'] = 'application/json';
-    if (TOKEN) h['Authorization'] = `Bearer ${TOKEN}`;
-    return h;
-  };
-
-  async function fetchList() {
-    const base = LIST_PATH.startsWith('http')
-      ? LIST_PATH
-      : `${API_BASE}${LIST_PATH.startsWith('/') ? LIST_PATH : `/${LIST_PATH}`}`;
-
-    try {
-      const res = await fetch(base, { headers: { Accept: 'application/json' } });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.ok === false) throw new Error(data.message || `HTTP_${res.status}`);
-
-      const list =
-        (Array.isArray(data) && data) ||
-        data.items || data.data?.items ||
-        data.docs  || data.data?.docs  || [];
-
-      return list.map((p, i) => ({
-        id: p.id || p._id || `${i}`,
-        nickname: p.nickname || '무명',
-        headline: p.headline || '',
-        tags: Array.isArray(p.tags) ? p.tags.slice(0, 5) : [],
-        img: pickImage(p),
-        updatedAt: p.updatedAt || p.createdAt || '',
-        openToOffers: !!p.openToOffers
-      }));
-    } catch (e) {
-      console.warn('[portfolio-list] fetch error:', e);
-      return [];
-    }
-  }
-
-  async function removeItem(id){
-    const ok = confirm('정말 삭제할까요? 되돌릴 수 없습니다.');
-    if (!ok) return false;
-    const res = await fetch(`${API_BASE}/portfolio-test/${encodeURIComponent(id)}`, {
-      method:'DELETE', headers: headers(false)
-    });
-    const j = await res.json().catch(()=>({}));
-    if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
-    return true;
-  }
-
-  // === 렌더 ===
-  function render(list){
-    const grid  = $('#plGrid');
-    const empty = $('#plEmpty');
-    if (!grid) return;
-
-    if (!list.length){
-      grid.innerHTML = '';
-      if (empty) empty.hidden = false;
-      return;
-    }
-    if (empty) empty.hidden = true;
-
-    grid.innerHTML = list.map(it => `
-      <article class="pl-card" data-id="${it.id}">
-        <a class="pl-thumbWrap" href="portfolio-view.html?id=${encodeURIComponent(it.id)}" aria-label="보기">
-          <img class="pl-thumb" src="${thumbSrc(it.img)}" alt="" onerror="this.onerror=null;this.src='${FALLBACK}'" />
-        </a>
+    return `
+      <article class="pl-card" data-id="${id}">
+        <div class="pl-thumb"><img src="${img}" alt=""></div>
         <div class="pl-body">
-          <div class="pl-nick">${it.nickname}</div>
-          <div class="pl-head">${it.headline || ''}</div>
-          ${it.tags && it.tags.length ? `
-            <div class="pl-tags">${it.tags.map(t=>`<span class="pl-tag">#${t}</span>`).join('')}</div>
-          `:''}
+          <div class="pl-name">${name}</div>
+          <div class="pl-actions">
+            <a class="btn ghost" href="portfolio.html?id=${encodeURIComponent(id)}"><i class="ri-user-line"></i> 프로필</a>
+            <a class="btn link" href="portfolio.html?id=${encodeURIComponent(id)}">프로필 상세보기<i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+          </div>
+          <div class="pl-headline">${headline}</div>
+          <div class="pl-meta">${meta}</div>
+          <div class="pl-tags">${tags}</div>
         </div>
-        <div class="pl-actions">
-          <a class="btn ghost" data-act="view"  href="portfolio-view.html?id=${encodeURIComponent(it.id)}"><i class="ri-external-link-line"></i> 보기</a>
-          <a class="btn"       data-act="edit"  href="portfolio-edit.html?id=${encodeURIComponent(it.id)}"><i class="ri-edit-line"></i> 수정</a>
-          <button class="btn danger" data-act="del"><i class="ri-delete-bin-line"></i> 삭제</button>
-        </div>
-      </article>
-    `).join('');
+      </article>`;
   }
 
-  // === 액션 바인딩(위임) ===
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-act]');
-    if (!btn) return;
-
-    const card = btn.closest('.pl-card');
-    const id   = card?.dataset.id;
-    const act  = btn.dataset.act;
-
-    // 토큰 없는 상태에서 수정/삭제 시 로그인 필요
-    if (['edit','del'].includes(act) && !TOKEN){
-      e.preventDefault();
-      alert('로그인 후 이용해주세요.');
-      return;
-    }
-
+  async function load(append=true){
+    if(done) return;
+    $('#plMore')?.setAttribute('disabled','disabled');
     try{
-      if (act === 'del'){
-        e.preventDefault();
-        btn.disabled = true;
-        btn.classList.add('loading');
-        const ok = await removeItem(id);
-        if (ok) {
-          // 자연스러운 제거 애니메이션
-          card.style.transition = 'opacity .18s ease, transform .18s ease';
-          card.style.opacity = '0';
-          card.style.transform = 'scale(.98)';
-          setTimeout(()=> card.remove(), 180);
-          // 비어있으면 empty 표시
-          setTimeout(()=>{
-            if (!$('#plGrid').children.length && $('#plEmpty')) $('#plEmpty').hidden = false;
-          }, 220);
-        }
+      const base = EP_LIST.split('?')[0];
+      const q = qs({ page, key, sort, status:'published', limit: 20 });
+      const r = await fetch(`${API}${base}?${q}`);
+      const j = await r.json().catch(()=>({}));
+      const items = j.items || j.data || j.docs || [];
+      if(page===1 && items.length===0){
+        $('#plGrid').innerHTML='';
+        $('#plEmpty').hidden = false;
+        $('.more-wrap').style.display='none';
+        return;
       }
-      // edit/view 는 a 링크 그대로 이동
-    }catch(err){
-      console.error('[delete]', err);
-      alert('삭제 실패: ' + (err.message || 'ERROR'));
+      $('#plEmpty').hidden = true;
+      if(items.length<1){ done=true; $('.more-wrap').style.display='none'; }
+      const html = items.map(card).join('');
+      if(append) $('#plGrid').insertAdjacentHTML('beforeend', html);
+      page += 1;
+    }catch(e){
+      console.warn('[portfolio list load]', e);
     }finally{
-      btn.disabled = false;
-      btn.classList.remove('loading');
+      $('#plMore')?.removeAttribute('disabled');
     }
+  }
+
+  // 검색/정렬
+  $('#plSearch')?.addEventListener('input', debounce(()=>{
+    key = ($('#plSearch').value||'').trim();
+    page=1; done=false; $('#plGrid').innerHTML=''; $('.more-wrap').style.display='';
+    load(true);
+  }, 250));
+  $('#plSort')?.addEventListener('change', ()=>{
+    sort = $('#plSort').value || 'latest';
+    page=1; done=false; $('#plGrid').innerHTML=''; $('.more-wrap').style.display='';
+    load(true);
   });
 
-  // === 시작 ===
-  document.addEventListener('DOMContentLoaded', async () => {
-    render(await fetchList());
-  });
+  $('#plMore')?.addEventListener('click',()=>load(true));
+
+  // 초기 로드
+  load(true);
+
+  function debounce(fn, ms){
+    let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); };
+  }
 })();
