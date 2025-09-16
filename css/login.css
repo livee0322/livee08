@@ -1,69 +1,63 @@
-/* 로그인 전용 — v2.6.1 (공통 UI 탑/바텀 사용, 반응형 보강) */
-:root{
-  --ink:#111827;
-  --muted:#6b7280;
-  --line:#e5e7eb;
-  --brand:#111;          /* 버튼 배경 */
-  --focus:#1d4ed8;       /* 포커스 컬러 */
-  --chip:#f3f4f6;
+/* 로그인 전용 — v2.7 (logo 여백 + 말풍선 배치) */
+.lg-banner { background:#f5f7ff; border-bottom:1px solid #e8eefc; }
+.lg-banner-in { max-width:760px; margin:0 auto; padding:10px 16px; font-size:14px; color:#2b4acb; }
+
+.lg-wrap { max-width:760px; margin:24px auto 96px; padding:0 16px; }
+.lg-brand { display:flex; justify-content:center; margin:20px 0 28px; } /* ⬅ 로고 아래 여백 +28 */
+.lg-brand img { height:44px; width:auto; display:block; }
+
+.role-switch {
+  position:relative; /* 말풍선 절대배치 기준 */
+  display:flex; gap:12px; justify-content:center; align-items:center;
+  margin:8px 0 22px;
+}
+.role-switch .pill {
+  padding:10px 16px; border-radius:999px; border:1px solid #dcdfe7; background:#fff;
+  font-weight:700; font-size:15px; cursor:pointer; color:#111;
+}
+.role-switch .pill.active { border-color:#1d4ed8; color:#1d4ed8; background:#f7f9ff; }
+
+/* 말풍선: 쇼호스트 버튼 위로 살짝 겹치기 */
+.role-switch .bubble{
+  position:absolute;
+  /* 쇼호스트 버튼(id=btnShowhost)을 기준으로 오른쪽 버튼 상단에 오도록 보정 */
+  left:50%; transform:translateX(84px);  /* 화면에 맞춰 약간 오른쪽으로 */
+  top:-6px;                               /* 버튼 위로 살짝 겹치게 */
+  pointer-events:none;
+}
+.role-switch .bubble > span{
+  display:inline-block; background:#111; color:#fff; font-weight:800; font-size:12px;
+  padding:6px 10px; border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.15);
+  position:relative; white-space:nowrap;
+}
+.role-switch .bubble > span::after{
+  content:""; position:absolute; left:14px; bottom:-6px; width:0; height:0;
+  border:6px solid transparent; border-top-color:#111; /* 위쪽 삼각형 */
 }
 
-body[data-page="login"]{background:#fff;font-family:'SUIT',system-ui,-apple-system,'Noto Sans KR',sans-serif}
-
-/* 안내 배너 */
-.lg-banner{background:#f5f7ff;border-bottom:1px solid #e8eefc}
-.lg-banner-in{max-width:960px;margin:0 auto;padding:10px 16px;font-size:14px;color:#2b4acb}
-
-/* 레이아웃 */
-.lg-wrap{max-width:960px;margin:24px auto 96px;padding:0 16px}
-.lg-brand{display:flex;justify-content:center;margin:8px 0 18px}
-.lg-brand img{height:44px;width:auto;object-fit:contain}
-
-/* 역할 스위치 + 말풍선 */
-.role-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 18px;position:relative}
-.role-switch{display:flex;gap:8px}
-.role-switch .pill{
-  padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;
-  font-weight:700;font-size:14px;color:var(--ink);cursor:pointer
-}
-.role-switch .pill.active{border-color:var(--focus);color:var(--focus);box-shadow:0 0 0 3px rgba(29,78,216,.12)}
-.role-tip{position:relative}
-.role-tip__txt{
-  display:inline-block;background:#111;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;
-}
-.role-tip__txt::after{
-  content:"";position:absolute;left:12px;bottom:-6px;border:6px solid transparent;border-top-color:#111
-}
-
-/* 폼 */
-.lg-form{display:flex;flex-direction:column;gap:12px;max-width:560px;margin:0 auto}
+/* 입력/버튼 */
+.lg-form { display:flex; flex-direction:column; gap:12px; }
 .lg-form input{
-  width:100%;height:52px;border:1px solid var(--line);border-radius:14px;padding:0 14px;
-  font-size:16px;background:#fff;color:var(--ink);outline:none
+  width:100%; height:52px; border:1px solid #dcdfe7; border-radius:14px; padding:0 14px;
+  font-size:16px; outline:none; background:#fff; color:#111;
 }
-.lg-form input::placeholder{color:#9ca3af}
-.lg-form input:focus{border-color:var(--focus);box-shadow:0 0 0 3px rgba(29,78,216,.14)}
+.lg-form input:focus{ border-color:#1d4ed8; box-shadow:0 0 0 3px rgba(29,78,216,.12); }
 
 .lg-submit{
-  height:54px;border-radius:14px;border:none;background:var(--brand);color:#fff;font-weight:800;font-size:16px
+  height:54px; border-radius:14px; border:none; background:#111; color:#fff; font-weight:800; font-size:16px;
 }
-.lg-submit:disabled{opacity:.6}
+.lg-submit:disabled{ opacity:.6; }
 
-.lg-error{color:#d71e18;font-size:14px;margin-top:2px;text-align:center}
-.lg-links{text-align:center;margin-top:12px;color:var(--muted)}
-.lg-links a{color:var(--focus);font-weight:800;text-decoration:none}
+.lg-error{ color:#d71e18; font-size:14px; margin-top:2px; }
+.lg-links{ text-align:center; margin-top:14px; color:#555; }
+.lg-links a{ color:#1d4ed8; font-weight:700; }
 
-/* 접근성용 스크린리더 텍스트 */
-.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* 하단 탭과 겹치지 않도록 */
+body[data-page="login"]{ padding-bottom:84px; }
 
-/* 하단 탭 가리지 않도록 */
-@media (max-width:960px){
-  body[data-page="login"]{padding-bottom:88px}
-}
-
-/* 반응형 확장 */
-@media (min-width:960px){
-  .lg-wrap{margin-top:36px}
-  .lg-form{max-width:640px}
-  .lg-brand img{height:52px}
+/* 반응형 보정 */
+@media (min-width:768px){
+  .lg-brand{ margin:28px 0 36px; }
+  .role-switch .bubble{ transform:translateX(100px); top:-8px; }
 }
