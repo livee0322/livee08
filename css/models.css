@@ -1,83 +1,70 @@
-/* models.css — v1.2.0 (라운드/그림자 제거, 2열 그리드, FAB) */
+/* models.css — v1.1.3 (카드 테두리/라운드/그림자 제거 + 간격 축소) */
 :root{
-  --bg:#ffffff;
-  --text:#0f172a;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#111827;
   --muted:#64748b;
-  --line:#e5e7eb;
-  --ink-sub:#475569;
-  --pri:#5b5bf0;
+  --pri:#635bff;
+  --radius:0;          /* 라운드 제거 */
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',sans-serif}
-a{color:inherit;text-decoration:none}  /* 밑줄 제거 */
-.container{padding:16px 16px 28px}
-.section{margin:12px 0}
+html,body{margin:0;font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',sans-serif;color:var(--text);background:var(--bg)}
 
-/* 카운트 */
-.mdl-count{font-weight:800;color:var(--muted);padding:4px 2px}
+.container{padding:12px 12px 20px}    /* 여백 살짝 축소 */
 
-/* 2열 그리드 (모바일 기준) */
+/* count */
+.mdl-count{color:var(--muted);font-weight:800;margin:6px 2px}
+
+/* grid */
 .mdl-grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
+  grid-template-columns:repeat(2,1fr);  /* 2열 고정 */
+  gap:8px;                               /* 카드 사이 여백 축소 */
 }
-@media (min-width:900px){ .mdl-grid{grid-template-columns:repeat(3,1fr)} }
-@media (min-width:1200px){ .mdl-grid{grid-template-columns:repeat(4,1fr)} }
+@media (min-width:860px){ .mdl-grid{ grid-template-columns:repeat(3,1fr);} }
+@media (min-width:1160px){ .mdl-grid{ grid-template-columns:repeat(4,1fr);} }
 
-/* 카드: 각진 + 그림자/테두리 최소화 */
+/* 카드: 테두리/라운드/그림자 전부 제거 */
 .mdl-card{
-  display:block;
-  border:1px solid var(--line);
-  border-radius:0;      /* 라운드 제거 */
-  background:#fff;
-  overflow:hidden;
+  background:var(--card);
+  border:none;               /* 테두리 제거 */
+  border-radius:var(--radius);
+  box-shadow:none;           /* 그림자 제거 */
+  display:flex;flex-direction:column;
 }
-
-/* 썸네일: 3:4 비율 */
 .mdl-card .thumb{
-  width:100%;
-  aspect-ratio:3/4;
-  background:#f1f5f9 center/cover no-repeat;
+  aspect-ratio:3/4;          /* 인물 사진 비율에 맞춤(세로 느낌) */
+  background:#e5e7eb center/cover no-repeat;
 }
+.mdl-card .body{padding:10px 6px 12px}  /* 내부 패딩도 소폭 축소 */
+.mdl-card .name{font-weight:900;letter-spacing:.2px}
+.mdl-card .headline{color:var(--muted);font-size:13px;margin-top:2px;line-height:1.35}
 
-/* 본문 */
-.mdl-card .body{padding:10px 8px 12px}
-.mdl-card .name{
-  display:block;
-  font-weight:900;
-  font-size:15px;
-  line-height:1.15;
-  margin-bottom:4px;
-}
-.mdl-card .headline{
-  font-size:13px;
-  color:var(--ink-sub);
-  line-height:1.3;
-  height:2.6em;             /* 2줄 고정 */
-  overflow:hidden;
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-}
+/* footer 버튼 영역도 카드 경계 없이 */
+.mdl-card .ft{display:flex;gap:6px;padding:8px 0}
+.btn{background:var(--pri);color:#fff;border:none;font-weight:900;padding:9px 10px;border-radius:10px}
+.btn.ghost{background:#fff;color:#334155;border:1px solid #e8ecf2}
+.btn[disabled]{opacity:.6}
 
-/* 더보기 버튼 */
-.more-wrap{display:flex;justify-content:center;margin:16px 0 8px}
-.btn{display:inline-flex;align-items:center;gap:6px;font-weight:800;border:1px solid var(--line);background:#fff;color:#334155;padding:10px 14px;cursor:pointer}
-.btn.ghost{background:#fff}
-.btn.loading{position:relative;pointer-events:none;opacity:.7}
-.btn.loading::after{content:"";position:absolute;right:12px;top:50%;width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;transform:translateY(-50%);animation:spin .8s linear infinite}
+/* more */
+.more-wrap{display:flex;justify-content:center;margin:12px 0}
+.btn.loading{position:relative;pointer-events:none}
+.btn.loading::after{
+  content:"";position:absolute;right:10px;top:50%;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;transform:translateY(-50%);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
 
-/* FAB (모델 등록) */
+/* helpers */
+.section{margin:10px 0}  /* 섹션 간격 축소 */
+
+/* FAB (우하단) */
 .fab{
-  position:fixed; right:18px; bottom:82px;
-  width:56px; height:56px; border-radius:50%;
-  display:inline-flex; align-items:center; justify-content:center;
-  background:var(--pri); color:#fff; border:none;
-  box-shadow:0 8px 18px rgba(91,91,240,.35);
-  cursor:pointer;
-  z-index:20;
+  position:fixed;right:18px;bottom:92px;
+  width:58px;height:58px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--pri);color:#fff;text-decoration:none;
+  box-shadow:0 12px 30px rgba(99,91,255,.28);
 }
 .fab i{font-size:22px}
-@media (min-width:1024px){ .fab{right:28px;bottom:28px} }
+
+/* 상단 탭 밑줄 제거 (ui.js에서 그리는 링크에도 적용) */
+a{text-decoration:none}
