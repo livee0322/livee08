@@ -1,4 +1,4 @@
-/* models.css — v1.1.0 (밝은 톤, 메인과 통일) */
+/* models.css — v1.1.1 (앵커 밑줄 제거 reset 포함, 메인 톤 통일) */
 :root{
   --bg:#f8fafc;
   --card:#ffffff;
@@ -12,17 +12,15 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',sans-serif;color:var(--text);background:var(--bg)}
+/* ui.js 로드 시 밑줄 방지 */
+a{color:inherit;text-decoration:none}
 .container{padding:16px 16px 24px}
 
 /* hero */
 .mdl-hero{
-  position:relative;
-  border-radius:24px;
-  overflow:hidden;
-  background: linear-gradient(160deg,#eef2ff 0%,#ffffff 50%,#f9fafb 100%);
-  border:1px solid var(--line);
-  box-shadow: var(--shadow);
-  min-height:160px;
+  position:relative;border-radius:24px;overflow:hidden;
+  background:linear-gradient(160deg,#eef2ff 0%,#ffffff 50%,#f9fafb 100%);
+  border:1px solid var(--line);box-shadow:var(--shadow);min-height:160px;
 }
 .mdl-hero__body{padding:22px}
 .mdl-hero .kicker{font-weight:900;color:#7c83ff;font-size:12px;letter-spacing:.06em;margin-bottom:6px}
@@ -31,9 +29,10 @@ html,body{margin:0;font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',
 .mdl-hero .btn{padding:10px 14px;border-radius:12px}
 
 /* toolbar */
+.section{margin:16px 0}
 .mdl-toolbar{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow)}
 .chips{display:flex;gap:8px;overflow:auto}
-.chip{border:1px solid var(--line);background:var(--chip);padding:8px 12px;border-radius:999px;font-weight:800;color:var(--muted)}
+.chip{border:1px solid var(--line);background:var(--chip);padding:8px 12px;border-radius:999px;font-weight:800;color:var(--muted);white-space:nowrap}
 .chip.on{background:#eef2ff;color:#333;border-color:#d9ddff}
 .actions .btn{padding:8px 12px;border-radius:12px}
 
@@ -50,7 +49,7 @@ html,body{margin:0;font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',
 .mdl-card .body{padding:12px}
 .mdl-card .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .mdl-card .name{font-weight:900}
-.mdl-card .rate .ri-star-fill{color:#f59e0b}
+.mdl-card .rate .ri-star-fill,
 .mdl-card .rate .ri-star-half-line{color:#f59e0b}
 .mdl-card .rate .ri-star-line{color:#e5e7eb}
 .mdl-card .headline{color:var(--muted);font-size:14px;margin-top:2px}
@@ -69,7 +68,3 @@ html,body{margin:0;font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',
 .btn.loading::after{
   content:"";position:absolute;right:12px;top:50%;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;transform:translateY(-50%);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
-
-/* helpers */
-.section{margin:16px 0}
-.btn.pri{background:var(--pri);color:#fff}
