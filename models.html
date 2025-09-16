@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Livee — 모델</title>
 
-  <!-- 폰트 & 아이콘 -->
+  <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
 
-  <!-- 스타일 -->
-  <link rel="stylesheet" href="css/models.css?v=1.1.0">
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/models.css?v=1.1.1">
   <meta name="theme-color" content="#ffffff">
 </head>
 <body class="theme-artbook">
-  <!-- 상단바 / 상단탭 (ui.js 가 렌더) -->
+  <!-- 상단/탭: ui.js가 렌더 -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
@@ -34,7 +34,7 @@
       </div>
     </section>
 
-    <!-- 툴바 -->
+    <!-- Toolbar -->
     <section class="section">
       <div class="mdl-toolbar">
         <div class="chips" id="mdlFilters" role="tablist" aria-label="카테고리">
@@ -51,12 +51,12 @@
       </div>
     </section>
 
-    <!-- 결과 개수 -->
+    <!-- Count -->
     <section class="section">
       <div class="mdl-count" id="mdlCount">모델 0명</div>
     </section>
 
-    <!-- 카드 그리드 -->
+    <!-- Grid -->
     <section class="section">
       <div id="mdlGrid" class="mdl-grid" aria-live="polite"></div>
       <div id="mdlMoreWrap" class="more-wrap">
@@ -68,101 +68,9 @@
   <!-- 하단 탭 -->
   <footer id="bottom-tabs"></footer>
 
-  <!-- 스크립트 (순서 중요) -->
+  <!-- Scripts (순서 중요) -->
   <script src="js/config.js?v=20250909"></script>
   <script src="js/ui.js?v=3.0.3"></script>
-  <script>
-  // models-list (가벼운 빌트인, 별도 파일 없이 여기에)
-  (() => {
-    const CFG = window.LIVEE_CONFIG || {};
-    const API = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-    const EP_LIST = (CFG.endpoints && CFG.endpoints.models) || '/models-test?status=published&limit=24';
-    const EP_BASE = (CFG.endpoints && CFG.endpoints.modelBase) || '/models-test';
-    const PH = CFG.placeholderThumb || 'default.jpg';
-
-    const $ = (s,el=document)=>el.querySelector(s);
-    const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
-    const money = (n)=>Number(n||0).toLocaleString('ko-KR');
-    const star = (v=0)=> {
-      const x = Math.max(0, Math.min(5, Number(v||0)));
-      const full = Math.floor(x), half = x - full >= 0.5;
-      let html = '';
-      for(let i=0;i<full;i++) html += '<i class="ri-star-fill"></i>';
-      if(half) html += '<i class="ri-star-half-line"></i>';
-      for(let i=full+(half?1:0);i<5;i++) html += '<i class="ri-star-line"></i>';
-      return `<span class="stars" aria-label="별점 ${x}점">${html}</span>`;
-    };
-
-    let page = 1, done=false, key='';
-
-    function card(d){
-      const id = d.id || d._id;
-      const img = d.mainThumbnailUrl || d.coverImageUrl || PH;
-      const name = d.nickname || d.name || '모델';
-      const sub = d.headline || d.oneLiner || '';
-      const region = d.region?.city ? `${d.region.city}${d.region.area?(' · '+d.region.area):''}` : '';
-      const rating = d.ratingAvg ?? d.rating ?? 0;
-      const tags = Array.isArray(d.tags)? d.tags.slice(0,3).map(t=>`<span class="tag">#${t}</span>`).join('') : '';
-
-      return `
-        <article class="mdl-card" data-id="${id}">
-          <div class="thumb" style="background-image:url('${img}')"></div>
-          <div class="body">
-            <div class="row">
-              <strong class="name">${name}</strong>
-              ${rating?`<span class="rate">${star(rating)}</span>`:''}
-            </div>
-            <div class="headline">${sub}</div>
-            <div class="meta">${region}${d.careerYears?` · 경력 ${d.careerYears}y`:''}</div>
-            <div class="tags">${tags}</div>
-          </div>
-          <div class="ft">
-            <a class="btn ghost" href="model.html?id=${encodeURIComponent(id)}"><i class="ri-user-line"></i> 프로필</a>
-            <a class="btn" href="model-new.html?id=${encodeURIComponent(id)}"><i class="ri-edit-2-line"></i> 수정</a>
-          </div>
-        </article>`;
-    }
-
-    async function load(append=true){
-      if(done) return;
-      $('#mdlMore')?.setAttribute('disabled','disabled');
-      $('#mdlMore')?.classList.add('loading');
-      try{
-        const q = new URLSearchParams({ page, key, status:'published', limit: 24 });
-        const r = await fetch(`${API}${EP_LIST.split('?')[0]}?${q.toString()}`);
-        const j = await r.json().catch(()=>({}));
-        const items = j.items || j.data || j.docs || [];
-        if(items.length<1){ done=true; $('#mdlMoreWrap').style.display='none'; }
-        const html = items.map(card).join('');
-        if(append) $('#mdlGrid').insertAdjacentHTML('beforeend', html);
-        const total = Number(j.total || j.count || $('#mdlGrid').children.length);
-        $('#mdlCount').textContent = `모델 ${total}명`;
-        page += 1;
-      }catch(e){
-        console.warn('[models load]', e);
-        UI.toast('목록을 불러오지 못했습니다');
-      }finally{
-        $('#mdlMore')?.removeAttribute('disabled');
-        $('#mdlMore')?.classList.remove('loading');
-      }
-    }
-
-    // filter chips
-    $('#mdlFilters')?.addEventListener('click',(e)=>{
-      const b = e.target.closest('.chip'); if(!b) return;
-      $$('#mdlFilters .chip').forEach(x=>x.classList.toggle('on', x===b));
-      key = b.dataset.k || '';
-      page=1; done=false;
-      $('#mdlGrid').innerHTML='';
-      $('#mdlMoreWrap').style.display='';
-      load(true);
-    });
-
-    $('#mdlMore')?.addEventListener('click',()=>load(true));
-
-    // 초기 로드
-    load(true);
-  })();
-  </script>
+  <script src="js/models.js?v=1.1.1"></script>
 </body>
 </html>
