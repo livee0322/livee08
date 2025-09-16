@@ -5,67 +5,41 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>로그인 - Livee</title>
 
-  <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-
-  <!-- Global / Page styles -->
-  <link rel="stylesheet" href="css/reset-frame.css?v=1"/>
-  <link rel="stylesheet" href="css/main.css?v=2.13.0"/>
-  <link rel="stylesheet" href="css/login.css?v=2.6.1"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"/>
+  <link rel="stylesheet" href="./css/main.css?v=20250907"/>
+  <link rel="stylesheet" href="./css/login.css?v=20250908"/> <!-- ⬅ 날짜만 업데이트 -->
   <meta name="theme-color" content="#ffffff"/>
 </head>
 <body data-page="login">
-  
-  <!-- 배너 -->
-  <div class="lg-banner" role="status" aria-live="polite">
-    <div class="lg-banner-in">현재 클로즈 베타 테스트 중입니다.</div>
-  </div>
+  <div class="lg-banner"><div class="lg-banner-in">현재 클로즈 베타 테스트 중입니다. 피드백 환영 🚀</div></div>
 
-  <!-- 본문 -->
+  <!-- 앱바/상단탭 제거됨 -->
+
   <main class="lg-wrap" role="main">
-    <!-- 브랜드 로고 -->
-    <h1 class="lg-brand" aria-label="Livee">
-      <!-- 루트 경로의 logo.png 사용 -->
-      <img src="logo.png" alt="Livee" width="180" height="44" decoding="async">
-    </h1>
+    <div class="lg-brand"><img src="./logo.png" alt="Livee"/></div> <!-- 루트의 logo.png 사용 -->
 
-    <!-- 역할 전환 + 말풍선 -->
-    <div class="role-wrap">
-      <div class="role-switch" aria-label="역할 선택">
-        <button type="button" class="pill active" data-role="brand">브랜드</button>
-        <button type="button" class="pill" data-role="showhost">쇼호스트</button>
-      </div>
-      <!-- 모델도 여기! 말풍선 -->
-      <div class="role-tip" id="roleTip" aria-hidden="true">
-        <span class="role-tip__txt">모델도 여기!</span>
-      </div>
+    <!-- 역할 선택 -->
+    <div class="role-switch" aria-label="역할 선택">
+      <button type="button" class="pill active" data-role="brand">브랜드</button>
+
+      <span class="bubble"><span>모델도 여기!</span></span> <!-- ⬅ 말풍선 -->
+
+      <button type="button" class="pill" data-role="showhost" id="btnShowhost">쇼호스트</button>
     </div>
 
-    <!-- 로그인 폼 -->
     <form id="loginForm" class="lg-form" novalidate>
-      <label class="sr-only" for="email">이메일</label>
-      <input type="email" id="email" placeholder="you@example.com" autocomplete="username" required>
-
-      <label class="sr-only" for="password">비밀번호</label>
-      <input type="password" id="password" placeholder="비밀번호" autocomplete="current-password" required>
-
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="username" required/>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required/>
       <button id="loginBtn" type="submit" class="lg-submit">로그인</button>
       <p id="loginError" class="lg-error" hidden></p>
     </form>
 
-    <p class="lg-links">아직 계정이 없으신가요? <a href="signup.html">회원가입</a></p>
+    <p class="lg-links">아직 계정이 없으신가요? <a href="./signup.html">회원가입</a></p>
   </main>
 
-  <!-- 하단 탭 (ui.js가 렌더링) -->
-  <footer id="bottom-tabs"></footer>
-
-  <!-- 공통 스크립트 -->
-  <script src="js/config.js?v=20250907"></script>
-  <script src="js/ui.js?v=3.0.4"></script>
-
-  <!-- 페이지 스크립트 -->
-  <script src="js/login.js?v=2.6.1"></script>
+  <!-- 공통 스크립트(탭바만 고정, 상단 요소 없음) -->
+  <script src="./js/config.js?v=20250907"></script>
+  <script src="./js/ui.js?v=20250907"></script>
+  <script src="./js/login.js?v=20250907"></script>
 </body>
 </html>
