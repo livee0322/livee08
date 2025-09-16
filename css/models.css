@@ -1,70 +1,69 @@
-/* models.css — v1.1.3 (카드 테두리/라운드/그림자 제거 + 간격 축소) */
+/* models.css — v1.2.0 */
 :root{
-  --bg:#f8fafc;
-  --card:#ffffff;
-  --text:#111827;
-  --muted:#64748b;
-  --pri:#635bff;
-  --radius:0;          /* 라운드 제거 */
+  --bg:#f8fafc; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+  --line:#eef1f5; --pri:#5b5bf0; --radius:0; --shadow:none;
 }
 *{box-sizing:border-box}
-html,body{margin:0;font-family:'SUIT',system-ui,AppleSDGothicNeo,'Noto Sans KR',sans-serif;color:var(--text);background:var(--bg)}
+html,body{margin:0;font-family:'SUIT',system-ui,'Noto Sans KR',sans-serif;color:var(--text);background:var(--bg)}
+/* 앵커/아이콘 기본값 수정: 파란색/밑줄 방지 */
+a{color:inherit;text-decoration:none}
+i[class^="ri-"], i[class*=" ri-"]{color:inherit}
 
-.container{padding:12px 12px 20px}    /* 여백 살짝 축소 */
+/* 컨테이너 */
+.container{padding:16px}
 
-/* count */
-.mdl-count{color:var(--muted);font-weight:800;margin:6px 2px}
-
-/* grid */
+/* 그리드(2열) */
 .mdl-grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);  /* 2열 고정 */
-  gap:8px;                               /* 카드 사이 여백 축소 */
+  grid-template-columns:repeat(2,1fr);
+  gap:10px; /* 여백 줄임 */
 }
-@media (min-width:860px){ .mdl-grid{ grid-template-columns:repeat(3,1fr);} }
-@media (min-width:1160px){ .mdl-grid{ grid-template-columns:repeat(4,1fr);} }
+@media (min-width:768px){.mdl-grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:1024px){.mdl-grid{grid-template-columns:repeat(4,1fr)}}
 
-/* 카드: 테두리/라운드/그림자 전부 제거 */
+/* 카드: 테두리/라운드/그림자 제거 */
 .mdl-card{
   background:var(--card);
-  border:none;               /* 테두리 제거 */
+  border:none;
   border-radius:var(--radius);
-  box-shadow:none;           /* 그림자 제거 */
+  box-shadow:var(--shadow);
   display:flex;flex-direction:column;
 }
+
+/* 썸네일 */
 .mdl-card .thumb{
-  aspect-ratio:3/4;          /* 인물 사진 비율에 맞춤(세로 느낌) */
+  width:100%; aspect-ratio:1/1; /* 정사각 + cover */
   background:#e5e7eb center/cover no-repeat;
 }
-.mdl-card .body{padding:10px 6px 12px}  /* 내부 패딩도 소폭 축소 */
-.mdl-card .name{font-weight:900;letter-spacing:.2px}
-.mdl-card .headline{color:var(--muted);font-size:13px;margin-top:2px;line-height:1.35}
 
-/* footer 버튼 영역도 카드 경계 없이 */
-.mdl-card .ft{display:flex;gap:6px;padding:8px 0}
-.btn{background:var(--pri);color:#fff;border:none;font-weight:900;padding:9px 10px;border-radius:10px}
-.btn.ghost{background:#fff;color:#334155;border:1px solid #e8ecf2}
-.btn[disabled]{opacity:.6}
+/* 바디 */
+.mdl-card .body{padding:10px 6px 6px}
+.mdl-card .name{font-weight:900; letter-spacing:.1px}
+.mdl-card .headline{color:var(--muted); font-size:14px; margin-top:2px; line-height:1.25}
 
-/* more */
-.more-wrap{display:flex;justify-content:center;margin:12px 0}
-.btn.loading{position:relative;pointer-events:none}
-.btn.loading::after{
-  content:"";position:absolute;right:10px;top:50%;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;transform:translateY(-50%);animation:spin .8s linear infinite}
-@keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
-
-/* helpers */
-.section{margin:10px 0}  /* 섹션 간격 축소 */
-
-/* FAB (우하단) */
-.fab{
-  position:fixed;right:18px;bottom:92px;
-  width:58px;height:58px;border-radius:50%;
-  display:grid;place-items:center;
-  background:var(--pri);color:#fff;text-decoration:none;
-  box-shadow:0 12px 30px rgba(99,91,255,.28);
+/* 프로필 상세보기 텍스트 링크 */
+.detail-link{
+  display:inline-flex; align-items:center; gap:4px;
+  font-weight:800; font-size:13px; color:#334155; /* 중립색 */
+  margin:8px 6px 4px;
 }
-.fab i{font-size:22px}
+.detail-link i{font-size:16px}
+.detail-link:hover{color:#111827; text-decoration:underline}
 
-/* 상단 탭 밑줄 제거 (ui.js에서 그리는 링크에도 적용) */
-a{text-decoration:none}
+/* 더보기 버튼 */
+.more-wrap{display:flex;justify-content:center;margin:14px 0 24px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;font-weight:900}
+.btn.ghost{background:#fff}
+
+/* FAB */
+.fab{
+  position:fixed; right:20px; bottom:88px;
+  width:56px; height:56px; border-radius:50%;
+  background:var(--pri); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 10px 24px rgba(91,91,240,.3);
+}
+.fab i{font-size:24px}
+
+/* 섹션 마진 */
+.section{margin:12px 0}
