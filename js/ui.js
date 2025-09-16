@@ -31,34 +31,54 @@
       localStorage.getItem('livee_token') ||
       localStorage.getItem('liveeToken') || '';
 
-    /* ---------- AppBar (logo.png) ---------- */
+   /* ui.js — appbar logo image patch */
+(() => {
+  const ready = (fn) =>
+    document.readyState === 'loading'
+      ? document.addEventListener('DOMContentLoaded', fn, { once: true })
+      : fn();
+
+  ready(() => {
     const appbar = document.getElementById('appbar');
-    if (appbar) {
-      const isLogin = !!getToken();
+    if (!appbar) return;
 
-      // 로고 사이즈/정렬은 여기서 통일 관리
-      const appbarHTML = `
-        <div class="lv-appbar" role="banner"
-             style="display:flex;align-items:center;gap:8px;justify-content:space-between;
-                    padding:12px 16px;border-bottom:1px solid #eef1f5;background:#fff;
-                    position:sticky;top:0;z-index:900">
-          <a href="index.html" class="lv-logo" aria-label="라이비 홈"
-             style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit">
-            <img src="/logo.png" alt="라이비" width="112" height="28"
-                 style="display:block;height:28px;width:auto;object-fit:contain"/>
+    // 현재 문서 기준 상대경로로 로고 경로 생성
+    // 루트에 logo.png가 있다면 './logo.png'가 가장 안전 (GitHub Pages 호환)
+    const logoSrc = './logo.png?v=1';
+
+    appbar.innerHTML = `
+      <div class="lv-appbar" role="banner"
+           style="display:flex;align-items:center;gap:8px;justify-content:space-between;
+                  padding:12px 16px;border-bottom:1px solid #eef1f5;background:#fff;
+                  position:sticky;top:0;z-index:900">
+        <a href="index.html" class="lv-logo" aria-label="라이비 홈"
+           style="display:flex;align-items:center;gap:10px;text-decoration:none">
+          <img src="${logoSrc}" alt="라이비" width="112" height="28"
+               style="display:block;height:28px;width:auto;object-fit:contain"/>
+        </a>
+        <div class="lv-actions" role="group" aria-label="빠른 작업" style="display:flex;gap:10px">
+          <a class="lv-action" href="#/alerts" aria-label="알림">
+            <i class="ri-notification-3-line" style="font-size:20px"></i>
           </a>
-          <div class="lv-actions" role="group" aria-label="빠른 작업" style="display:flex;gap:10px">
-            <a class="lv-action" href="#/alerts" aria-label="알림"><i class="ri-notification-3-line" style="font-size:20px"></i></a>
-            <a class="lv-action" href="#/search" aria-label="검색"><i class="ri-search-line" style="font-size:20px"></i></a>
-            <a class="lv-action" href="${isLogin ? 'login.html?logout=1' : 'login.html'}"
-               aria-label="${isLogin ? '로그아웃' : '로그인'}">
-              <i class="${isLogin ? 'ri-logout-box-r-line' : 'ri-login-box-line'}" style="font-size:20px"></i>
-            </a>
-          </div>
-        </div>`;
+          <a class="lv-action" href="#/search" aria-label="검색">
+            <i class="ri-search-line" style="font-size:20px"></i>
+          </a>
+          <a class="lv-action" href="${
+            (localStorage.getItem('livee_token') || localStorage.getItem('liveeToken')) ? 'login.html?logout=1' : 'login.html'
+          }" aria-label="${
+            (localStorage.getItem('livee_token') || localStorage.getItem('liveeToken')) ? '로그아웃' : '로그인'
+          }">
+            <i class="${
+              (localStorage.getItem('livee_token') || localStorage.getItem('liveeToken'))
+                ? 'ri-logout-box-r-line'
+                : 'ri-login-box-line'
+            }" style="font-size:20px"></i>
+          </a>
+        </div>
+      </div>`;
+  });
+})();
 
-      appbar.innerHTML = appbarHTML;
-    }
 
     /* ---------- Top Tabs (underline + nowrap scroll) ---------- */
     const top = document.getElementById('top-tabs');
@@ -122,3 +142,4 @@
     root.style.paddingBottom = 'calc('+ Math.max(pb, 88) +'px + env(safe-area-inset-bottom))';
   });
 })();
+
