@@ -136,7 +136,7 @@
       if (!card) return;
       if (e.target.closest('.pl-scrap')) return; // 스크랩 버튼은 제외
       const id = card.dataset.id;
-      location.href = `portfolio.html?id=${encodeURIComponent(id)}`;
+      location.href = `portfolio-detail.html?id=${encodeURIComponent(id)}`;
     });
     $('#plList').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
