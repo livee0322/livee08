@@ -1,86 +1,81 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>포트폴리오 상세 - Livee</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>프로필</title>
 
-  <!-- 폰트/리셋 & 공통 -->
-  <link rel="stylesheet" href="css/reset-frame.css"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"/>
-
-  <!-- 상단/하단 공통 UI -->
-  <script defer src="js/ui.js?v=3.0.3"></script>
-  <script defer src="js/config.js"></script>
-
-  <!-- 상세 전용 스타일/로직 -->
-  <link rel="stylesheet" href="css/portfolio-detail.css?v=1.0.0"/>
-  <script defer src="js/portfolio-detail.js?v=1.0.0"></script>
+  <!-- Reset & 폰트 -->
+  <link rel="stylesheet" href="css/reset-frame.css">
+  <!-- 아이콘 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+  <!-- 공통 UI -->
+  <link rel="stylesheet" href="css/ui-common.css">
+  <!-- 본 페이지 전용 -->
+  <link rel="stylesheet" href="css/portfolio-detail.css">
 </head>
-<body class="theme-artbook">
-  <!-- 공통 상단바 & 상단탭 -->
+<body>
+  <!-- 상단바 / 상단탭 (ui.js 가 렌더) -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
-  <main class="pd-wrap">
-    <!-- Cover / Avatar -->
-    <section class="pd-hero" aria-label="프로필">
-      <div class="pd-cover" id="pdCover"></div>
-      <div class="pd-hero__in">
-        <img id="pdAvatar" class="pd-avatar" alt="프로필 사진"/>
-        <div class="pd-head">
-          <h1 id="pdName" class="pd-name">이름</h1>
-          <p id="pdHeadline" class="pd-sub">한 줄 소개</p>
-          <div id="pdChips" class="pd-chips" aria-label="공개 정보"></div>
+  <main id="root" class="pf-root" aria-live="polite">
+    <!-- Hero -->
+    <section class="pf-hero">
+      <!-- 배경 -->
+      <div class="pf-hero__bg" id="heroBg" role="img" aria-label="커버 이미지"></div>
+      <!-- 반투명 그라데이션 오버레이 -->
+      <div class="pf-hero__overlay"></div>
+
+      <!-- 헤더 바(공유/뒤로/스크랩) -->
+      <div class="pf-hero__bar">
+        <button class="icon-btn" onclick="history.back()" aria-label="뒤로">
+          <i class="ri-arrow-left-line"></i>
+        </button>
+        <div class="pf-hero__bar-actions">
+          <button id="shareBtn" class="icon-btn" aria-label="공유"><i class="ri-share-line"></i></button>
+          <button id="favBtn" class="icon-btn" aria-label="스크랩"><i class="ri-bookmark-line"></i></button>
+        </div>
+      </div>
+
+      <!-- 아바타 + 텍스트 -->
+      <div class="pf-hero__bottom">
+        <img id="avatar" class="pf-avatar" alt="프로필 썸네일"/>
+        <div class="pf-namewrap">
+          <h1 id="nickname" class="pf-nickname">닉네임</h1>
+          <p id="headline" class="pf-headline">한 줄 소개</p>
+          <div id="pillRow" class="pf-pills" aria-label="공개 항목"></div>
         </div>
       </div>
     </section>
 
-    <!-- 링크/지역 -->
-    <section class="pd-links">
-      <div id="pdRegion" class="pd-litem" hidden>
-        <i class="ri-map-pin-line"></i><span></span>
-      </div>
-      <a id="pdWeb" class="pd-litem" href="#" target="_blank" rel="noopener" hidden>
-        <i class="ri-link-m"></i><span></span>
-      </a>
-      <a id="pdInsta" class="pd-litem" href="#" target="_blank" rel="noopener" hidden>
-        <i class="ri-instagram-line"></i><span>Instagram</span>
-      </a>
-      <a id="pdYouTube" class="pd-litem" href="#" target="_blank" rel="noopener" hidden>
-        <i class="ri-youtube-line"></i><span>YouTube</span>
-      </a>
+    <!-- 액션(외부 링크) -->
+    <section class="pf-links" id="extLinks" hidden>
+      <!-- JS가 유무에 따라 버튼 삽입 -->
     </section>
 
-    <!-- Bio -->
-    <section class="pd-section" id="pdBioWrap" hidden>
-      <h2 class="pd-h2">소개</h2>
-      <div id="pdBio" class="pd-bio"></div>
+    <!-- 소개 -->
+    <section class="pf-section" id="bioWrap" hidden>
+      <h2 class="pf-sec-ttl">소개</h2>
+      <p id="bio" class="pf-bio"></p>
     </section>
 
     <!-- 갤러리 -->
-    <section class="pd-section" id="pdGalleryWrap" hidden>
-      <h2 class="pd-h2">갤러리</h2>
-      <div id="pdGallery" class="pd-grid"></div>
+    <section class="pf-section" id="galleryWrap" hidden>
+      <h2 class="pf-sec-ttl">갤러리</h2>
+      <div id="gallery" class="pf-gallery"></div>
     </section>
-
-    <!-- 최근 라이브/출연 -->
-    <section class="pd-section" id="pdLivesWrap" hidden>
-      <h2 class="pd-h2">최근 활동</h2>
-      <ul id="pdLives" class="pd-lives"></ul>
-    </section>
-
-    <div id="pdEmpty" class="pd-empty" hidden>포트폴리오를 찾을 수 없습니다.</div>
   </main>
 
-  <!-- 하단 고정 액션 -->
-  <div id="pdActionBar" class="pd-actionbar" aria-live="polite">
-    <button id="pdActionBtn" class="pd-btn">
-      <i class="ri-send-plane-2-line"></i><span>제안하기</span>
-    </button>
-  </div>
+  <!-- 떠있는 CTA -->
+  <button id="ctaBtn" class="pf-fab" aria-label="제안하기">제안하기</button>
 
-  <!-- 공통 하단 탭 -->
+  <!-- 하단 탭 -->
   <footer id="bottom-tabs"></footer>
+
+  <!-- 스크립트 -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/portfolio-detail.js"></script>
 </body>
 </html>
