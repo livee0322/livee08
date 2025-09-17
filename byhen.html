@@ -7,9 +7,11 @@
 
   <!-- 폰트 & 아이콘 -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" href="css/byhen.css?v=1.1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+  <link rel="stylesheet" href="css/byhen.css?v=1.2.0">
 </head>
 <body>
+  <!-- 상단 앱바 -->
   <header class="bh-appbar">
     <button class="bh-icon" onclick="history.back()" aria-label="뒤로"><i class="ri-arrow-left-line"></i></button>
     <div class="bh-title">BYHEN</div>
@@ -17,70 +19,56 @@
   </header>
 
   <main id="byhen" class="bh-container" aria-live="polite">
-    <!-- 1) Hero (멀티 이미지 & 썸네일) -->
-    <section id="bh-hero" class="bh-hero"></section>
+    <!-- Hero (슬라이드 + 오버레이) -->
+    <section id="bh-hero" class="bh-hero">
+      <!-- JS가 채움 -->
+      <button class="bh-fabBack" onclick="history.back()" aria-label="뒤로"><i class="ri-arrow-left-line"></i></button>
+    </section>
 
-    <!-- 2) 정보 (칩 + 별점) -->
+    <!-- 정보 -->
     <section id="bhInfo" class="bh-section"></section>
 
-    <!-- 3) 설명 -->
+    <!-- 소개 -->
     <section class="bh-section">
       <div class="bh-sec-head"><h2>소개</h2></div>
       <div id="bhDesc" class="bh-card text"></div>
     </section>
 
-    <!-- 4) 규칙 -->
+    <!-- 이용 규칙 -->
     <section class="bh-section">
       <div class="bh-sec-head"><h2>이용 규칙</h2></div>
       <div id="bhRules" class="bh-card text"></div>
     </section>
 
-    <!-- 5) 위치 -->
+    <!-- 위치 -->
     <section class="bh-section">
       <div class="bh-sec-head"><h2>위치</h2></div>
-      <div id="bhLocation" class="bh-card">
-        <!-- JS가 지도/링크 렌더 -->
-      </div>
+      <div id="bhLocation" class="bh-card"></div>
     </section>
 
-    <!-- 6) 예약 가능일 -->
+    <!-- 예약: 달력 대신 버튼 → 모달에서 날짜/시간 선택 -->
     <section class="bh-section">
-      <div class="bh-sec-head">
-        <h2>예약 가능일</h2>
-        <div class="bh-cal-nav">
-          <button class="bh-btn ghost" id="bhPrevMon" aria-label="이전 달"><i class="ri-arrow-left-s-line"></i></button>
-          <strong id="bhMonTitle" class="bh-mon-title">0000-00</strong>
-          <button class="bh-btn ghost" id="bhNextMon" aria-label="다음 달"><i class="ri-arrow-right-s-line"></i></button>
-        </div>
-      </div>
-      <div id="bhCalendar" class="bh-cal"></div>
-      <div id="bhSlotCard" class="bh-slot-card" hidden>
-        <div class="bh-slot-date"><i class="ri-calendar-line"></i><b id="bhPickedDate">-</b></div>
-        <div id="bhSlots" class="bh-chips"></div>
-        <button id="bhOpenReserve" class="bh-btn pri bh-slot-cta" disabled>
-          <i class="ri-calendar-check-line"></i> 예약 요청
-        </button>
-      </div>
-      <div class="bh-legend">
-        <span><i class="dot ok"></i>가능</span>
-        <span><i class="dot soon"></i>준비(리드타임)</span>
-        <span><i class="dot booked"></i>마감</span>
-        <span><i class="dot off"></i>휴무</span>
+      <div class="bh-sec-head"><h2>예약</h2></div>
+      <div class="bh-card">
+        <p class="bh-sub">실시간 예약 현황에 따라 선택 가능한 날짜/시간을 안내합니다.</p>
+        <button id="bhOpenReserve" class="bh-btn pri wide"><i class="ri-calendar-check-line"></i> 날짜 · 시간 선택</button>
       </div>
     </section>
 
-    <!-- 7) 가격/패키지 -->
+    <!-- 가격/패키지 -->
     <section class="bh-section">
       <div class="bh-sec-head"><h2>가격 & 패키지</h2></div>
       <div id="bhPricing" class="bh-pricing"></div>
       <p class="bh-vat">* 부가세 별도, 옵션 추가 시 변동될 수 있습니다.</p>
     </section>
 
-    <!-- 갤러리/숏폼은 필요 시 아래에 유지 -->
+    <!-- 갤러리 -->
     <section class="bh-section">
       <div class="bh-sec-head"><h2>갤러리</h2></div>
       <div id="bhGallery" class="bh-grid"></div>
     </section>
+
+    <!-- 하이라이트 -->
     <section class="bh-section">
       <div class="bh-sec-head"><h2>하이라이트</h2></div>
       <div id="bhShorts" class="bh-shorts"></div>
@@ -93,9 +81,65 @@
     <button id="bhOpenReserveBottom" class="bh-btn pri"><i class="ri-calendar-check-line"></i> 예약하기</button>
   </div>
 
-  <!-- 스크립트 순서 중요 -->
+  <!-- 예약 모달 (달력 + 타임슬롯) -->
+  <div id="bhReserveModal" class="bh-modal" role="dialog" aria-modal="true" aria-labelledby="reserveTitle">
+    <div class="sheet">
+      <header>
+        <strong id="reserveTitle">날짜 · 시간 선택</strong>
+        <button class="x" data-close><i class="ri-close-line"></i></button>
+      </header>
+
+      <div class="pick">
+        <div class="pick-cal">
+          <div class="pick-hd">
+            <button class="nav prev" id="rvPrevMon" aria-label="이전 달"><i class="ri-arrow-left-s-line"></i></button>
+            <strong id="rvMonTitle">0000-00</strong>
+            <button class="nav next" id="rvNextMon" aria-label="다음 달"><i class="ri-arrow-right-s-line"></i></button>
+          </div>
+          <div class="cal-hd">
+            <span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span>
+          </div>
+          <div id="rvGrid" class="cal-grid"></div>
+          <div class="legend">
+            <span><i class="dot ok"></i>가능</span>
+            <span><i class="dot soon"></i>준비</span>
+            <span><i class="dot booked"></i>마감</span>
+            <span><i class="dot off"></i>휴무</span>
+          </div>
+        </div>
+
+        <div class="pick-times">
+          <div class="sel-date"><i class="ri-calendar-line"></i><b id="rvPickedDate">날짜를 선택하세요</b></div>
+          <div id="rvSlots" class="time-grid"></div>
+        </div>
+      </div>
+
+      <div class="bh-actions">
+        <button class="bh-btn ghost" data-close>취소</button>
+        <button id="rvSubmit" class="bh-btn pri" disabled><i class="ri-check-line"></i> 예약 요청</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문의 모달(기존 스타일 재사용) -->
+  <div id="bhInquiryModal" class="bh-modal" role="dialog" aria-modal="true" aria-labelledby="inqTitle">
+    <div class="sheet">
+      <header>
+        <strong id="inqTitle">문의하기</strong>
+        <button class="x" data-close><i class="ri-close-line"></i></button>
+      </header>
+      <label class="bh-label" for="inqMsg">내용</label>
+      <textarea id="inqMsg" class="bh-textarea" placeholder="문의 내용을 입력해주세요."></textarea>
+      <div class="bh-actions">
+        <button class="bh-btn ghost" data-close>닫기</button>
+        <button id="inqSend" class="bh-btn pri"><i class="ri-send-plane-line"></i> 보내기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 스크립트 -->
   <script src="js/config.js?v=2.12"></script>
-  <script src="js/byhen.data.js?v=1.1.0"></script><!-- API 실패시 폴백 -->
-  <script src="js/byhen.page.js?v=1.3.0"></script>
+  <script src="js/byhen.data.js?v=1.1.0"></script>
+  <script src="js/byhen.page.js?v=1.4.0"></script>
 </body>
 </html>
