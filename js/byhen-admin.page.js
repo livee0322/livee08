@@ -1,5 +1,4 @@
 <!-- public/js/byhen-admin.page.js -->
-<script>
 /* byhen-admin.page.js — v2.5 (full refactor)
  * - API_BASE 강제(설정 없을 때 Render 기본값)
  * - Cloudinary: 서버 서명(/uploads/signature) 방식만 사용
@@ -376,4 +375,3 @@
     });
   }
 })();
-</script>
