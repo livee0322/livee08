@@ -28,30 +28,30 @@
     dots.forEach((d,i)=> on(d,'click',()=>go(i)));
   }
 
-  /* 모델 섹션 템플릿: 2.5 칼럼 가로 스크롤 */
-  function tplModelCardsHScroll(models){
-    if (!models || !models.length) {
-      return `<div class="hscroll models-h">
-        <article class="mdl-card" aria-disabled="true">
-          <div class="mdl-thumb" style="background:#f3f4f6"></div>
-          <div class="mdl-body">
-            <div class="mdl-name">모델이 없습니다</div>
-            <div class="mdl-intro">첫 모델 프로필을 등록해보세요</div>
-          </div>
-        </article>
-      </div>`;
-    }
-    return `<div class="hscroll models-h">
-      ${models.map(m => `
-        <article class="mdl-card" onclick="location.href='models.html#/${encodeURIComponent(m.id || m._id || '')}'">
-          <img class="mdl-thumb" src="${m.mainThumbnailUrl || m.coverImageUrl || m.thumb || 'default.jpg'}" alt="" loading="lazy" decoding="async">
-          <div class="mdl-body">
-            <div class="mdl-name">${m.nickname || '모델'}</div>
-            <div class="mdl-intro">${m.headline || ''}</div>
-          </div>
-        </article>`).join('')}
+ /* ---- 모델(카드) : 2.5장 보이는 가로 스크롤 ---- */
+function tplModelsGrid(items){
+  if (!items || !items.length) {
+    return `<div class="models-hscroll">
+      <article class="model-card is-empty">
+        <div class="thumb"></div>
+        <div class="name">모델이 없습니다</div>
+        <div class="meta">첫 모델 프로필을 등록해보세요</div>
+      </article>
     </div>`;
   }
+  return `<div class="models-hscroll">
+    ${items.map(m => `
+      <article class="model-card" onclick="location.href='model-detail.html?id=${encodeURIComponent(m.id)}'">
+        <div class="thumb">
+          <img src="${m.thumb || 'default.jpg'}" alt="${m.nickname || '모델'}" loading="lazy" decoding="async">
+        </div>
+        <div class="name">${m.nickname || '모델'}</div>
+        <div class="meta">${m.headline || ''}</div>
+      </article>
+    `).join('')}
+  </div>`;
+}
+H.tpl.tplModelsGrid = tplModelsGrid;
 
   async function render(){
     const heroRoot = document.getElementById('hero');
