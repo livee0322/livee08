@@ -1,293 +1,244 @@
-/* byhen.page.js — v1.3.0 (멀티 히어로, 별점, 섹션 재배치) */
-(function(w){
+/* byhen.page.js — v1.4.0
+   - Hero 슬라이드
+   - 정보/패키지/갤러리/숏폼 렌더
+   - 예약 모달(달력+타임슬롯) */
+(function (w){
   'use strict';
 
-  // ---------- config / data load ----------
-  const CFG = w.LIVEE_CONFIG || {};
-  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/,'');
-  const QS = new URLSearchParams(location.search);
-  const SLUG = (QS.get('slug') || 'byhen').trim().toLowerCase();
-  const ID   = (QS.get('id') || '').trim();
+  // --- 임시 데이터 폴백 (byhen.data.js가 있으면 그걸 사용) ---
+  const D = w.BYHEN_DATA || {
+    name: 'BYHEN',
+    tagline: '제품 · 뷰티 · 패션 촬영 대행',
+    rating: 4.9,
+    ratingCount: 124,
+    phone: '01012345678',
+    open: '09시~18시',
+    area: '대전',
+    chips: ['제품', '뷰티', '패션', '촬영대행'],
+    images: ['banner1.jpg','banner2.jpg','default.jpg'],
+    desc: '소개 텍스트가 여기에 들어갑니다.',
+    rules: '규칙 텍스트가 여기에 들어갑니다.',
+    locationHtml: '<a href="https://map.naver.com/" target="_blank" rel="noopener">지도 열기</a>',
+    plans: [
+      { name:'Basic', price: '64,000원/시간', badge:'인기', items:['스튜디오 사용','간단 보정']},
+      { name:'Pro',   price: '120,000원/시간', items:['조명 포함','포트레이트'] }
+    ],
+    gallery: [],
+    shorts: []
+  };
 
-  let D = {}; // 페이지 데이터
-  let heroIdx = 0; let heroTimer = 0;
+  // 유틸
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+  const fmtYMD = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const pad2   = (n) => String(n).padStart(2,'0');
 
-  async function fetchJSON(url){
-    const r = await fetch(url, { headers:{ Accept:'application/json' }});
-    const j = await r.json().catch(()=>({}));
-    if(!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
-    return j;
-  }
-  async function loadData(){
-    try{
-      if(ID){ const j=await fetchJSON(`${API_BASE}/brands-test/${encodeURIComponent(ID)}`); return j.data||j; }
-      const j1=await fetchJSON(`${API_BASE}/brands-test?slug=${encodeURIComponent(SLUG)}&limit=1`);
-      const items1 = j1.items||j1.data||j1.docs||[];
-      if(Array.isArray(items1) && items1.length) return items1[0];
-
-      const j2=await fetchJSON(`${API_BASE}/brands-test?limit=1`);
-      const items2 = j2.items||j2.data||j2.docs||[];
-      if(Array.isArray(items2) && items2.length) return items2[0];
-    }catch(_){}
-    return (w.BYHEN_DATA || {});
-  }
-
-  // ---------- utils ----------
-  const $ = (s,el=document)=>el.querySelector(s);
-  const on = (el,ev,fn)=>el && el.addEventListener(ev,fn);
-  const pad2=(n)=>String(n).padStart(2,'0');
-  const fmt=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  const money = (n)=>Number(n||0).toLocaleString('ko-KR');
-
-  function toast(msg){
-    let t=$('#bhToast'); if(!t){ t=document.createElement('div'); t.id='bhToast'; t.className='bh-toast'; document.body.appendChild(t); }
-    t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 1600);
-  }
-
-  // ---------- HERO (multi images) ----------
-  function collectHeroImages(){
-    // 우선순위: hero.images → hero.image → studioPhotos 앞부분
-    const arr = [];
-    if (Array.isArray(D.hero?.images)) arr.push(...D.hero.images);
-    if (D.hero?.image) arr.unshift(D.hero.image);
-    if (arr.length===0 && Array.isArray(D.studioPhotos)) arr.push(...D.studioPhotos.slice(0,6));
-    // 중복 제거/빈값 필터
-    return [...new Set(arr.filter(Boolean))];
-  }
-
-  function renderHero(){
-    const root = $('#bh-hero'); if(!root) return;
-    const imgs = collectHeroImages();
-    const name = D.name || 'BYHEN';
-    const tag  = D.tagline || '';
-
-    let slides = imgs.map((src,i)=>`<img alt="hero-${i}" ${i===0?'class="show"':''} src="${src}">`).join('');
-    let thumbs = imgs.map((src,i)=>`<img ${i===0?'class="sel"':''} data-i="${i}" src="${src}" alt="thumb-${i}">`).join('');
-
-    root.innerHTML = `
-      <div class="slides">${slides}</div>
+  // ---------------- Hero ----------------
+  function mountHero(root){
+    const imgs = (D.images||[]).filter(Boolean);
+    const html = `
+      <div class="slides">
+        ${imgs.map((src,i)=>`<img src="${src}" alt="" class="${i? '':'show'}">`).join('')}
+      </div>
       <div class="overlay">
         <div>
-          <div class="title">${name}</div>
-          ${tag?`<div class="tag">${tag}</div>`:''}
+          <div class="title">${D.name||'브랜드'}</div>
+          <div class="tag">${D.tagline||''}</div>
         </div>
       </div>
-      <div class="thumbs">${thumbs}</div>
+      <div class="thumbs">
+        ${imgs.map((src,i)=>`<img src="${src}" alt="" data-i="${i}" class="${i? '':'sel'}">`).join('')}
+      </div>
     `;
+    root.insertAdjacentHTML('beforeend', html);
 
-    // 인터랙션
-    const slideEls = [...root.querySelectorAll('.slides img')];
-    const thumbEls = [...root.querySelectorAll('.thumbs img')];
-
-    function go(n){
-      heroIdx = (n+slideEls.length)%slideEls.length;
-      slideEls.forEach((el,i)=>el.classList.toggle('show', i===heroIdx));
-      thumbEls.forEach((el,i)=>el.classList.toggle('sel',  i===heroIdx));
+    const slides = $$('.slides img', root);
+    const thumbs = $$('.thumbs img', root);
+    let i = 0, n = slides.length;
+    const go = (k) => {
+      i = (k+n)%n;
+      slides.forEach((im,idx)=> im.classList.toggle('show', idx===i));
+      thumbs.forEach((th,idx)=> th.classList.toggle('sel', idx===i));
+    };
+    thumbs.forEach(th => th.addEventListener('click', ()=> go(+th.dataset.i)));
+    if(n > 1){
+      setInterval(()=> go(i+1), 5000);
     }
-    on(root.querySelector('.thumbs'),'click', (e)=>{
-      const t=e.target.closest('img[data-i]'); if(!t) return;
-      go(Number(t.dataset.i)||0); restartAuto();
-    });
-
-    function restartAuto(){
-      clearInterval(heroTimer);
-      if(slideEls.length>1){
-        heroTimer = setInterval(()=>go(heroIdx+1), 4500);
-      }
-    }
-    restartAuto();
   }
 
-  // ---------- INFO + RATING ----------
-  function starHtml(avg=0){
-    const full = Math.floor(avg);
-    const half = (avg - full) >= 0.5 ? 1 : 0;
-    const empty = 5 - full - half;
-    return [
-      ...Array(full).fill('<i class="ri-star-fill"></i>'),
-      ...Array(half).fill('<i class="ri-star-half-line"></i>'),
-      ...Array(empty).fill('<i class="ri-star-line dim"></i>')
-    ].join('');
-  }
-  function renderInfo(){
-    const r = $('#bhInfo'); if(!r) return;
-    const rating = D.rating || {}; // {avg, count}
-    r.innerHTML = `
-      <div class="bh-card">
-        <div class="bh-rating">
-          <span class="stars" aria-label="평점 ${rating.avg||'-'}">${starHtml(rating.avg||0)}</span>
-          <span>${(rating.avg||'-')} (${rating.count||0})</span>
+  // ---------------- Info ----------------
+  function mountInfo(root){
+    const ratingStars = (() =>{
+      const score = Math.round((D.rating||0)*2)/2;
+      const stars = Array.from({length:5}, (_,i)=> i+1 <= Math.floor(score) ? 'ri-star-fill'
+                      : (i+0.5===score ? 'ri-star-half-line':'ri-star-line'));
+      return `<span class="stars">${stars.map(c=>`<i class="${c}"></i>`).join('')}</span>`;
+    })();
+
+    root.innerHTML = `
+      <div class="bh-card bh-info">
+        <div class="row">
+          <span class="bh-chip soft"><i class="ri-map-pin-line"></i>${D.area||'-'}</span>
+          <span class="bh-chip soft"><i class="ri-time-line"></i>${D.open||'-'}</span>
+          <span class="bh-chip soft"><i class="ri-phone-line"></i>${D.phone||'-'}</span>
+          <a class="bh-chip soft" href="https://pf.kakao.com/" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>
         </div>
-        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          ${D.location?`<span class="bh-chip gray"><i class="ri-map-pin-2-line"></i>${D.location}</span>`:''}
-          ${D.hours?`<span class="bh-chip gray"><i class="ri-time-line"></i>${D.hours}</span>`:''}
-          ${D.contact?.phone?`<a class="bh-chip gray" href="tel:${D.contact.phone}"><i class="ri-phone-line"></i>${D.contact.phone}</a>`:''}
-          ${D.contact?.kakaoUrl?`<a class="bh-chip gray" href="${D.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
+        <div class="bh-rating">${ratingStars}<span>${(D.rating||0).toFixed(1)} · ${D.ratingCount||0} reviews</span></div>
+        <div class="row">
+          ${(D.chips||[]).slice(0,6).map(t=>`<span class="bh-chip soft">${t}</span>`).join('')}
         </div>
       </div>
     `;
+
+    $('#bhDesc').textContent  = D.desc || '';
+    $('#bhRules').textContent = D.rules || '';
+    $('#bhLocation').innerHTML = D.locationHtml || '-';
   }
 
-  // ---------- DESC / RULES / LOCATION ----------
-  function renderDesc(){ $('#bhDesc').textContent = D.description || (D.policy? '':'소개가 준비 중입니다.'); }
-  function renderRules(){ $('#bhRules').textContent = D.rules || D.policy || ''; }
-  function renderLocation(){
-    const wrap = $('#bhLocation'); if(!wrap) return;
-    const map = D.map || {};
-    // 우선순위: iframe(embedUrl) → 정적 이미지(staticImage) → 네이버/카카오 링크
-    if(map.embedUrl){
-      wrap.innerHTML = `<div class="map" style="overflow:hidden;border-radius:10px">
-        <iframe src="${map.embedUrl}" style="border:0;width:100%;height:280px" loading="lazy"></iframe>
-      </div>
-      <p style="color:#6b7280;margin-top:8px">자세한 주소는 예약 확정 후에 안내됩니다.</p>`;
-    }else if(map.staticImage){
-      wrap.innerHTML = `<img src="${map.staticImage}" alt="map" style="width:100%;border-radius:10px">
-      <p style="color:#6b7280;margin-top:8px">자세한 주소는 예약 확정 후에 안내됩니다.</p>`;
-    }else{
-      const link = map.link || 'https://map.naver.com/';
-      wrap.innerHTML = `<a class="bh-btn ghost" href="${link}" target="_blank" rel="noopener"><i class="ri-map-2-line"></i> 지도에서 보기</a>
-      <p style="color:#6b7280;margin-top:8px">자세한 주소는 예약 확정 후에 안내됩니다.</p>`;
-    }
-  }
-
-  // ---------- CALENDAR ----------
-  const calState = { ym:new Date(), pickedDate:'', pickedTime:'' };
-  const addDays=(d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
-
-  function renderCalendar(){
-    const root = $('#bhCalendar'); if(!root) return;
-    const y = calState.ym.getFullYear(), m=calState.ym.getMonth();
-    $('#bhMonTitle').textContent = `${y}-${pad2(m+1)}`;
-    const first = new Date(y,m,1), start = addDays(first, -((first.getDay()+6)%7));
-    const booked = new Set(D.availability?.booked||[]);
-    const closed = new Set(D.availability?.closed||[]);
-    const lead   = Number(D.availability?.leadDays||0);
-    const today  = new Date(); today.setHours(0,0,0,0);
-    const earliest = addDays(today, lead);
-
-    let grid=''; const weeks=6, days=7;
-    for(let i=0;i<weeks*days;i++){
-      const d=addDays(start,i), inMon=(d.getMonth()===m), iso=fmt(d);
-      const isClosed=closed.has(iso), isBooked=booked.has(iso), isSoon=d<earliest;
-      const ok=inMon && !isClosed && !isBooked && !isSoon;
-      const cls=['cell',inMon?'':'off',isClosed?'off':'',isBooked?'booked':'',ok?'ok':'',(calState.pickedDate===iso)?'sel':''].filter(Boolean).join(' ');
-      const dot=isClosed?'<i class="dot off"></i>':isBooked?'<i class="dot booked"></i>':isSoon?'<i class="dot soon"></i>':'<i class="dot ok"></i>';
-      grid += `<div class="${cls}" data-iso="${iso}"><span class="d">${d.getDate()}</span>${inMon?dot:''}</div>`;
-    }
-    root.innerHTML = `<div class="hd">${['월','화','수','목','금','토','일'].map(d=>`<div>${d}</div>`).join('')}</div><div class="grid">${grid}</div>`;
-  }
-  function bindCalendar(){
-    on($('#bhPrevMon'),'click',()=>{ calState.ym.setMonth(calState.ym.getMonth()-1); renderCalendar(); });
-    on($('#bhNextMon'),'click',()=>{ calState.ym.setMonth(calState.ym.getMonth()+1); renderCalendar(); });
-    on($('#bhCalendar'),'click',(e)=>{
-      const cell=e.target.closest('.cell.ok'); if(!cell) return;
-      calState.pickedDate = cell.dataset.iso; calState.pickedTime='';
-      renderCalendar(); renderSlots();
-    });
-  }
-  function renderSlots(){
-    const card=$('#bhSlotCard'); if(!card) return;
-    if(!calState.pickedDate){ card.hidden=true; return; }
-    $('#bhPickedDate').textContent=calState.pickedDate;
-    const wrap=$('#bhSlots'); const slots=(D.availability?.timeslots||[]);
-    wrap.innerHTML = slots.map(t=>{
-      const sel=(calState.pickedTime===t)?'is-sel':'';
-      return `<button class="bh-chip2 ${sel}" data-t="${t}" type="button">${t}</button>`;
-    }).join('');
-    card.hidden=false; $('#bhOpenReserve').disabled=!calState.pickedTime;
-    on(wrap,'click',(e)=>{
-      const b=e.target.closest('.bh-chip2'); if(!b) return;
-      calState.pickedTime=b.dataset.t;
-      [...wrap.children].forEach(x=>x.classList.toggle('is-sel',x===b));
-      $('#bhOpenReserve').disabled=false;
-    });
-  }
-
-  // ---------- PRICING ----------
-  function renderPricing(){
-    const root = $('#bhPricing'); if(!root) return;
-    const html = (D.pricing||[]).map(p=>`
+  // ---------------- Pricing ----------------
+  function mountPricing(){
+    const wrap = $('#bhPricing');
+    wrap.innerHTML = (D.plans||[]).map(p => `
       <article class="bh-plan">
-        ${p.badge?`<span class="badge">${p.badge}</span>`:''}
-        <div class="name">${p.name} · <span style="color:#64748b">${p.duration||''}</span></div>
-        <div class="price">${money(p.price)}원</div>
-        ${Array.isArray(p.includes)?`<ul>${p.includes.map(i=>`<li>${i}</li>`).join('')}</ul>`:''}
-        ${Array.isArray(p.options)&&p.options.length?`<div class="opt"><b>옵션</b> · ${p.options.map(o=>`${o.name} +${money(o.price)}원`).join(' / ')}</div>`:''}
+        ${p.badge ? `<span class="badge">${p.badge}</span>`:''}
+        <div class="name">${p.name}</div>
+        <div class="price">${p.price}</div>
+        ${Array.isArray(p.items) ? `<ul>${p.items.map(i=>`<li>${i}</li>`).join('')}</ul>` : ''}
+        ${p.opt ? `<div class="opt">${p.opt}</div>`:''}
       </article>
     `).join('');
-    root.innerHTML = html || '<div style="color:#64748b">준비 중입니다.</div>';
   }
 
-  // ---------- GALLERY / SHORTS (기존 유지) ----------
-  function renderGallery(){
-    const root = $('#bhGallery'); if(!root) return;
-    const list = (D.studioPhotos||[]).concat(D.portfolioPhotos||[]);
-    root.innerHTML = list.map((src,i)=>`<img src="${src}" alt="gallery-${i}" loading="lazy">`).join('');
+  // ---------------- Gallery / Shorts ----------------
+  function mountGallery(){
+    const g = $('#bhGallery');
+    const arr = D.gallery && D.gallery.length ? D.gallery : (D.images||[]);
+    g.innerHTML = arr.map(s=>`<img src="${s}" alt="">`).join('');
+    g.addEventListener('click', (e)=>{
+      const t = e.target.closest('img'); if(!t) return;
+      const lb = document.createElement('div');
+      lb.className = 'bh-lightbox show';
+      lb.innerHTML = `<img src="${t.src}" alt=""><button class="x"><i class="ri-close-line"></i></button>`;
+      document.body.appendChild(lb);
+      lb.addEventListener('click', (ev)=>{ if(ev.target===lb || ev.target.closest('.x')) lb.remove(); });
+    });
   }
-  function renderShorts(){
-    const root = $('#bhShorts'); if(!root) return;
-    const items = (D.shorts||[]).filter(s=>s.embedUrl);
-    root.innerHTML = items.map(s=>`
-      <article class="bh-clip" data-embed="${s.embedUrl}">
-        <img src="${s.thumbnailUrl||''}" alt=""><span class="play"><i class="ri-play-fill"></i></span>
+  function mountShorts(){
+    const s = $('#bhShorts');
+    if(!D.shorts || !D.shorts.length){ s.innerHTML=''; return; }
+    s.innerHTML = D.shorts.map(x=>`
+      <article class="bh-clip" data-embed="${x.embed}">
+        <img src="${x.thumb}" alt=""><span class="play"><i class="ri-play-fill"></i></span>
       </article>
-    `).join('') || '<div style="color:#64748b">클립이 없습니다.</div>';
+    `).join('');
   }
 
-  // ---------- modals (문의/예약) ----------
-  function openModal(kind, payload={}){
-    let wrap=$('#bhModal'); if(!wrap){ wrap=document.createElement('div'); wrap.id='bhModal'; wrap.className='bh-modal'; document.body.appendChild(wrap); }
-    if(kind==='inquiry'){
-      wrap.innerHTML = `<div class="sheet"><header><strong>문의하기</strong><button class="x">✕</button></header>
-        <div class="bh-field"><label class="bh-label">이름</label><input id="inqName" class="bh-input" placeholder="이름"></div>
-        <div class="bh-field"><label class="bh-label">연락처</label><input id="inqPhone" class="bh-input" placeholder="010-0000-0000"></div>
-        <div class="bh-field"><label class="bh-label">메시지</label><textarea id="inqMsg" class="bh-textarea" placeholder="문의 내용을 남겨주세요."></textarea></div>
-        <div class="bh-actions">
-          ${D.contact?.kakaoUrl?`<a class="bh-btn ghost" target="_blank" rel="noopener" href="${D.contact.kakaoUrl}"><i class="ri-kakao-talk-line"></i> 카카오톡</a>`:''}
-          <button class="bh-btn pri" id="inqSubmit"><i class="ri-send-plane-line"></i> 보내기</button>
-        </div></div>`;
-      const close=()=>wrap.classList.remove('show');
-      on(wrap.querySelector('.x'),'click',close);
-      on(wrap,'click',e=>{ if(e.target===wrap) close(); });
-      on($('#inqSubmit',wrap),'click',()=>{ const n=$('#inqName').value.trim(), p=$('#inqPhone').value.trim(); if(!n||!p){ toast('이름/연락처를 입력해주세요'); return; } close(); toast('문의가 전달되었습니다'); });
-      wrap.classList.add('show');
+  // ---------------- 예약 모달 ----------------
+  const modal = $('#bhReserveModal');
+  const openBtns = ['#bhOpenReserve','#bhOpenReserveBottom'].map(s=>$(s));
+  const closeModal = ()=> modal.classList.remove('show');
+  modal.addEventListener('click', (e)=>{ if(e.target===modal || e.target.hasAttribute('data-close')) closeModal(); });
+
+  // 간단한 가용성 데이터(실서비스 연결 시 교체)
+  const today = new Date();
+  let cur = new Date(today.getFullYear(), today.getMonth(), 1);
+  let pickedDate = null, pickedTime = null;
+
+  function buildMonth(y,m){
+    const first = new Date(y,m,1);
+    const start = new Date(first);
+    start.setDate(first.getDay()===0? -5 : 1-first.getDay()+1); // 월 시작 기준
+    const grid = [];
+    for(let i=0;i<42;i++){
+      const d = new Date(start); d.setDate(start.getDate()+i);
+      // 예시 가용성 규칙
+      let status = 'ok';
+      if(d.getMonth()!==m) status='off';
+      if(d.getDay()===0) status='off';
+      if(d.getDate()%7===0) status='booked';
+      if(d.getDate()%5===0) status='soon';
+      grid.push({date:d,status});
     }
-    if(kind==='reserve'){
-      const date = payload.date||calState.pickedDate||'-';
-      const time = payload.time||calState.pickedTime||'';
-      wrap.innerHTML = `<div class="sheet"><header><strong>예약 요청</strong><button class="x">✕</button></header>
-        <div class="bh-field"><label class="bh-label">예약일자</label><input id="rvDate" class="bh-input" value="${date}" readonly></div>
-        <div class="bh-field"><label class="bh-label">시간</label><input id="rvTime" class="bh-input" value="${time}" placeholder="예: 14:00"></div>
-        <div class="bh-field"><label class="bh-label">이름</label><input id="rvName" class="bh-input" placeholder="이름"></div>
-        <div class="bh-field"><label class="bh-label">연락처</label><input id="rvPhone" class="bh-input" placeholder="010-0000-0000"></div>
-        <div class="bh-field"><label class="bh-label">요청사항 (선택)</label><textarea id="rvMsg" class="bh-textarea" placeholder="세부 요청을 남겨주세요."></textarea></div>
-        <div class="bh-actions"><button class="bh-btn" id="rvCancel">취소</button><button class="bh-btn pri" id="rvSubmit"><i class="ri-calendar-check-line"></i> 요청 보내기</button></div></div>`;
-      const close=()=>wrap.classList.remove('show');
-      on(wrap.querySelector('.x'),'click',close); on($('#rvCancel',wrap),'click',close);
-      on(wrap,'click',e=>{ if(e.target===wrap) close(); });
-      on($('#rvSubmit',wrap),'click',()=>{ const n=$('#rvName').value.trim(), p=$('#rvPhone').value.trim(); if(!n||!p){ toast('이름/연락처를 입력해주세요'); return; } close(); toast('예약 요청이 접수되었습니다'); });
-      wrap.classList.add('show');
+    return grid;
+  }
+
+  function renderCalendar(){
+    $('#rvMonTitle').textContent = fmtYMD(cur);
+    const grid = buildMonth(cur.getFullYear(), cur.getMonth());
+    const el = $('#rvGrid');
+    el.innerHTML = grid.map(g=>{
+      const y=g.date.getFullYear(), m=pad2(g.date.getMonth()+1), d=pad2(g.date.getDate());
+      const ymd = `${y}-${m}-${d}`;
+      const isSel = pickedDate && ymd===pickedDate;
+      return `<div class="cal-cell ${g.status} ${g.status==='ok'?'ok':''} ${isSel?'sel':''}" data-ymd="${ymd}">
+        <span class="d">${g.date.getDate()}</span>
+        <i class="dot ${g.status}"></i>
+      </div>`;
+    }).join('');
+  }
+
+  function renderSlots(ymd){
+    $('#rvPickedDate').textContent = ymd ? ymd : '날짜를 선택하세요';
+    const wrap = $('#rvSlots');
+    if(!ymd){ wrap.innerHTML=''; $('#rvSubmit').disabled=true; return; }
+
+    // 예시: 10:30 ~ 19:30, 30분 간격 (일부 막기)
+    const times = [];
+    for(let h=10; h<=19; h++){
+      ['00','30'].forEach(min=>{
+        if(h===10 && min==='00') return; // 10:00 제외
+        times.push(`${h}:${min}`);
+      });
     }
+    wrap.innerHTML = times.map(t=>{
+      const off = (t==='13:00' || t==='15:30'); // 예시 마감 슬롯
+      const sel = pickedTime===t;
+      return `<button class="time ${off?'off':''} ${sel?'sel':''}" data-t="${t}" ${off?'disabled':''}>${t}</button>`;
+    }).join('');
+    $('#rvSubmit').disabled = !pickedTime;
   }
 
-  // ---------- init ----------
-  async function init(){
-    try{
-      D = await loadData(); w.BYHEN_DATA = D;
-    }catch(e){ console.warn('[byhen load error]', e); D = w.BYHEN_DATA || {}; }
-
-    renderHero();
-    renderInfo();
-    renderDesc(); renderRules(); renderLocation();
-
-    renderCalendar(); bindCalendar(); renderSlots();
-    renderPricing();
-    renderGallery();
-    renderShorts();
-
-    on($('#bhOpenInquiry'),'click',()=>openModal('inquiry'));
-    on($('#bhOpenReserveBottom'),'click',()=>openModal('reserve'));
-    on($('#bhOpenReserve'),'click',()=>openModal('reserve', {date:calState.pickedDate, time:calState.pickedTime}));
+  function openReserve(){
+    pickedDate=null; pickedTime=null;
+    renderCalendar(); renderSlots(null);
+    modal.classList.add('show');
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init, {once:true}); else init();
+
+  // 캘린더/슬롯 바인딩
+  $('#rvPrevMon').addEventListener('click', ()=>{ cur.setMonth(cur.getMonth()-1); renderCalendar(); });
+  $('#rvNextMon').addEventListener('click', ()=>{ cur.setMonth(cur.getMonth()+1); renderCalendar(); });
+  $('#rvGrid').addEventListener('click', (e)=>{
+    const cell = e.target.closest('.cal-cell.ok'); if(!cell) return;
+    pickedDate = cell.dataset.ymd; pickedTime=null;
+    renderCalendar(); renderSlots(pickedDate);
+  });
+  $('#rvSlots').addEventListener('click', (e)=>{
+    const b = e.target.closest('.time'); if(!b || b.classList.contains('off')) return;
+    pickedTime = b.dataset.t;
+    $$('#rvSlots .time').forEach(x=>x.classList.toggle('sel', x===b));
+    $('#rvSubmit').disabled = !(pickedDate && pickedTime);
+  });
+  $('#rvSubmit').addEventListener('click', ()=>{
+    alert(`[예약요청]\n날짜: ${pickedDate}\n시간: ${pickedTime}`);
+    closeModal();
+  });
+
+  // 문의 모달
+  const inq = $('#bhInquiryModal');
+  $('#bhOpenInquiry').addEventListener('click', ()=> inq.classList.add('show'));
+  inq.addEventListener('click', (e)=>{ if(e.target===inq || e.target.hasAttribute('data-close')) inq.classList.remove('show'); });
+  $('#inqSend').addEventListener('click', ()=>{
+    alert('문의가 전송되었습니다.');
+    inq.classList.remove('show');
+  });
+
+  // CTA 버튼
+  openBtns.forEach(b=> b && b.addEventListener('click', openReserve));
+
+  // 초기 렌더
+  mountHero($('#bh-hero'));
+  mountInfo($('#bhInfo'));
+  mountPricing();
+  mountGallery();
+  mountShorts();
 })(window);
