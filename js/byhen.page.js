@@ -1,4 +1,4 @@
-
+<script>
 /* byhen.page.js — v1.5.0
    - BrandPage 스키마에 맞춘 렌더러
    - Hero(멀티) · 정보 · 가격 · 갤러리 · 숏폼
@@ -316,3 +316,4 @@
   mountGallery();
   mountShorts();
 })(window);
+</script>
