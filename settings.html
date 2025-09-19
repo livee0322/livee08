@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>설정 - 라이비</title>
 
-  <!-- 공통 / 페이지 CSS -->
+  <!-- 공통/페이지 CSS -->
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/settings.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
-  <!-- 폰트(SUIT) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" />
+
+  <!-- 밑줄 제거( ui.js 로드 후에도 강제 ) -->
+  <style>
+    a, a:visited, a:hover, a:active { text-decoration: none !important; }
+    .btn { text-decoration: none !important; }
+  </style>
 
   <!-- 공통 스크립트 -->
   <script src="js/config.js"></script>
@@ -24,10 +29,10 @@
   <main class="st-page container">
     <h1 class="st-title">설정</h1>
 
-    <!-- 알림/저장 안내 -->
+    <!-- 안내 토스트 -->
     <div id="stToast" class="st-toast" role="status" aria-live="polite"></div>
 
-    <!-- 프로필 -->
+    <!-- ===== 프로필 (사진 > 이름 > 이메일 > 휴대폰 인증) ===== -->
     <section class="st-card" id="secProfile">
       <header class="st-card__head">
         <h2><i class="ri-user-settings-line"></i> 프로필</h2>
@@ -35,118 +40,88 @@
       </header>
 
       <div class="st-profile">
+        <!-- 아바타 -->
         <div class="st-avatar">
-          <img id="avatarPreview" alt="아바타 미리보기">
-          <button type="button" id="btnAvatarPick" class="avatar-pick" aria-label="프로필 사진 업로드"><i class="ri-image-add-line"></i></button>
+          <img id="avatarPreview" alt="프로필 이미지">
+          <button type="button" id="btnAvatarPick" class="avatar-pick" aria-label="프로필 사진 업로드">
+            <i class="ri-image-add-line"></i>
+          </button>
           <input id="avatarFile" type="file" accept="image/*" hidden>
         </div>
 
+        <!-- 필드: 이름/이메일/휴대폰 -->
         <div class="st-form">
-          <label class="label">닉네임</label>
-          <input id="nickname" class="input" placeholder="예: 라이브 크리에이터">
+          <label class="label">이름(닉네임)</label>
+          <input id="nickname" class="input" placeholder="예: 홍길동">
 
-          <label class="label">한 줄 소개</label>
-          <input id="intro" class="input" placeholder="예: 뷰티/일상 라이브 진행자">
+          <label class="label">이메일</label>
+          <input id="email" class="input" placeholder="example@mail.com" readonly>
 
-          <div class="st-grid2">
-            <div>
-              <label class="label">계정 이메일(읽기)</label>
-              <input id="email" class="input" readonly placeholder="등록된 이메일">
-            </div>
-            <div>
-              <label class="label">보조 이메일(선택)</label>
-              <input id="backupEmail" class="input" type="email" placeholder="알림 수신용 보조 이메일">
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 연락처/휴대폰 인증 -->
-    <section class="st-card" id="secContact">
-      <header class="st-card__head">
-        <h2><i class="ri-smartphone-line"></i> 연락처</h2>
-        <button class="btn sm" id="btnContactSave"><i class="ri-save-3-line"></i> 저장</button>
-      </header>
-
-      <div class="st-form">
-        <label class="label">휴대폰 번호</label>
-        <div class="st-row">
-          <input id="phone" class="input" inputmode="numeric" placeholder="예: 01012345678">
-          <button class="btn ghost" id="btnSendCode"><i class="ri-shield-check-line"></i> 인증코드 전송</button>
-        </div>
-
-        <div id="verifyWrap" class="verify" hidden>
+          <label class="label">휴대폰 번호</label>
           <div class="st-row">
-            <input id="code" class="input" inputmode="numeric" maxlength="6" placeholder="6자리 코드">
-            <button class="btn" id="btnVerify"><i class="ri-check-line"></i> 검증</button>
+            <input id="phone" class="input" inputmode="numeric" placeholder="예: 01012345678">
+            <button class="btn ghost" id="btnSendCode"><i class="ri-shield-check-line"></i> 인증</button>
           </div>
-          <div class="hint">데모용 인증코드 <b id="codeHint"></b> · 남은시간 <b id="codeTimer">03:00</b></div>
-        </div>
 
-        <div class="badge-line">
-          <span id="phoneStatus" class="badge muted"><i class="ri-alert-line"></i> 미인증</span>
-          <small class="muted">카카오 알림톡 수신에 필요합니다.</small>
+          <div id="verifyWrap" class="verify" hidden>
+            <div class="st-row">
+              <input id="code" class="input" inputmode="numeric" maxlength="6" placeholder="6자리 코드">
+              <button class="btn" id="btnVerify"><i class="ri-check-line"></i> 확인</button>
+            </div>
+            <div class="hint">데모코드 <b id="codeHint"></b> · 남은시간 <b id="codeTimer">03:00</b></div>
+            <div class="badge-line">
+              <span id="phoneStatus" class="badge muted"><i class="ri-alert-line"></i> 미인증</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- 채널 연결 -->
+    <!-- ===== 알림 채널 (카카오/사이트내) ===== -->
     <section class="st-card" id="secChannels">
       <header class="st-card__head">
-        <h2><i class="ri-links-line"></i> 채널 연결</h2>
+        <h2><i class="ri-notification-3-line"></i> 알림 채널</h2>
         <button class="btn sm" id="btnChannelsSave"><i class="ri-save-3-line"></i> 저장</button>
       </header>
 
       <div class="channels">
+        <!-- 카카오 알림톡 -->
         <div class="chan">
           <div class="chan__left">
             <i class="ri-kakao-talk-fill kakao"></i>
             <div>
               <div class="tit">카카오 알림톡</div>
-              <div class="sub">휴대폰 인증 + 채널 연결</div>
+              <div class="sub">휴대폰 인증 후 수신</div>
             </div>
           </div>
           <div class="chan__right">
             <label class="switch">
-              <input type="checkbox" id="kakaoLinked">
+              <input type="checkbox" id="kakaoEnabled">
               <span></span>
             </label>
           </div>
         </div>
 
+        <!-- 사이트 내 알림 -->
         <div class="chan">
           <div class="chan__left">
-            <i class="ri-mail-line"></i>
+            <i class="ri-notification-badge-line"></i>
             <div>
-              <div class="tit">이메일</div>
-              <div class="sub">보조 이메일로 알림 수신</div>
+              <div class="tit">사이트 내 알림</div>
+              <div class="sub">내 알림함에서 확인</div>
             </div>
           </div>
           <div class="chan__right">
             <label class="switch">
-              <input type="checkbox" id="emailSub">
+              <input type="checkbox" id="siteEnabled">
               <span></span>
             </label>
-          </div>
-        </div>
-
-        <div class="chan">
-          <div class="chan__left">
-            <i class="ri-notification-3-line"></i>
-            <div>
-              <div class="tit">푸시 알림</div>
-              <div class="sub" id="pushStatus">브라우저 권한 필요</div>
-            </div>
-          </div>
-          <div class="chan__right">
-            <button class="btn ghost" id="btnPushPerm"><i class="ri-notification-badge-line"></i> 권한요청</button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 알림 설정 (토픽 × 채널) -->
+    <!-- ===== 알림 토픽 (간단 매트릭스) ===== -->
     <section class="st-card" id="secNoti">
       <header class="st-card__head">
         <h2><i class="ri-equalizer-line"></i> 알림 설정</h2>
@@ -154,35 +129,34 @@
       </header>
 
       <div class="matrix">
-        <div class="matrix__head">
+        <div class="matrix__head" style="grid-template-columns:1.5fr 1fr 1fr;">
           <div class="col topic">토픽</div>
           <div class="col">카카오</div>
-          <div class="col">이메일</div>
-          <div class="col">푸시</div>
+          <div class="col">사이트내</div>
         </div>
-        <div class="matrix__row">
+
+        <div class="matrix__row" style="grid-template-columns:1.5fr 1fr 1fr;">
           <div class="col topic">신규 공고 등록</div>
-          <div class="col"><input type="checkbox" id="tRecruitK" /></div>
-          <div class="col"><input type="checkbox" id="tRecruitE" /></div>
-          <div class="col"><input type="checkbox" id="tRecruitP" /></div>
+          <div class="col"><input type="checkbox" id="tRecruitK"></div>
+          <div class="col"><input type="checkbox" id="tRecruitS"></div>
         </div>
-        <div class="matrix__row">
-          <div class="col topic">합격/불합격 결과</div>
-          <div class="col"><input type="checkbox" id="tResultK" /></div>
-          <div class="col"><input type="checkbox" id="tResultE" /></div>
-          <div class="col"><input type="checkbox" id="tResultP" /></div>
+
+        <div class="matrix__row" style="grid-template-columns:1.5fr 1fr 1fr;">
+          <div class="col topic">제안이 왔을 때</div>
+          <div class="col"><input type="checkbox" id="tOfferK"></div>
+          <div class="col"><input type="checkbox" id="tOfferS"></div>
         </div>
-        <div class="matrix__row">
-          <div class="col topic">새 메시지 수신</div>
-          <div class="col"><input type="checkbox" id="tMessageK" /></div>
-          <div class="col"><input type="checkbox" id="tMessageE" /></div>
-          <div class="col"><input type="checkbox" id="tMessageP" /></div>
+
+        <div class="matrix__row" style="grid-template-columns:1.5fr 1fr 1fr;">
+          <div class="col topic">지원 합격 시</div>
+          <div class="col"><input type="checkbox" id="tPassK"></div>
+          <div class="col"><input type="checkbox" id="tPassS"></div>
         </div>
       </div>
 
-      <div class="st-grid2">
+      <div class="st-grid2" style="margin-top:10px">
         <div>
-          <label class="label">수신 제한(야간 금지) 시작</label>
+          <label class="label">수신 제한 시작</label>
           <input id="quietStart" class="input" type="time" value="22:00">
         </div>
         <div>
@@ -192,34 +166,7 @@
       </div>
     </section>
 
-    <!-- 테스트 알림 -->
-    <section class="st-card" id="secTest">
-      <header class="st-card__head">
-        <h2><i class="ri-test-tube-line"></i> 테스트 알림</h2>
-        <button class="btn sm" id="btnSendTest"><i class="ri-send-plane-line"></i> 보내기</button>
-      </header>
-      <div class="st-grid2">
-        <div>
-          <label class="label">토픽</label>
-          <select id="testTopic" class="input">
-            <option value="newRecruit">신규 공고</option>
-            <option value="application">결과 안내</option>
-            <option value="message">새 메시지</option>
-          </select>
-        </div>
-        <div>
-          <label class="label">채널</label>
-          <select id="testChannel" class="input">
-            <option value="kakao">카카오</option>
-            <option value="email">이메일</option>
-            <option value="push">푸시</option>
-          </select>
-        </div>
-      </div>
-      <p class="muted small">※ 데모모드: 실제 전송 대신 성공 토스트만 표시됩니다.</p>
-    </section>
-
-    <!-- 위험 구역 -->
+    <!-- 위험 구역(로그아웃만 유지) -->
     <section class="st-card danger">
       <header class="st-card__head">
         <h2><i class="ri-error-warning-line"></i> 위험 구역</h2>
@@ -235,7 +182,7 @@
   <!-- 공통 하단 탭 -->
   <div id="bottom-tabs"></div>
 
-  <!-- 페이지 JS -->
+  <!-- (선택) 기존 settings.js를 그대로 사용하거나, 간단 저장만 필요하면 아래에서 필요한 바인딩만 추가하세요 -->
   <script src="js/settings.js"></script>
 </body>
 </html>
