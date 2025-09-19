@@ -19,192 +19,171 @@
   <div id="appbar"></div>
   <div id="top-tabs"></div>
 
-  <main class="st-page container">
-    <h1 class="st-title">설정</h1>
+  <!-- 프로필 -->
+<section class="st-card" id="secProfile">
+  <header class="st-card__head">
+    <h2><i class="ri-user-settings-line"></i> 프로필</h2>
+  </header>
 
-    <!-- 간단 프로필 요약 -->
-    <section class="st-card" id="secProfileMini">
-      <header class="st-card__head">
-        <h2><i class="ri-user-3-line"></i> 프로필</h2>
-      </header>
-      <div class="nt-prof">
-        <div class="nt-avatar">
-          <img id="avatarPreview" alt="">
-          <button type="button" id="btnAvatarPick" class="nt-avatar-pick" aria-label="프로필 사진 업로드">
-            <i class="ri-image-add-line"></i>
-          </button>
-          <input id="avatarFile" type="file" accept="image/*" hidden>
-        </div>
-        <div class="nt-prof-form">
-          <label class="label">이름</label>
-          <input id="nickname" class="input" placeholder="성함 또는 활동명">
-          <label class="label">이메일</label>
-          <input id="email" class="input" readonly placeholder="등록된 이메일">
-          <label class="label">전화번호</label>
-          <div class="st-row">
-            <input id="phone" class="input" inputmode="numeric" placeholder="01012345678">
-            <button class="btn ghost" id="btnSendCode"><i class="ri-shield-check-line"></i> 인증</button>
-          </div>
-        </div>
-      </div>
-    </section>
+  <div class="st-profile">
+    <div class="st-avatar">
+      <img id="avatarPreview" alt="아바타 미리보기">
+      <button type="button" id="btnAvatarPick" class="avatar-pick" aria-label="프로필 사진 업로드">
+        <i class="ri-image-add-line"></i>
+      </button>
+      <input id="avatarFile" type="file" accept="image/*" hidden>
+    </div>
 
-    <!-- 채널 토글(카카오 전체 연결) -->
-    <section class="st-card" id="secChannelToggle">
-      <header class="st-card__head">
-        <h2><i class="ri-links-line"></i> 채널</h2>
-      </header>
-      <div class="nt-channels">
-        <div class="nt-chan">
-          <div class="nt-chan__left">
-            <i class="ri-kakao-talk-fill kakao"></i>
-            <div>
-              <div class="tit">카카오 알림톡</div>
-              <div class="sub">휴대폰 인증 · 채널 연결 필요</div>
-            </div>
-          </div>
-          <div class="nt-chan__right">
-            <label class="switch">
-              <input type="checkbox" id="kakaoLinked">
-              <span></span>
-            </label>
-          </div>
-        </div>
+    <div class="st-form">
+      <label class="label">이름</label>
+      <input id="nickname" class="input" placeholder="성함 또는 활동명">
 
-        <div class="nt-chan">
-          <div class="nt-chan__left">
-            <i class="ri-mail-line"></i>
-            <div>
-              <div class="tit">이메일</div>
-              <div class="sub">보조 이메일로 안내 수신</div>
-            </div>
-          </div>
-          <div class="nt-chan__right">
-            <label class="switch">
-              <input type="checkbox" id="emailSub">
-              <span></span>
-            </label>
-          </div>
-        </div>
+      <label class="label">이메일</label>
+      <input id="email" class="input" readonly placeholder="등록된 이메일">
 
-        <div class="nt-chan">
-          <div class="nt-chan__left">
-            <i class="ri-notification-3-line"></i>
-            <div>
-              <div class="tit">푸시</div>
-              <div class="sub" id="pushStatus">브라우저 권한 필요</div>
-            </div>
-          </div>
-          <div class="nt-chan__right">
-            <button class="btn ghost" id="btnPushPerm"><i class="ri-notification-badge-line"></i> 권한요청</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 알림 매트릭스 -->
-    <section class="st-card" id="secNotiMatrix">
-      <header class="st-card__head">
-        <h2><i class="ri-equalizer-line"></i> 알림 설정</h2>
-      </header>
-
-      <!-- 1) 공고/계약 -->
-      <div class="nt-group">
-        <h3><i class="ri-file-list-2-line"></i> 공고/계약</h3>
-        <div class="nt-matrix">
-          <div class="nt-row">
-            <div class="topic">신규 공고 등록</div>
-            <div class="tog"><input type="checkbox" id="nRecruitK" aria-label="카카오"></div>
-            <div class="tog"><input type="checkbox" id="nRecruitE" aria-label="이메일"></div>
-            <div class="tog"><input type="checkbox" id="nRecruitP" aria-label="푸시"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">제안 도착</div>
-            <div class="tog"><input type="checkbox" id="nOfferK"></div>
-            <div class="tog"><input type="checkbox" id="nOfferE"></div>
-            <div class="tog"><input type="checkbox" id="nOfferP"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">지원 결과(합격/불합격)</div>
-            <div class="tog"><input type="checkbox" id="nResultK"></div>
-            <div class="tog"><input type="checkbox" id="nResultE"></div>
-            <div class="tog"><input type="checkbox" id="nResultP"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">계약 확정/결제 완료</div>
-            <div class="tog"><input type="checkbox" id="nContractOkK"></div>
-            <div class="tog"><input type="checkbox" id="nContractOkE"></div>
-            <div class="tog"><input type="checkbox" id="nContractOkP"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">계약 취소/변경</div>
-            <div class="tog"><input type="checkbox" id="nContractChgK"></div>
-            <div class="tog"><input type="checkbox" id="nContractChgE"></div>
-            <div class="tog"><input type="checkbox" id="nContractChgP"></div>
-          </div>
-        </div>
+      <label class="label">전화번호</label>
+      <div class="st-row nowrap">
+        <input id="phone" class="input flex-1" inputmode="numeric" placeholder="01012345678">
+        <button class="btn" id="btnSendCode"><i class="ri-shield-check-line"></i> 인증</button>
       </div>
 
-      <!-- 2) 일정/촬영 -->
-      <div class="nt-group">
-        <h3><i class="ri-calendar-event-line"></i> 일정/촬영</h3>
-        <div class="nt-matrix">
-          <div class="nt-row">
-            <div class="topic">촬영일 1일 전 리마인드</div>
-            <div class="tog"><input type="checkbox" id="nD1K"></div>
-            <div class="tog"><input type="checkbox" id="nD1E"></div>
-            <div class="tog"><input type="checkbox" id="nD1P"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">촬영 시작 1시간 전 푸시</div>
-            <div class="tog"><input type="checkbox" id="nH1K"></div>
-            <div class="tog"><input type="checkbox" id="nH1E"></div>
-            <div class="tog"><input type="checkbox" id="nH1P"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">촬영 일정 변경/취소</div>
-            <div class="tog"><input type="checkbox" id="nSchedChgK"></div>
-            <div class="tog"><input type="checkbox" id="nSchedChgE"></div>
-            <div class="tog"><input type="checkbox" id="nSchedChgP"></div>
-          </div>
+      <!-- (선택) 인증 코드 UI – 필요 시 JS에서 hidden 해제 -->
+      <div id="verifyWrap" class="verify" hidden>
+        <div class="st-row nowrap">
+          <input id="code" class="input flex-1" inputmode="numeric" maxlength="6" placeholder="6자리 코드">
+          <button class="btn" id="btnVerify"><i class="ri-check-line"></i> 확인</button>
+        </div>
+        <div class="hint">데모 코드 <b id="codeHint"></b> · 남은시간 <b id="codeTimer">03:00</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 채널 (카카오톡 / 라이비 알림만) -->
+<section class="st-card" id="secChannels">
+  <header class="st-card__head">
+    <h2><i class="ri-links-line"></i> 채널</h2>
+  </header>
+
+  <div class="channels">
+    <div class="chan">
+      <div class="chan__left">
+        <i class="ri-kakao-talk-fill kakao"></i>
+        <div>
+          <div class="tit">카카오톡 채널 알림</div>
+          <div class="sub">휴대폰 인증 · 채널 연결 필요</div>
         </div>
       </div>
+      <div class="chan__right">
+        <label class="switch">
+          <input type="checkbox" id="kakaoLinked">
+          <span></span>
+        </label>
+      </div>
+    </div>
 
-      <!-- 3) 메시지/소통 -->
-      <div class="nt-group">
-        <h3><i class="ri-chat-3-line"></i> 메시지/소통</h3>
-        <div class="nt-matrix">
-          <div class="nt-row">
-            <div class="topic">새 메시지 도착</div>
-            <div class="tog"><input type="checkbox" id="nMsgK"></div>
-            <div class="tog"><input type="checkbox" id="nMsgE"></div>
-            <div class="tog"><input type="checkbox" id="nMsgP"></div>
-          </div>
-          <div class="nt-row">
-            <div class="topic">운영자 공지/공지사항</div>
-            <div class="tog"><input type="checkbox" id="nNoticeK"></div>
-            <div class="tog"><input type="checkbox" id="nNoticeE"></div>
-            <div class="tog"><input type="checkbox" id="nNoticeP"></div>
-          </div>
+    <div class="chan">
+      <div class="chan__left">
+        <i class="ri-notification-3-line"></i>
+        <div>
+          <div class="tit">라이비 알림(사이트 내)</div>
+          <div class="sub" id="liveePushDesc">브라우저 권한 필요</div>
         </div>
       </div>
-
-      <!-- 4) 정산/금전 -->
-      <div class="nt-group">
-        <h3><i class="ri-hand-coin-line"></i> 정산/금전</h3>
-        <div class="nt-matrix">
-          <div class="nt-row">
-            <div class="topic">정산 완료 알림</div>
-            <div class="tog"><input type="checkbox" id="nSettleK"></div>
-            <div class="tog"><input type="checkbox" id="nSettleE"></div>
-            <div class="tog"><input type="checkbox" id="nSettleP"></div>
-          </div>
-        </div>
+      <div class="chan__right">
+        <label class="switch">
+          <input type="checkbox" id="liveePush">
+          <span></span>
+        </label>
       </div>
-    </section>
+    </div>
+  </div>
+  <div class="st-row" style="margin-top:10px">
+    <button class="btn ghost" id="btnPushPerm"><i class="ri-notification-badge-line"></i> 권한요청</button>
+  </div>
+</section>
 
-    <div class="st-bottom-space"></div>
-  </main>
+<!-- 알림 설정 (두 채널만 ON/OFF) -->
+<section class="st-card" id="secNoti">
+  <header class="st-card__head">
+    <h2><i class="ri-equalizer-line"></i> 알림 설정</h2>
+  </header>
+
+  <div class="matrix2">
+    <div class="matrix2__head">
+      <div class="col topic">토픽</div>
+      <div class="col">카카오톡</div>
+      <div class="col">라이비</div>
+    </div>
+
+    <!-- 1. 공고/계약 -->
+    <div class="matrix2__section"><i class="ri-survey-line"></i> 공고/계약</div>
+    <div class="matrix2__row">
+      <div class="col topic">신규 공고 등록</div>
+      <div class="col"><input type="checkbox" id="n_recruit_k"></div>
+      <div class="col"><input type="checkbox" id="n_recruit_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">제안 도착</div>
+      <div class="col"><input type="checkbox" id="n_offer_k"></div>
+      <div class="col"><input type="checkbox" id="n_offer_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">지원 결과(합격/불합격)</div>
+      <div class="col"><input type="checkbox" id="n_result_k"></div>
+      <div class="col"><input type="checkbox" id="n_result_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">계약 확정/결제 완료</div>
+      <div class="col"><input type="checkbox" id="n_contract_ok_k"></div>
+      <div class="col"><input type="checkbox" id="n_contract_ok_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">계약 취소/변경</div>
+      <div class="col"><input type="checkbox" id="n_contract_cancel_k"></div>
+      <div class="col"><input type="checkbox" id="n_contract_cancel_l"></div>
+    </div>
+
+    <!-- 2. 일정/촬영 -->
+    <div class="matrix2__section"><i class="ri-calendar-event-line"></i> 일정/촬영</div>
+    <div class="matrix2__row">
+      <div class="col topic">촬영일 1일 전 리마인드</div>
+      <div class="col"><input type="checkbox" id="n_shoot_d1_k"></div>
+      <div class="col"><input type="checkbox" id="n_shoot_d1_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">촬영 시작 1시간 전 (선택)</div>
+      <div class="col"><input type="checkbox" id="n_shoot_h1_k"></div>
+      <div class="col"><input type="checkbox" id="n_shoot_h1_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">일정 변경/취소</div>
+      <div class="col"><input type="checkbox" id="n_shoot_change_k"></div>
+      <div class="col"><input type="checkbox" id="n_shoot_change_l"></div>
+    </div>
+
+    <!-- 3. 메시지/소통 -->
+    <div class="matrix2__section"><i class="ri-message-3-line"></i> 메시지/소통</div>
+    <div class="matrix2__row">
+      <div class="col topic">새 메시지 도착</div>
+      <div class="col"><input type="checkbox" id="n_msg_k"></div>
+      <div class="col"><input type="checkbox" id="n_msg_l"></div>
+    </div>
+    <div class="matrix2__row">
+      <div class="col topic">운영자 공지</div>
+      <div class="col"><input type="checkbox" id="n_notice_k"></div>
+      <div class="col"><input type="checkbox" id="n_notice_l"></div>
+    </div>
+
+    <!-- 4. 정산/금전 -->
+    <div class="matrix2__section"><i class="ri-hand-coin-line"></i> 정산/금전</div>
+    <div class="matrix2__row">
+      <div class="col topic">정산 완료</div>
+      <div class="col"><input type="checkbox" id="n_payout_k"></div>
+      <div class="col"><input type="checkbox" id="n_payout_l"></div>
+    </div>
+  </div>
+</section>
 
   <!-- 공통 하단 탭 -->
   <div id="bottom-tabs"></div>
