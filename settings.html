@@ -103,84 +103,85 @@
   </div>
 </section>
 
-<!-- 알림 설정 (두 채널만 ON/OFF) -->
 <section class="st-card" id="secNoti">
   <header class="st-card__head">
     <h2><i class="ri-equalizer-line"></i> 알림 설정</h2>
+    <button class="btn sm" id="btnNotiSave"><i class="ri-save-3-line"></i> 저장</button>
   </header>
 
-  <div class="matrix2">
-    <div class="matrix2__head">
-      <div class="col topic">토픽</div>
-      <div class="col">카카오톡</div>
-      <div class="col">라이비</div>
+  <div class="nt-matrix" role="table" aria-label="알림 설정">
+    <!-- 헤더 -->
+    <div class="nt-head" role="row">
+      <div class="topic" role="columnheader">토픽</div>
+      <div class="kakao" role="columnheader">카카오톡 채널</div>
+      <div class="livee" role="columnheader">라이비</div>
     </div>
 
-    <!-- 1. 공고/계약 -->
-    <div class="matrix2__section"><i class="ri-survey-line"></i> 공고/계약</div>
-    <div class="matrix2__row">
-      <div class="col topic">신규 공고 등록</div>
-      <div class="col"><input type="checkbox" id="n_recruit_k"></div>
-      <div class="col"><input type="checkbox" id="n_recruit_l"></div>
+    <!-- 공고/계약 -->
+    <h3 class="nt-group"><i class="ri-file-list-3-line"></i> 공고/계약</h3>
+    <div class="nt-row" role="row">
+      <div class="topic">신규 공고 등록</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_new" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_new" type="checkbox"><span></span></label></div>
     </div>
-    <div class="matrix2__row">
-      <div class="col topic">제안 도착</div>
-      <div class="col"><input type="checkbox" id="n_offer_k"></div>
-      <div class="col"><input type="checkbox" id="n_offer_l"></div>
+    <div class="nt-row">
+      <div class="topic">제안 도착</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_offer" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_offer" type="checkbox"><span></span></label></div>
     </div>
-    <div class="matrix2__row">
-      <div class="col topic">지원 결과(합격/불합격)</div>
-      <div class="col"><input type="checkbox" id="n_result_k"></div>
-      <div class="col"><input type="checkbox" id="n_result_l"></div>
+    <div class="nt-row">
+      <div class="topic">지원 결과(합격/불합격)</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_result" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_result" type="checkbox"><span></span></label></div>
     </div>
-    <div class="matrix2__row">
-      <div class="col topic">계약 확정/결제 완료</div>
-      <div class="col"><input type="checkbox" id="n_contract_ok_k"></div>
-      <div class="col"><input type="checkbox" id="n_contract_ok_l"></div>
+    <div class="nt-row">
+      <div class="topic">계약 확정/결제 완료</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_paid" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_paid" type="checkbox"><span></span></label></div>
     </div>
-    <div class="matrix2__row">
-      <div class="col topic">계약 취소/변경</div>
-      <div class="col"><input type="checkbox" id="n_contract_cancel_k"></div>
-      <div class="col"><input type="checkbox" id="n_contract_cancel_l"></div>
-    </div>
-
-    <!-- 2. 일정/촬영 -->
-    <div class="matrix2__section"><i class="ri-calendar-event-line"></i> 일정/촬영</div>
-    <div class="matrix2__row">
-      <div class="col topic">촬영일 1일 전 리마인드</div>
-      <div class="col"><input type="checkbox" id="n_shoot_d1_k"></div>
-      <div class="col"><input type="checkbox" id="n_shoot_d1_l"></div>
-    </div>
-    <div class="matrix2__row">
-      <div class="col topic">촬영 시작 1시간 전 (선택)</div>
-      <div class="col"><input type="checkbox" id="n_shoot_h1_k"></div>
-      <div class="col"><input type="checkbox" id="n_shoot_h1_l"></div>
-    </div>
-    <div class="matrix2__row">
-      <div class="col topic">일정 변경/취소</div>
-      <div class="col"><input type="checkbox" id="n_shoot_change_k"></div>
-      <div class="col"><input type="checkbox" id="n_shoot_change_l"></div>
+    <div class="nt-row">
+      <div class="topic">계약 취소/변경</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_cancel" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_cancel" type="checkbox"><span></span></label></div>
     </div>
 
-    <!-- 3. 메시지/소통 -->
-    <div class="matrix2__section"><i class="ri-message-3-line"></i> 메시지/소통</div>
-    <div class="matrix2__row">
-      <div class="col topic">새 메시지 도착</div>
-      <div class="col"><input type="checkbox" id="n_msg_k"></div>
-      <div class="col"><input type="checkbox" id="n_msg_l"></div>
+    <!-- 일정/촬영 -->
+    <h3 class="nt-group"><i class="ri-calendar-event-line"></i> 일정/촬영</h3>
+    <div class="nt-row">
+      <div class="topic">촬영일 1일 전 리마인드</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_d1" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_d1" type="checkbox"><span></span></label></div>
     </div>
-    <div class="matrix2__row">
-      <div class="col topic">운영자 공지</div>
-      <div class="col"><input type="checkbox" id="n_notice_k"></div>
-      <div class="col"><input type="checkbox" id="n_notice_l"></div>
+    <div class="nt-row">
+      <div class="topic">촬영 시작 1시간 전 푸시</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_h1" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_h1" type="checkbox"><span></span></label></div>
+    </div>
+    <div class="nt-row">
+      <div class="topic">촬영 일정 변경/취소</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_sched" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_sched" type="checkbox"><span></span></label></div>
     </div>
 
-    <!-- 4. 정산/금전 -->
-    <div class="matrix2__section"><i class="ri-hand-coin-line"></i> 정산/금전</div>
-    <div class="matrix2__row">
-      <div class="col topic">정산 완료</div>
-      <div class="col"><input type="checkbox" id="n_payout_k"></div>
-      <div class="col"><input type="checkbox" id="n_payout_l"></div>
+    <!-- 메시지/소통 -->
+    <h3 class="nt-group"><i class="ri-chat-3-line"></i> 메시지/소통</h3>
+    <div class="nt-row">
+      <div class="topic">새 메시지 도착</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_msg" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_msg" type="checkbox"><span></span></label></div>
+    </div>
+    <div class="nt-row">
+      <div class="topic">운영자 공지/공지사항</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_notice" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_notice" type="checkbox"><span></span></label></div>
+    </div>
+
+    <!-- 정산/금전 -->
+    <h3 class="nt-group"><i class="ri-coins-line"></i> 정산/금전</h3>
+    <div class="nt-row">
+      <div class="topic">정산 완료 알림</div>
+      <div class="kakao"><label class="nt-switch"><input id="n_k_payout" type="checkbox"><span></span></label></div>
+      <div class="livee"><label class="nt-switch"><input id="n_l_payout" type="checkbox"><span></span></label></div>
     </div>
   </div>
 </section>
