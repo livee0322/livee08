@@ -131,7 +131,7 @@
         <div class="lv-tabbar__in"
              style="display:grid;grid-template-columns:repeat(5,1fr);height:calc(64px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)">
           <a class="tbi" href="index.html"           style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-home-line" style="font-size:20px"></i><span style="font-size:12px">홈</span></a>
-          <a class="tbi" href="recruit-list.html"    style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-archive-drawer-line" style="font-size:20px"></i><span style="font-size:12px">모집캠페인</span></a>
+          <a class="tbi" href="recruit-board.html"    style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-archive-drawer-line" style="font-size:20px"></i><span style="font-size:12px">모집캠페인</span></a>
           <a class="tbi" href="models.html"          style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-user-star-line" style="font-size:20px"></i><span style="font-size:12px">모델</span></a>
           <a class="tbi" href="portfolio-list.html"  style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-user-3-line" style="font-size:20px"></i><span style="font-size:12px">포트폴리오</span></a>
           <a class="tbi" href="${myHref}"             style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#64748b"><i class="ri-user-settings-line" style="font-size:20px"></i><span style="font-size:12px">마이페이지</span></a>
