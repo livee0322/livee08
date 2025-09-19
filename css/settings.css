@@ -100,3 +100,54 @@
 .matrix .topic{ font-weight:800; }
 
 .st-bottom-space{ height:12px; }
+
+/* ===== Patch: 레이아웃 깨짐/넘침 방지 ===== */
+.container, .st-page { max-width: 980px; margin: 0 auto; padding-inline: 12px; }
+.st-card { margin: 0 0 14px; }
+.st-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.st-row.nowrap { flex-wrap: nowrap; }
+.st-row > * { min-width: 0; }              /* flex 자식 넘침 방지 */
+.flex-1 { flex: 1 1 0; min-width: 120px; } /* input이 버튼에 눌리지 않게 */
+.input { width: 100%; min-width: 0; }      /* iOS/Safari 넘침 방지 */
+img { max-width: 100%; height: auto; }     /* 이미지 넘침 방지 */
+
+/* a 밑줄 제거 – ui.js 유무와 무관하게 강제 */
+a, a:visited { text-decoration: none; color: inherit; }
+
+/* 스위치는 기존 규칙 사용(이미 있음). 크기만 모바일 친화적으로 살짝 키움 */
+.switch { width: 50px; height: 30px; }
+.switch span::after { width: 24px; height: 24px; }
+
+/* 채널 카드 간격 */
+.channels { display:grid; gap:10px; }
+.chan { display:flex; align-items:center; justify-content:space-between;
+  border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff; }
+.chan__left { display:flex; gap:10px; align-items:center; min-width:0; }
+.chan__left .tit { font-weight:900; }
+.chan__left .sub { font-size:12.5px; color:#6b7280; }
+.chan__left i.kakao { color:#3b1e1e; background:#fee500; border-radius:8px; padding:4px; }
+
+/* ===== 알림 매트릭스(2채널만) ===== */
+.matrix2 { border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.matrix2__head { display:grid; grid-template-columns:1.4fr 1fr 1fr; background:#f8fafc; font-weight:900; font-size:13px; }
+.matrix2__head .col { padding:12px; border-right:1px solid var(--line); }
+.matrix2__head .col:last-child { border-right:0; }
+
+.matrix2__section { padding:10px 12px; font-weight:900; background:#fcfcfd; border-top:1px solid var(--line); display:flex; gap:8px; align-items:center; }
+.matrix2__row { display:grid; grid-template-columns:1.4fr 1fr 1fr; }
+.matrix2__row .col { padding:12px; border-top:1px solid var(--line); border-right:1px solid var(--line); }
+.matrix2__row .col:last-child { border-right:0; }
+.matrix2 .topic { font-weight:800; }
+
+/* 모바일에서 안전하게 꽉 차기 */
+@media (max-width: 560px){
+  .matrix2__head, .matrix2__row { grid-template-columns: 1.2fr .9fr .9fr; }
+  .st-profile { grid-template-columns: 1fr; }
+  .st-row.nowrap { flex-wrap: wrap; } /* 아주 작은 폭에서는 줄바꿈 허용 */
+}
+
+/* 프로필 아바타 영역 여유 */
+.st-avatar { width:112px; height:112px; }
+
+/* 버튼/칩 일관 컬러 */
+.btn { white-space: nowrap; }
