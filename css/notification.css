@@ -1,0 +1,71 @@
+/* notifications.css — v1.0.0 */
+:root{
+  --line:#e6e9f0; --ink:#0f172a; --sub:#64748b; --card:#fff; --accent:#4f46e5;
+}
+*{box-sizing:border-box}
+img{max-width:100%;display:block}
+a, a:visited{color:inherit; text-decoration:none} /* ui.js 삽입 시 밑줄 방지 */
+
+/* 프로필 요약 */
+.nt-prof{display:grid; grid-template-columns:120px 1fr; gap:14px}
+@media (max-width:560px){ .nt-prof{grid-template-columns:1fr} }
+
+.nt-avatar{position:relative;width:120px;height:120px;border-radius:50%;
+  overflow:hidden;background:#eef2f7;border:3px solid #fff; box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.nt-avatar img{width:100%;height:100%;object-fit:cover}
+.nt-avatar-pick{position:absolute;right:6px;bottom:6px;width:36px;height:36px;border-radius:50%;
+  border:0;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center}
+.nt-prof-form .label{display:block;font-weight:800;margin:8px 0 6px}
+
+/* 채널 카드 */
+.nt-channels{display:grid;gap:8px}
+.nt-chan{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
+.nt-chan__left{display:flex;gap:10px;align-items:center}
+.nt-chan__left .kakao{color:#3b1e1e;background:#fee500;border-radius:8px;padding:4px;font-size:20px}
+.nt-chan__left .tit{font-weight:900}
+.nt-chan__left .sub{font-size:12.5px;color:var(--sub)}
+.nt-chan__right{display:flex;align-items:center;gap:8px}
+
+/* 스위치 (settings.css와 동일 스타일 재사용을 위해 클래스 유지) */
+.switch{position:relative;display:inline-block;width:46px;height:28px}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:#e5e7eb;border-radius:999px;transition:.2s}
+.switch span::after{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.2s}
+.switch input:checked + span{background:var(--accent)}
+.switch input:checked + span::after{transform:translateX(18px)}
+
+/* 알림 그룹 */
+.nt-group{margin:16px 0}
+.nt-group h3{margin:0 0 8px; font-size:15px; font-weight:900; display:flex; gap:8px; align-items:center}
+
+/* 알림 매트릭스 (반응형) */
+.nt-matrix{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.nt-row{display:grid;grid-template-columns:1.6fr repeat(3,120px);align-items:center}
+.nt-row:not(:last-child){border-bottom:1px solid var(--line)}
+.nt-row > div{padding:10px 12px}
+.nt-row .topic{font-weight:800;color:var(--ink)}
+.nt-row .tog{display:flex;justify-content:center;align-items:center}
+.nt-row input[type="checkbox"]{width:20px;height:20px}
+
+/* 작은 화면: 카드형으로 접기 */
+@media (max-width:720px){
+  .nt-row{grid-template-columns:1fr;gap:0}
+  .nt-row .topic{border-bottom:1px dashed var(--line);background:#f9fafb}
+  .nt-row .tog{justify-content:flex-start;gap:12px}
+  .nt-row .tog::before{content:attr(aria-label);display:none}
+  .nt-row > div{padding:10px 12px}
+  /* 세 채널을 한 행에 정렬 */
+  .nt-row{padding:0}
+  .nt-row .topic + .tog{display:flex;gap:18px}
+  .nt-row .topic + .tog::before{content:"카카오 · 이메일 · 푸시"; color:var(--sub); font-size:12.5px; display:block; margin-right:6px}
+  /* 3개의 체크박스를 나란히 */
+  .nt-row .tog{display:flex}
+  .nt-row .tog input{margin-right:18px}
+}
+
+/* 입력/버튼 공통 보정(메인 CSS와 톤 맞춤) */
+.input{width:100%;height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:900;cursor:pointer}
+.btn.ghost{background:#fff}
+.st-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
