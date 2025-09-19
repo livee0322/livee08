@@ -3,69 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>모집 공고 - 라이비</title>
+  <title>모집 캠페인 - 라이비</title>
 
-  <!-- Board 전용 CSS → 이름 고정 -->
+  <!-- 페이지 전용 -->
   <link rel="stylesheet" href="css/recruit-board.css" />
   <!-- 공통 -->
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
-
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
 </head>
 <body>
-  <!-- 공통 상단바/탭 -->
+  <!-- 상단바/탭 -->
   <div id="appbar"></div>
   <div id="top-tabs"></div>
 
-  <main class="rb-page">
-    <!-- 헤더: 총 N건 + 정렬 -->
+  <main class="rb-page container">
+    <!-- 상단: 총 N건 + 정렬 -->
     <header class="rb-head">
-      <div class="rb-count" id="rbTotal" aria-live="polite">총 0건</div>
-      <select class="rb-sort" id="rbSort" aria-label="정렬">
-        <option value="recent">최신 등록순</option>
-        <option value="deadline">마감 임박순</option>
-        <option value="popular">지원자 많은순</option>
-      </select>
+      <div class="left"><span id="rbTotal" aria-live="polite">총 0건</span></div>
+      <div class="right">
+        <select id="rbSort" aria-label="정렬">
+          <option value="recent">최신 등록순</option>
+          <option value="deadline">마감 임박순</option>
+          <option value="popular">지원자 많은순</option>
+        </select>
+      </div>
     </header>
 
-    <!-- 검색 + 필터 버튼 -->
+    <!-- 검색/필터 -->
     <section class="rb-toolbar" aria-label="검색과 필터">
-      <label class="rb-search" aria-label="검색">
+      <label class="search">
         <i class="ri-search-line lead"></i>
         <input id="rbQuery" type="search" placeholder="제목·내용·브랜드로 검색" />
-        <button id="rbSearchGo" class="rb-go" type="button" aria-label="검색 실행">
+        <button id="rbSearchGo" class="sgo" type="button" aria-label="검색 실행">
           <i class="ri-arrow-right-line"></i>
         </button>
       </label>
-      <button id="rbBtnFilter" class="btn rb-filter" type="button" aria-label="필터">
-        <i class="ri-sliders-2-line"></i> 필터
+      <button id="rbBtnFilter" class="btn" type="button" aria-label="필터">
+        <i class="ri-sliders-2-line"></i>
       </button>
     </section>
 
-    <!-- 활성화된 필터 칩 -->
+    <!-- 활성 필터 칩 -->
     <div id="rbChips" class="rb-chips" hidden></div>
 
-    <!-- 스폰서 AD (있을 때만 표시) -->
-    <section id="rbTopAd" class="rb-ad" hidden></section>
+    <!-- 상단 AD -->
+    <section id="rbTopAd" class="rb-list" hidden></section>
 
-    <!-- 보드형 목록 -->
+    <!-- 리스트 -->
     <section id="rbList" class="rb-list" aria-live="polite"></section>
 
     <!-- 페이지네이션 -->
-    <nav id="rbPager" class="rb-pager" aria-label="페이지 네비게이션"></nav>
+    <nav id="rbPager" class="rb-pager" aria-label="페이지 이동"></nav>
   </main>
 
-  <!-- 필터 드로어 (고정 오버레이: 화면 하단으로 내려가지 않음) -->
-  <aside id="rbDrawer" class="rb-drawer" aria-hidden="true">
-    <div class="rb-sheet" role="dialog" aria-modal="true" aria-labelledby="rbFilterTitle">
-      <header class="rb-sheet__head">
-        <strong id="rbFilterTitle">필터</strong>
+  <!-- 필터 드로어 -->
+  <aside id="rbDrawer" class="drawer" aria-hidden="true">
+    <div class="sheet">
+      <header>
+        <strong>필터</strong>
         <button id="rbFilterClose" class="x" type="button" aria-label="닫기">✕</button>
       </header>
 
-      <div class="rb-fields">
+      <div class="grid">
         <div class="field">
           <label for="fRegion">지역</label>
           <input id="fRegion" placeholder="예: 서울" />
@@ -74,39 +75,41 @@
           <label for="fDistrict">구/군</label>
           <input id="fDistrict" placeholder="예: 강남구" />
         </div>
-        <div class="field">
-          <label>출연료 범위(원)</label>
-          <div class="row">
-            <input id="fPayMin" type="number" placeholder="최소" />
-            <span class="dash">~</span>
-            <input id="fPayMax" type="number" placeholder="최대" />
-          </div>
-        </div>
-        <label class="chk"><input id="fNegotiable" type="checkbox" /> 출연료 협의 포함</label>
+      </div>
 
-        <div class="field">
-          <label for="fCloseIn">마감까지</label>
-          <select id="fCloseIn">
-            <option value="">전체</option>
-            <option value="3">3일</option>
-            <option value="7">7일</option>
-            <option value="14">14일</option>
-            <option value="30">30일</option>
-          </select>
+      <div class="field">
+        <label>출연료 범위(원)</label>
+        <div class="range">
+          <input id="fPayMin" type="number" placeholder="최소" />
+          <span class="dash">~</span>
+          <input id="fPayMax" type="number" placeholder="최대" />
         </div>
       </div>
 
-      <div class="rb-sheet__actions">
+      <label class="chk"><input id="fNegotiable" type="checkbox" /> 출연료 협의 포함</label>
+
+      <div class="field">
+        <label for="fCloseIn">마감까지</label>
+        <select id="fCloseIn">
+          <option value="">전체</option>
+          <option value="3">3일</option>
+          <option value="7">7일</option>
+          <option value="14">14일</option>
+          <option value="30">30일</option>
+        </select>
+      </div>
+
+      <div class="actions">
         <button id="rbFilterReset" class="btn" type="button">초기화</button>
         <button id="rbFilterApply" class="btn pri" type="button">적용</button>
       </div>
     </div>
   </aside>
 
-  <!-- 공통 하단 탭 -->
+  <!-- 하단 탭 -->
   <div id="bottom-tabs"></div>
 
-  <!-- Board 전용 JS → 이름 고정 -->
+  <!-- 페이지 스크립트 -->
   <script src="js/recruit-board.js"></script>
 </body>
 </html>
