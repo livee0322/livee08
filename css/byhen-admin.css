@@ -29,3 +29,15 @@
 .btn{display:inline-flex;align-items:center;gap:8px;padding:0 14px;height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:800;cursor:pointer}
 .btn.sm{height:34px}
 .btn.pri{background:var(--pri);color:#fff;border-color:transparent}
+
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(min-width:720px){.slot-grid{grid-template-columns:repeat(6,1fr)}}
+.slot-btn{height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:800}
+.slot-btn.off{opacity:.55;background:#f3f4f6;text-decoration:line-through}
+.adm-day{position:relative;min-height:48px;padding:6px;border-right:1px solid #f1f3f6;border-bottom:1px solid #f1f3f6;display:flex;align-items:flex-start;justify-content:flex-end;cursor:pointer}
+.adm-day:nth-child(7n){border-right:0}
+.adm-day.sel{outline:2px solid var(--pri)}
+.adm-day .dn{font-weight:900}
+.adm-dot{position:absolute;left:6px;bottom:6px;width:8px;height:8px;border-radius:50%}
+.adm-dot.closed{background:#64748b}
+.adm-dot.booked{background:#ef4444}
