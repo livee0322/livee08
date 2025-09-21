@@ -1,31 +1,119 @@
-<!-- /js/recruit-new.js — v2.6 (brand/pay 강제 동기화) -->
+/* recruit-new.js — v3.1
+ * - 필드 순서/말머리/직군 칩
+ * - 날짜/시간 모달 픽커
+ * - Cloudinary 업로드(서명 기반)
+ * - 기존 스키마 호환 payload
+ */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
   const THUMB = CFG.thumb || { card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto" };
 
   const $id = s => document.getElementById(s);
+  const say=(t,ok=false)=>{ const el=$id('recruitMsg'); if(!el) return; el.textContent=t; el.classList.add('show'); el.classList.toggle('ok',ok); };
+  const headers=(json=true)=>{ const h={}; if(json) h["Content-Type"]="application/json"; const tok=localStorage.getItem("livee_token")||localStorage.getItem("liveeToken"); if(tok) h.Authorization=`Bearer ${tok}`; return h; };
+  const withTransform = (url, t) => { try{ if(!url.includes('/upload/')) return url; const [h,tail]=url.split('/upload/'); return `${h}/upload/${t}/${tail}`; }catch{ return url; } };
+
+  // ---------- DOM ----------
   const form        = $id("recruitForm");
   const brandNameEl = $id("brandName");
+  const prefixEl    = $id("prefix");
   const titleEl     = $id("title");
   const descEl      = $id("desc");
   const categoryEl  = $id("category");
   const locationEl  = $id("location");
-  const shootDate   = $id("shootDate");
-  const startTime   = $id("startTime");
-  const endTime     = $id("endTime");
-  const deadline    = $id("deadline");
+
+  const shootDateHidden = $id("shootDate");
+  const shootDateBtn    = $id("shootDateBtn");
+  const shootDateText   = $id("shootDateText");
+
+  const deadlineHidden  = $id("deadline");
+  const deadlineBtn     = $id("deadlineBtn");
+  const deadlineText    = $id("deadlineText");
+
+  const startHidden     = $id("startTime");
+  const startBtn        = $id("startTimeBtn");
+  const startText       = $id("startTimeText");
+
+  const durationEl      = $id("duration");
+
   const payEl       = $id("pay");
   const negEl       = $id("negotiable");
   const fileEl      = $id("imageFile");
   const previewEl   = $id("preview");
-  const msgEl       = $id("recruitMsg");
 
-  const say=(t,ok=false)=>{ if(!msgEl) return; msgEl.textContent=t; msgEl.classList.add('show'); msgEl.classList.toggle('ok',ok); };
-  const headers=(json=true)=>{ const h={}; if(json) h["Content-Type"]="application/json"; const tok=localStorage.getItem("livee_token")||localStorage.getItem("liveeToken"); if(tok) h.Authorization=`Bearer ${tok}`; return h; };
+  // ---------- 말머리 칩 ----------
+  (function bindPrefixChips(){
+    const wrap = document.getElementById('prefixChips');
+    if(!wrap) return;
+    wrap.addEventListener('click', (e)=>{
+      const b = e.target.closest('.chip'); if(!b) return;
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      prefixEl.value = b.dataset.v;
+    });
+  })();
 
-  const withTransform = (url, t) => { try{ if(!url.includes('/upload/')) return url; const [h,tail]=url.split('/upload/'); return `${h}/upload/${t}/${tail}`; }catch{ return url; } };
+  // ---------- 직군 → 본문 자동 헤더 ----------
+  function selectedRoles(){
+    return [...document.querySelectorAll('#roles input:checked')].map(i=>i.value);
+  }
 
+  // ---------- 날짜/시간 모달 ----------
+  const pickerModal = $id('pickerModal');
+  const pickerTitle = $id('pickerTitle');
+  const pickerBody  = $id('pickerBody');
+  const pickerOk    = $id('pickerOk');
+  const pickerCancel= $id('pickerCancel');
+  const pickerClose = $id('pickerClose');
+
+  function openPicker(kind, initial){
+    pickerModal.classList.add('show');
+    pickerModal.setAttribute('aria-hidden','false');
+    document.documentElement.style.overflow='hidden';
+
+    if(kind==='date'){
+      pickerTitle.textContent = '날짜 선택';
+      pickerBody.innerHTML = `<input id="__date" type="date" class="input" value="${initial||''}" style="height:48px">`;
+    }else if(kind==='time'){
+      pickerTitle.textContent = '시간 선택';
+      pickerBody.innerHTML = `<input id="__time" type="time" class="input" value="${initial||''}" step="60" style="height:48px">`;
+    }
+    return new Promise((resolve,reject)=>{
+      function done(ok){
+        pickerModal.classList.remove('show');
+        pickerModal.setAttribute('aria-hidden','true');
+        document.documentElement.style.overflow='';
+        pickerOk.onclick = pickerCancel.onclick = pickerClose.onclick = null;
+        if(!ok) return reject('cancel');
+        const v = kind==='date' ? ($id('__date').value) : ($id('__time').value);
+        resolve(v);
+      }
+      pickerOk.onclick = ()=> done(true);
+      pickerCancel.onclick = pickerClose.onclick = ()=> done(false);
+    });
+  }
+
+  shootDateBtn?.addEventListener('click', async ()=>{
+    try{
+      const v = await openPicker('date', shootDateHidden.value);
+      if(v){ shootDateHidden.value = v; shootDateText.textContent = v; }
+    }catch{}
+  });
+  deadlineBtn?.addEventListener('click', async ()=>{
+    try{
+      const v = await openPicker('date', deadlineHidden.value);
+      if(v){ deadlineHidden.value = v; deadlineText.textContent = v; }
+    }catch{}
+  });
+  startBtn?.addEventListener('click', async ()=>{
+    try{
+      const v = await openPicker('time', startHidden.value);
+      if(v){ startHidden.value = v; startText.textContent = v; }
+    }catch{}
+  });
+
+  // ---------- 이미지 업로드 ----------
   fileEl?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     if(!/^image\//.test(f.type)) { say('이미지 파일만 업로드'); e.target.value=''; return; }
@@ -43,21 +131,33 @@
     }catch(err){ previewEl.removeAttribute('src'); delete previewEl.dataset.cover; delete previewEl.dataset.thumb; say('업로드 실패: '+(err.message||'오류')); }
   });
 
+  // 출연료 협의
   negEl?.addEventListener('change', ()=>{ if(negEl.checked){ payEl.value=''; payEl.disabled=true; } else { payEl.disabled=false; } });
 
+  // ---------- 제출 ----------
   form?.addEventListener('submit', async ev=>{
     ev.preventDefault();
 
-    const brandName = (brandNameEl?.value||'').trim();          // ★ 반드시 채워서 전송
+    const brandName = (brandNameEl?.value||'').trim();
+    const prefix    = (prefixEl?.value||'').trim();
     const title     = (titleEl?.value||'').trim();
-    const desc      = (descEl?.value||'').trim();
-    if(!brandName) { say('브랜드명을 입력해주세요.'); return; }
-    if(!title)     { say('제목을 입력해주세요.'); return; }
-    if(!categoryEl.value){ say('카테고리를 선택해주세요.'); return; }
-    if(!shootDate.value || !startTime.value || !endTime.value){ say('촬영일/시간을 입력해주세요.'); return; }
-    if(!deadline.value){ say('마감일을 선택해주세요.'); return; }
+    const descRaw   = (descEl?.value||'').trim();
+    const roles     = selectedRoles();
 
-    // 출연료 숫자 파싱 (협의 체크 시 undefined)
+    if(!brandName){ say('브랜드명을 입력해주세요.'); return; }
+    if(!prefix){ say('말머리를 선택/입력해주세요.'); return; }
+    if(!title){ say('제목을 입력해주세요.'); return; }
+    if(!categoryEl.value){ say('카테고리를 선택해주세요.'); return; }
+    if(!shootDateHidden.value){ say('촬영일을 선택해주세요.'); return; }
+    if(!deadlineHidden.value){ say('공고 마감일을 선택해주세요.'); return; }
+    if(!startHidden.value){ say('시작 시간을 선택해주세요.'); return; }
+    if(!durationEl.value){ say('촬영 시간을 입력해주세요.'); return; }
+
+    // 본문 앞에 직군 요약 블록 자동 prepend
+    const rolesBlock = roles.length ? `■ 모집 직군: ${roles.join(' · ')}\n\n` : '';
+    const desc = rolesBlock + (descRaw || '');
+
+    // 출연료 숫자
     let feeNum;
     if(!negEl.checked){
       const raw=String(payEl.value||'').replace(/,/g,'').trim();
@@ -68,35 +168,53 @@
       }
     }
 
+    // 종료시각 계산 (시작+duration)
+    function calcEnd(startHHmm, hoursFloat){
+      const [H,M] = startHHmm.split(':').map(Number);
+      const d = new Date(2000,0,1,H,M||0);
+      d.setMinutes(d.getMinutes() + Math.round(Number(hoursFloat)*60));
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      return `${hh}:${mm}`;
+    }
+    const endTime = calcEnd(startHidden.value, durationEl.value);
+
     const coverImageUrl = previewEl?.dataset?.cover || '';
     const thumbnailUrl  = previewEl?.dataset?.thumb  || (coverImageUrl?withTransform(coverImageUrl,THUMB.card169):'');
 
-    // ★ 스키마 차이 흡수: top-level + nested 모두 세팅
+    // Payload (구/신 스키마 호환)
     const payload = {
       type:"recruit",
       status:"published",
-      title,
+      title: `${prefix} ${title}`.trim(),
       category: categoryEl.value,
-      brandName,                      // v2 라우터
-      brand: brandName,               // 구 스키마 호환
-      closeAt: `${deadline.value}T23:59:59.000Z`,
+      brandName,
+      brand: brandName,
+      location: (locationEl.value||'').trim(),
+      closeAt: `${deadlineHidden.value}T23:59:59.000Z`,
       ...(coverImageUrl?{coverImageUrl}:{}),
       ...(thumbnailUrl ?{thumbnailUrl }:{}),
       ...(desc?{descriptionHTML:desc}:{}),
-
-      // top-level fee도 같이 전송 (일부 모델/조회기에 사용)
       ...(feeNum!==undefined ? { fee: feeNum } : {}),
       feeNegotiable: !!negEl.checked,
 
       recruit:{
         recruitType:"product",
-        brandName,                    // nested에도 동기화
+        brandName,
         location: (locationEl.value||'').trim(),
-        shootDate: new Date(`${shootDate.value}T00:00:00.000Z`),
-        shootTime: `${startTime.value}~${endTime.value}`,
-        pay: feeNum,                  // nested pay 세팅
+        shootDate: new Date(`${shootDateHidden.value}T00:00:00.000Z`),
+        shootTime: `${startHidden.value}~${endTime}`,
+        durationHours: Number(durationEl.value),
+        roles, // 선택 직군 배열
+        pay: feeNum,
         payNegotiable: !!negEl.checked,
         requirements: desc
+      },
+
+      // 메타(말머리/직군) - 조회용
+      meta:{
+        prefix,
+        roles
       }
     };
 
@@ -106,7 +224,7 @@
       const data = await res.json().catch(()=>({}));
       if(!res.ok || data.ok===false) throw new Error(data.message || `등록 실패 (${res.status})`);
       alert('공고가 등록되었습니다.');
-      location.href = 'index.html#recruits';
+      location.href = 'recruit-board.html';
     }catch(err){ say(err.message||'네트워크 오류'); }
   });
 })();
