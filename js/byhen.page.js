@@ -1,19 +1,17 @@
-
-/* byhen.page.js — v1.5.0
-   - BrandPage 스키마에 맞춘 렌더러
-   - Hero(멀티) · 정보 · 가격 · 갤러리 · 숏폼
-   - 예약 모달: 캘린더 + 타임슬롯 (availability 기반)
-*/
+/* byhen.page.js — v2.0.0
+ * - 메인 가로 썸네일 + 서브 썸네일
+ * - 정보/소개/갤러리/이용/금액/주소/스케줄
+ * - 예약: 날짜 → 시간 → 결제(데모)
+ */
 (function (w){
   'use strict';
 
-  // ---------- 데이터 정규화 ----------
+  // ----- 데이터 정규화 -----
   const RAW = w.BYHEN_DATA || {};
   const D = normalize(RAW);
-
   function normalize(src){
-    const heroImgs = (src.hero?.images && src.hero.images.length ? src.hero.images
-                   : (src.hero?.image ? [src.hero.image] : src.images)) || [];
+    const heroImgs = (src.hero?.images?.length ? src.hero.images
+                    : (src.hero?.image ? [src.hero.image] : src.images)) || [];
     return {
       name: src.name || '브랜드',
       tagline: src.tagline || '',
@@ -24,295 +22,237 @@
         kakaoUrl: src.contact?.kakaoUrl || '',
         email: src.contact?.email || ''
       },
-      tags: src.tags || src.chips || [],
-
-      hero: {
-        images: heroImgs,
-        image: src.hero?.image || (heroImgs && heroImgs[0]) || ''
-      },
-
       rating: {
         avg: Number(src.rating?.avg ?? src.rating ?? 0) || 0,
         count: Number(src.rating?.count ?? src.ratingCount ?? 0) || 0
       },
-
+      hero: { images: heroImgs, image: heroImgs[0] || '' },
       description: src.description || src.desc || '',
       rules: src.rules || '',
-
-      map: {
-        embedUrl: src.map?.embedUrl || '',
-        staticImage: src.map?.staticImage || '',
-        link: src.map?.link || ''
-      },
-
-      availability: {
-        leadDays: Number(src.availability?.leadDays ?? 0) || 0,
-        timeslots: Array.isArray(src.availability?.timeslots) ? src.availability.timeslots : [],
-        booked: Array.isArray(src.availability?.booked) ? src.availability.booked : [],
-        closed: Array.isArray(src.availability?.closed) ? src.availability.closed : []
-      },
-
       pricing: Array.isArray(src.pricing) ? src.pricing : [],
+      map: { embedUrl: src.map?.embedUrl||'', staticImage: src.map?.staticImage||'', link: src.map?.link||'' },
       studioPhotos: Array.isArray(src.studioPhotos) ? src.studioPhotos : [],
       portfolioPhotos: Array.isArray(src.portfolioPhotos) ? src.portfolioPhotos : [],
-      shorts: Array.isArray(src.shorts) ? src.shorts : []
+      availability: {
+        leadDays: Number(src.availability?.leadDays ?? 0) || 0,
+        booked: Array.isArray(src.availability?.booked) ? src.availability.booked : [],
+        closed: Array.isArray(src.availability?.closed) ? src.availability.closed : [],
+        timeslots: Array.isArray(src.availability?.timeslots) ? src.availability.timeslots : []
+      }
     };
   }
 
-  // ---------- 유틸 ----------
+  // ----- 유틸 -----
   const $ = (s, el=document) => el.querySelector(s);
   const $$ = (s, el=document) => [...el.querySelectorAll(s)];
-  const ymd = (d)=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const ym  = (d)=> `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const pad2 = (n)=> String(n).padStart(2,'0');
+  const ymd  = (d)=> `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const ym   = (d)=> `${d.getFullYear()}-${pad2(d.getMonth()+1)}`;
+  const money= (v)=> isFinite(+v) ? Number(v).toLocaleString('ko-KR')+'원' : (v??'');
 
-  // ---------- Hero ----------
-  function mountHero(root){
-    const imgs = (D.hero.images || []).filter(Boolean);
-    if(!root) return;
+  // ----- Hero -----
+  function mountHero(){
+    const root = $('#bh-hero'); if(!root) return;
+    const imgs = (D.hero.images||[]).filter(Boolean);
+    const main = imgs[0] || 'default.jpg';
     root.innerHTML = `
-      <div class="slides">
-        ${imgs.map((src,i)=>`<img src="${src}" alt="" class="${i? '':'show'}">`).join('')}
-      </div>
-      <div class="overlay">
-        <div>
-          <div class="title">${D.name}</div>
-          <div class="tag">${D.tagline||''}</div>
-        </div>
-      </div>
-      <div class="thumbs">
+      <div class="hero-main"><img id="heroMain" src="${main}" alt=""></div>
+      <div class="hero-thumbs">
         ${imgs.map((src,i)=>`<img src="${src}" alt="" data-i="${i}" class="${i? '':'sel'}">`).join('')}
       </div>
     `;
-
-    const slides = $$('.slides img', root);
-    const thumbs = $$('.thumbs img', root);
-    let i = 0, n = slides.length;
-    const go = (k) => {
-      i = (k+n)%n;
-      slides.forEach((im,idx)=> im.classList.toggle('show', idx===i));
-      thumbs.forEach((th,idx)=> th.classList.toggle('sel', idx===i));
-    };
-    thumbs.forEach(th => th.addEventListener('click', ()=> go(+th.dataset.i)));
-    if(n > 1){ setInterval(()=> go(i+1), 5000); }
+    $('#heroMain').src = main;
+    root.querySelector('.hero-thumbs')?.addEventListener('click', (e)=>{
+      const im = e.target.closest('img'); if(!im) return;
+      $$('#bh-hero .hero-thumbs img').forEach(x=>x.classList.remove('sel'));
+      im.classList.add('sel');
+      $('#heroMain').src = im.getAttribute('src');
+    });
   }
 
-  // ---------- Info ----------
-  function mountInfo(root){
-    if(!root) return;
-    const stars = (() =>{
-      const score = Math.round((D.rating.avg||0)*2)/2;
-      return Array.from({length:5}, (_,i)=> {
-        if(i+1 <= Math.floor(score)) return 'ri-star-fill';
-        if(i+0.5 === score) return 'ri-star-half-line';
-        return 'ri-star-line';
-      });
-    })();
-
-    root.innerHTML = `
-      <div class="bh-card bh-info">
-        <div class="row">
-          ${D.location ? `<span class="bh-chip soft"><i class="ri-map-pin-line"></i>${D.location}</span>`:''}
-          ${D.hours ? `<span class="bh-chip soft"><i class="ri-time-line"></i>${D.hours}</span>`:''}
-          ${D.contact.phone ? `<span class="bh-chip soft"><i class="ri-phone-line"></i>${D.contact.phone}</span>`:''}
-          ${D.contact.kakaoUrl ? `<a class="bh-chip soft" href="${D.contact.kakaoUrl}" target="_blank" rel="noopener"><i class="ri-kakao-talk-line"></i>카카오톡</a>`:''}
-        </div>
-        <div class="bh-rating">
-          <span class="stars">${stars.map(c=>`<i class="${c}"></i>`).join('')}</span>
-          <span>${(D.rating.avg||0).toFixed(1)} · ${D.rating.count||0} reviews</span>
-        </div>
-        ${D.tags && D.tags.length ? `<div class="row">${D.tags.slice(0,6).map(t=>`<span class="bh-chip soft">${t}</span>`).join('')}</div>` : ''}
+  // ----- Info -----
+  function mountInfo(){
+    $('#bhBrandTitle').textContent = D.name || '스튜디오';
+    const rating = (D.rating.avg ? `${D.rating.avg.toFixed(1)} (${D.rating.count})` : '리뷰 준비중');
+    $('#bhInfo').innerHTML = `
+      <div class="top">
+        <span class="bh-name">${D.name||'-'}</span>
+        ${D.tagline ? `<span class="bh-chip">${D.tagline}</span>` : ''}
+        <span class="bh-chip"><i class="ri-star-line"></i>${rating}</span>
+      </div>
+      <div class="bh-kv">
+        <div class="row"><i class="ri-time-line"></i><b>이용 가능</b> · ${D.hours || '문의'}</div>
+        <div class="row"><i class="ri-phone-line"></i><b>연락처</b> · ${D.contact.phone || '-'} ${D.contact.kakaoUrl?`· <a href="${D.contact.kakaoUrl}" target="_blank" rel="noopener">카카오톡</a>`:''}</div>
       </div>
     `;
-
-    // 소개 / 규칙
-    $('#bhDesc') && ($('#bhDesc').textContent = D.description || '');
-    $('#bhRules') && ($('#bhRules').textContent = D.rules || '');
+    $('#bhDesc').textContent  = D.description || '';
+    $('#bhRules').textContent = D.rules || '';
 
     // 지도
-    const mapWrap = $('#bhLocation');
-    if(mapWrap){
-      if(D.map.embedUrl){
-        mapWrap.innerHTML = `<iframe src="${D.map.embedUrl}" style="width:100%;height:280px;border:0;border-radius:12px" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
-      } else if (D.map.staticImage){
-        mapWrap.innerHTML = `<img src="${D.map.staticImage}" alt="" style="width:100%;border-radius:12px">` +
-                            (D.map.link ? `<div style="margin-top:8px"><a class="bh-btn" href="${D.map.link}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도로 열기</a></div>`:'');
-      } else if (D.map.link){
-        mapWrap.innerHTML = `<a class="bh-btn" href="${D.map.link}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도로 열기</a>`;
-      } else {
-        mapWrap.textContent = '-';
-      }
+    const map = $('#bhLocation');
+    if (D.map.embedUrl){
+      map.innerHTML = `<iframe src="${D.map.embedUrl}" style="width:100%;height:300px;border:0;border-radius:12px" loading="lazy"></iframe>`;
+    } else if (D.map.staticImage){
+      map.innerHTML = `<img src="${D.map.staticImage}" alt="" style="width:100%;border-radius:12px">` +
+                      (D.map.link?`<div style="margin-top:8px"><a class="bh-btn" href="${D.map.link}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도로 열기</a></div>`:'');
+    } else if (D.map.link){
+      map.innerHTML = `<a class="bh-btn" href="${D.map.link}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도로 열기</a>`;
+    } else {
+      map.textContent = '-';
     }
   }
 
-  // ---------- Pricing ----------
+  // ----- Pricing -----
   function mountPricing(){
     const wrap = $('#bhPricing'); if(!wrap) return;
-    wrap.innerHTML = (D.pricing||[]).map(p => `
+    wrap.innerHTML = (D.pricing||[]).map(p=>`
       <article class="bh-plan">
-        ${p.badge ? `<span class="badge">${p.badge}</span>`:''}
+        ${p.badge?`<span class="badge">${p.badge}</span>`:''}
         <div class="name">${p.name||'-'}</div>
-        <div class="price">${formatMoney(p.price)}</div>
-        ${p.duration ? `<div class="opt">소요시간: ${p.duration}</div>`:''}
-        ${Array.isArray(p.includes) && p.includes.length ? `<ul>${p.includes.map(i=>`<li>${i}</li>`).join('')}</ul>` : ''}
-        ${Array.isArray(p.options) && p.options.length ? `<div class="opt">옵션: ${p.options.map(o=>`${o.name} +${formatMoney(o.price)}`).join(' · ')}</div>`:''}
+        <div class="price">${money(p.price)}</div>
+        ${p.duration?`<div class="opt">시간: ${p.duration}</div>`:''}
+        ${Array.isArray(p.includes)&&p.includes.length?`<ul>${p.includes.map(i=>`<li>${i}</li>`).join('')}</ul>`:''}
+        ${Array.isArray(p.options)&&p.options.length?`<div class="opt">옵션: ${p.options.map(o=>`${o.name} +${money(o.price)}`).join(' · ')}</div>`:''}
       </article>
     `).join('');
   }
-  function formatMoney(v){
-    const n = Number(v||0);
-    if(!isFinite(n)) return String(v||'');
-    return n.toLocaleString() + '원';
-  }
 
-  // ---------- Gallery / Shorts ----------
+  // ----- Gallery -----
   function mountGallery(){
     const g = $('#bhGallery'); if(!g) return;
-    const arr = (D.studioPhotos.length || D.portfolioPhotos.length)
-      ? [...D.studioPhotos, ...D.portfolioPhotos]
-      : (D.hero.images || []);
+    const arr = (D.studioPhotos.length||D.portfolioPhotos.length) ? [...D.studioPhotos,...D.portfolioPhotos] : (D.hero.images||[]);
     g.innerHTML = arr.map(s=>`<img src="${s}" alt="">`).join('');
     g.addEventListener('click', (e)=>{
       const t = e.target.closest('img'); if(!t) return;
       const lb = document.createElement('div');
-      lb.className = 'bh-lightbox show';
-      lb.innerHTML = `<img src="${t.src}" alt=""><button class="x"><i class="ri-close-line"></i></button>`;
+      lb.className = 'bh-modal show';
+      lb.innerHTML = `<div class="sheet"><header><strong>미리보기</strong><button class="x" data-close><i class="ri-close-line"></i></button></header><img src="${t.src}" alt="" style="width:100%;border-radius:12px"/></div>`;
       document.body.appendChild(lb);
-      lb.addEventListener('click', (ev)=>{ if(ev.target===lb || ev.target.closest('.x')) lb.remove(); });
-    });
-  }
-  function mountShorts(){
-    const s = $('#bhShorts'); if(!s) return;
-    if(!D.shorts || !D.shorts.length){ s.innerHTML=''; return; }
-    s.innerHTML = D.shorts.map(x=>`
-      <article class="bh-clip" data-embed="${x.embedUrl||''}">
-        <img src="${x.thumbnailUrl||''}" alt=""><span class="play"><i class="ri-play-fill"></i></span>
-      </article>
-    `).join('');
-    s.addEventListener('click', (e)=>{
-      const card = e.target.closest('.bh-clip'); if(!card) return;
-      const url = card.getAttribute('data-embed'); if(!url) return;
-      const m = document.createElement('div');
-      m.className = 'bh-clip-modal show';
-      m.innerHTML = `<div class="inner"><iframe src="${url}" allowfullscreen></iframe><button class="x"><i class="ri-close-line"></i></button></div>`;
-      document.body.appendChild(m);
-      m.addEventListener('click', ev=>{ if(ev.target===m || ev.target.closest('.x')) m.remove(); });
+      lb.addEventListener('click',(ev)=>{ if(ev.target===lb || ev.target.hasAttribute('data-close')) lb.remove(); });
     });
   }
 
-  // ---------- 예약 모달 ----------
-  // 모달 마크업은 byhen.html에 포함되어 있다고 가정
-  const modal = $('#bhReserveModal');
-  const openBtns = ['#bhOpenReserve','#bhOpenReserveBottom'].map(s=>$(s));
+  // ----- 스케줄 (미니 달력) -----
   const today = new Date();
-  let curMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  let pickedDate = null, pickedTime = null;
-
-  function openReserve(){
-    if(!modal) return;
-    pickedDate = null; pickedTime = null;
-    renderCalendar(); renderSlots(null);
-    modal.classList.add('show');
-  }
-  function closeReserve(){ modal && modal.classList.remove('show'); }
-
-  function isBooked(ymdStr){ return D.availability.booked.includes(ymdStr); }
-  function isClosed(ymdStr){ return D.availability.closed.includes(ymdStr); }
-  function isBeforeLead(dateObj){
-    const d = new Date(today); d.setDate(today.getDate() + (D.availability.leadDays||0));
-    return dateObj < new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  }
-
+  let miniMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   function buildGrid(y,m){
     const first = new Date(y,m,1);
     const start = new Date(first);
     const dow = first.getDay(); // 0:일
-    // 월요일 시작 그리드
-    const shift = (dow===0? -5 : 1-dow);
+    const shift = (dow===0? -5 : 1-dow); // 월 시작
     start.setDate(first.getDate()+shift);
     const arr = [];
     for(let i=0;i<42;i++){
       const d = new Date(start); d.setDate(start.getDate()+i);
       const ymdStr = ymd(d);
-      let status = 'ok';
+      let status='ok';
       if(d.getMonth()!==m) status='off';
-      if(isClosed(ymdStr)) status='off';
-      else if(isBooked(ymdStr)) status='booked';
-      else if(isBeforeLead(d)) status='soon';
-      arr.push({date:d, status});
+      else if (D.availability.closed.includes(ymdStr)) status='off';
+      else if (D.availability.booked.includes(ymdStr)) status='booked';
+      else if (isBeforeLead(d)) status='soon';
+      arr.push({date:d,ymd:ymdStr,status});
     }
     return arr;
   }
-
-  function renderCalendar(){
-    if(!modal) return;
-    $('#rvMonTitle').textContent = ym(curMonth);
-    const grid = buildGrid(curMonth.getFullYear(), curMonth.getMonth());
-    const wrap = $('#rvGrid'); if(!wrap) return;
-    wrap.innerHTML = grid.map(g=>{
-      const ymdStr = ymd(g.date);
-      const sel = (pickedDate===ymdStr);
-      return `<div class="cal-cell ${g.status} ${g.status==='ok'?'ok':''} ${sel?'sel':''}" data-ymd="${ymdStr}">
+  function isBeforeLead(d){
+    const pr = new Date(today); pr.setDate(pr.getDate()+ (D.availability.leadDays||0));
+    const cmp = new Date(pr.getFullYear(),pr.getMonth(),pr.getDate());
+    return d < cmp;
+  }
+  function renderMiniCal(){
+    $('#miniTitle').textContent = ym(miniMonth);
+    const grid = buildGrid(miniMonth.getFullYear(), miniMonth.getMonth());
+    const el = $('#miniGrid');
+    el.innerHTML = grid.map(g=>`
+      <div class="cal-cell ${g.status} ${g.status==='ok'?'ok':''}" data-ymd="${g.ymd}">
         <span class="d">${g.date.getDate()}</span>
         <i class="dot ${g.status}"></i>
+      </div>
+    `).join('');
+  }
+
+  // ----- 예약 모달 -----
+  const rvModal = $('#bhReserveModal');
+  let curMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  let pickedDate = null, pickedTime = null;
+
+  function openReserve(){
+    pickedDate=null; pickedTime=null;
+    renderCalendar(); renderSlots(null); renderSummary();
+    rvModal.classList.add('show');
+  }
+  function closeReserve(){ rvModal.classList.remove('show'); }
+
+  function renderCalendar(){
+    $('#rvMonTitle').textContent = ym(curMonth);
+    const grid = buildGrid(curMonth.getFullYear(), curMonth.getMonth());
+    $('#rvGrid').innerHTML = grid.map(g=>{
+      const sel = pickedDate===g.ymd;
+      return `<div class="cal-cell ${g.status} ${g.status==='ok'?'ok':''} ${sel?'sel':''}" data-ymd="${g.ymd}">
+        <span class="d">${g.date.getDate()}</span><i class="dot ${g.status}"></i>
       </div>`;
     }).join('');
   }
-
   function renderSlots(ymdStr){
-    $('#rvPickedDate').textContent = ymdStr || '날짜를 선택하세요';
-    const list = $('#rvSlots'); if(!list) return;
-    if(!ymdStr){ list.innerHTML=''; $('#rvSubmit').disabled=true; return; }
-
-    const times = (D.availability.timeslots && D.availability.timeslots.length)
-      ? D.availability.timeslots
-      : buildDefaultTimes(); // 폴백: 10:30~19:30, 30분 간격
-
-    list.innerHTML = times.map(t=>{
-      const off = false; // 시간이 별도 마감되는 요구가 생기면 여기서 처리
-      const sel = (pickedTime===t);
-      return `<button class="time ${off?'off':''} ${sel?'sel':''}" data-t="${t}" ${off?'disabled':''}>${t}</button>`;
+    $('#rvPickedDate').textContent = ymdStr || '날짜를 먼저 선택하세요';
+    const wrap = $('#rvSlots');
+    if(!ymdStr){ wrap.innerHTML=''; return; }
+    const times = D.availability.timeslots.length ? D.availability.timeslots : buildDefaultTimes();
+    wrap.innerHTML = times.map(t=>{
+      const sel = pickedTime===t;
+      return `<button class="time ${sel?'sel':''}" data-t="${t}">${t}</button>`;
     }).join('');
-    $('#rvSubmit').disabled = !pickedTime;
   }
-
   function buildDefaultTimes(){
-    const out = [];
-    for(let h=10; h<=19; h++){
-      ['00','30'].forEach(m=>{
-        if(h===10 && m==='00') return; // 10:00 제외 예시
-        out.push(`${String(h).padStart(2,'0')}:${m}`);
-      });
+    const list=[]; // 10:00~19:30, 30분 간격
+    for(let h=10;h<=19;h++){
+      for (const m of [0,30]){ if(h===10 && m===0) continue; list.push(`${pad2(h)}:${pad2(m)}`); }
     }
-    return out;
+    return list;
+  }
+  function renderSummary(){
+    const sum = $('#rvSummary');
+    const btn = $('#rvPay');
+    if(pickedDate && pickedTime){
+      sum.textContent = `선택: ${pickedDate} · ${pickedTime} — 결제를 진행해주세요.`;
+      btn.disabled = false;
+    }else{
+      sum.textContent = '날짜/시간을 선택하면 결제 버튼이 활성화됩니다.';
+      btn.disabled = true;
+    }
   }
 
-  // 이벤트 바인딩(모달)
-  if(modal){
-    modal.addEventListener('click', (e)=>{ if(e.target===modal || e.target.hasAttribute('data-close')) closeReserve(); });
-    $('#rvPrevMon')?.addEventListener('click', ()=>{ curMonth.setMonth(curMonth.getMonth()-1); renderCalendar(); });
-    $('#rvNextMon')?.addEventListener('click', ()=>{ curMonth.setMonth(curMonth.getMonth()+1); renderCalendar(); });
-    $('#rvGrid')?.addEventListener('click', (e)=>{
-      const cell = e.target.closest('.cal-cell.ok'); if(!cell) return;
-      pickedDate = cell.dataset.ymd; pickedTime=null;
-      renderCalendar(); renderSlots(pickedDate);
-    });
-    $('#rvSlots')?.addEventListener('click', (e)=>{
-      const b = e.target.closest('.time'); if(!b || b.classList.contains('off')) return;
-      pickedTime = b.dataset.t;
-      $$('#rvSlots .time').forEach(x=>x.classList.toggle('sel', x===b));
-      $('#rvSubmit').disabled = !(pickedDate && pickedTime);
-    });
-    $('#rvSubmit')?.addEventListener('click', ()=>{
-      alert(`[예약요청]\n날짜: ${pickedDate}\n시간: ${pickedTime}`);
-      closeReserve();
-    });
-  }
-  openBtns.forEach(b=> b && b.addEventListener('click', openReserve));
+  // ----- 이벤트 바인딩 -----
+  // 상단/섹션
+  mountHero(); mountInfo(); mountPricing(); mountGallery();
+  renderMiniCal();
+  $('#miniPrev')?.addEventListener('click',()=>{ miniMonth.setMonth(miniMonth.getMonth()-1); renderMiniCal(); });
+  $('#miniNext')?.addEventListener('click',()=>{ miniMonth.setMonth(miniMonth.getMonth()+1); renderMiniCal(); });
 
-  // ---------- 초기 렌더 ----------
-  mountHero($('#bh-hero'));
-  mountInfo($('#bhInfo'));
-  mountPricing();
-  mountGallery();
-  mountShorts();
+  // 문의
+  const inq = $('#bhInquiryModal');
+  $('#bhOpenInquiry')?.addEventListener('click', ()=> inq.classList.add('show'));
+  inq?.addEventListener('click',(e)=>{ if(e.target===inq||e.target.hasAttribute('data-close')) inq.classList.remove('show'); });
+  $('#inqSend')?.addEventListener('click', ()=>{ alert('문의가 전송되었습니다.'); inq.classList.remove('show'); });
+
+  // 예약 모달
+  $('#bhOpenReserve')?.addEventListener('click', openReserve);
+  rvModal?.addEventListener('click',(e)=>{ if(e.target===rvModal || e.target.hasAttribute('data-close')) closeReserve(); });
+  $('#rvPrev')?.addEventListener('click',()=>{ curMonth.setMonth(curMonth.getMonth()-1); renderCalendar(); });
+  $('#rvNext')?.addEventListener('click',()=>{ curMonth.setMonth(curMonth.getMonth()+1); renderCalendar(); });
+  $('#rvGrid')?.addEventListener('click',(e)=>{
+    const cell = e.target.closest('.cal-cell.ok'); if(!cell) return;
+    pickedDate = cell.dataset.ymd; pickedTime=null; renderCalendar(); renderSlots(pickedDate); renderSummary();
+  });
+  $('#rvSlots')?.addEventListener('click',(e)=>{
+    const b = e.target.closest('.time'); if(!b) return;
+    pickedTime = b.dataset.t;
+    $$('#rvSlots .time').forEach(x=>x.classList.toggle('sel', x===b));
+    renderSummary();
+  });
+  $('#rvPay')?.addEventListener('click',()=>{
+    alert(`[결제 데모]\n날짜: ${pickedDate}\n시간: ${pickedTime}\n결제가 완료되었다고 가정합니다.`);
+    closeReserve();
+  });
+
 })(window);
