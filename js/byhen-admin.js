@@ -1,13 +1,8 @@
-/* byhen-admin.js — v3.3
-   - 쇼호스트/브랜드 권한(로그인) 있으면 Signed 업로드 우선
-   - 없으면(또는 실패 시) unsigned 설정이 있을 때만 폴백
-   - HTML ids: thumbTrigger/thumbFile/thumbPrev, subsTrigger/subsFile/subsGrid,
-               galleryTrigger/galleryFile/galleryGrid, publishBtn/saveDraftBtn/saveBtn
-*/
+/* byhen-admin.js — v3.3 (Unsigned 우선, Signed 폴백 + 저장 시 lastId 저장) */
 (function () {
   'use strict';
 
-  // ---------- Config ----------
+  // ----- Config -----
   const CFG = window.LIVEE_CONFIG || {};
   const EP  = CFG.endpoints || {};
   const API_BASE = (() => {
@@ -17,104 +12,58 @@
   })();
   const BRAND_BASE = (EP.brandBase || '/brand-test').replace(/^\/*/, '/');
   const SIGN_EP    = (EP.uploadsSignature || '/uploads/signature').replace(/^\/*/, '/');
-  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
   const THUMB = {
-    main:   (CFG.thumb && CFG.thumb.cover169) || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
-    square: (CFG.thumb && CFG.thumb.square)   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
+    main:   CFG.thumb?.cover169 || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
+    square: CFG.thumb?.square   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto',
   };
 
-  // ---------- Helpers ----------
-  const $  = (s, el=document) => el.querySelector(s);
-  const $$ = (s, el=document) => [...el.querySelectorAll(s)];
-  const say=(m,ok=false)=>{const n=$('#admMsg'); if(!n) return; n.textContent=m; n.classList.add('show'); n.classList.toggle('ok',!!ok); };
+  const $  = (s, el=document)=>el.querySelector(s);
+  const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
+  const say=(m,ok=false)=>{ const n=$('#admMsg'); if(!n) return; n.textContent=m; n.classList.add('show'); n.classList.toggle('ok',!!ok); };
   const withTr=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url||'';} };
 
-  // ----- Upload: role-aware (Signed first if token), else Unsigned fallback -----
+  // ----- Uploads (Unsigned first) -----
   function getUnsignedCfg(){
     const c = CFG.cloudinaryUnsigned || CFG.cloudinary || {};
-    const cloudName    = c.cloudName || c.name;
-    const uploadPreset = c.uploadPreset || c.unsignedPreset || c.preset;
-    return { cloudName, uploadPreset };
+    return {
+      cloudName: c.cloudName || c.name,
+      uploadPreset: c.uploadPreset || c.unsignedPreset || c.preset
+    };
   }
-
   async function uploadUnsigned(file){
     const u = getUnsignedCfg();
-    if(!u.cloudName || !u.uploadPreset){
-      const e = new Error('UNSIGNED_NOT_CONFIGURED');
-      e.code = 'UNSIGNED_NOT_CONFIGURED';
-      throw e;
-    }
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', u.uploadPreset);
+    if(!u.cloudName || !u.uploadPreset){ const e=new Error('UNSIGNED_NOT_CONFIGURED'); e.code='UNSIGNED_NOT_CONFIGURED'; throw e; }
+    const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', u.uploadPreset);
     const url = `https://api.cloudinary.com/v1_1/${u.cloudName}/image/upload`;
-    const res = await fetch(url, { method:'POST', body:fd });
-    const j = await res.json().catch(()=>({}));
-    if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
+    const r = await fetch(url, { method:'POST', body: fd }); const j = await r.json().catch(()=>({}));
+    if(!r.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${r.status}`);
     return j.secure_url;
   }
-
-  async function getSignature() {
-    const headers = { Accept:'application/json' };
-    if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`; // ← 쇼호스트/브랜드 권한 토큰
-    const r = await fetch(API_BASE + SIGN_EP, { headers });
-    const j = await r.json().catch(()=>({}));
-    if(!r.ok || j.ok===false) {
-      const err = new Error(j.message || `HTTP_${r.status}`);
-      err.status = r.status;
-      throw err;
-    }
-    const d = j.data || j;
-    ['cloudName','apiKey','timestamp','signature'].forEach(k=>{
-      if(!d[k]) throw new Error('Invalid signature payload');
-    });
+  async function getSignature(){
+    const r=await fetch(API_BASE+SIGN_EP,{headers:{Accept:'application/json'}}); const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.ok===false){ const e=new Error(j.message||`HTTP_${r.status}`); e.status=r.status; throw e; }
+    const d=j.data||j; ['cloudName','apiKey','timestamp','signature'].forEach(k=>{ if(!d[k]) throw new Error('Invalid signature payload'); });
     return d;
   }
-
   async function uploadSigned(file){
-    const sig = await getSignature();
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('api_key', sig.apiKey);
-    fd.append('timestamp', sig.timestamp);
-    fd.append('signature', sig.signature);
-    const url = `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`;
-    const res = await fetch(url, { method:'POST', body:fd });
-    const j = await res.json().catch(()=>({}));
-    if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
+    const s=await getSignature(); const fd=new FormData();
+    fd.append('file',file); fd.append('api_key',s.apiKey); fd.append('timestamp',s.timestamp); fd.append('signature',s.signature);
+    const url=`https://api.cloudinary.com/v1_1/${s.cloudName}/image/upload`;
+    const r=await fetch(url,{method:'POST',body:fd}); const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${r.status}`);
     return j.secure_url;
   }
-
   async function uploadImage(file){
-    if(!file) throw new Error('no file');
-    if(!/^image\//.test(file.type)) throw new Error('이미지 파일만 업로드');
-    if(file.size>10*1024*1024) throw new Error('최대 10MB');
-
-    // 토큰이 있으면 권한 있는 사용자 → signed 먼저
-    if (TOKEN) {
-      try { return await uploadSigned(file); }
-      catch (e1) {
-        // fallback to unsigned only if configured
-        try { return await uploadUnsigned(file); }
-        catch (e2) {
-          if (e2.code === 'UNSIGNED_NOT_CONFIGURED') throw e1; // 더 의미있는 에러 반환
-          throw e2;
-        }
-      }
+    if(!file) throw new Error('no file'); if(!/^image\//.test(file.type)) throw new Error('이미지 파일만'); if(file.size>10*1024*1024) throw new Error('최대 10MB');
+    const hasUnsigned = !!(getUnsignedCfg().cloudName && getUnsignedCfg().uploadPreset);
+    if(hasUnsigned){
+      try{ return await uploadUnsigned(file); }catch(eu){ try{ return await uploadSigned(file); }catch(es){ throw new Error(eu.message || es.message || '업로드 실패'); } }
     }
-
-    // 비로그인/권한 없음 → unsigned 먼저(설정 있을 때만)
-    try { return await uploadUnsigned(file); }
-    catch (e) {
-      if (e.code === 'UNSIGNED_NOT_CONFIGURED') {
-        throw new Error('로그인 후 다시 시도하거나, 공개 업로드 preset을 설정해주세요.');
-      }
-      throw e;
-    }
+    try{ return await uploadSigned(file); }catch(e1){ try{ return await uploadUnsigned(file); }catch(e2){ if(e2.code==='UNSIGNED_NOT_CONFIGURED') throw new Error('업로드 실패: 서버 서명 오류/공개 업로드 미설정'); throw e2; } }
   }
 
-  // ---------- State ----------
+  // ----- State -----
   const qs=new URLSearchParams(location.search);
   const state={
     id: qs.get('id') || '',
@@ -131,25 +80,17 @@
   };
   const bump=(n)=>{ state.uploads=Math.max(0,state.uploads+n); };
 
-  // ---------- DOM ----------
+  // ----- DOM -----
   const el={};
   function cacheDom(){
     el.name=$('#name'); el.slug=$('#slug');
-
     el.thumbPrev=$('#thumbPrev'); el.thumbFile=$('#thumbFile'); el.thumbTrigger=$('#thumbTrigger');
     el.subsFile=$('#subsFile'); el.subsTrigger=$('#subsTrigger'); el.subsGrid=$('#subsGrid');
-
-    el.intro=$('#intro'); el.description=$('#description');
-    el.usageGuide=$('#usageGuide'); el.priceInfo=$('#priceInfo');
-
+    el.intro=$('#intro'); el.description=$('#description'); el.usageGuide=$('#usageGuide'); el.priceInfo=$('#priceInfo');
     el.phone=$('#phone'); el.email=$('#email'); el.kakao=$('#kakao');
     el.address=$('#address'); el.mapLink=$('#mapLink');
-
     el.galleryFile=$('#galleryFile'); el.galleryTrigger=$('#galleryTrigger'); el.galleryGrid=$('#galleryGrid');
-
-    el.availableHours=$('#availableHours'); el.timeslots=$('#timeslots');
-    el.availableDates=$('#availableDates'); el.closed=$('#closed'); el.booked=$('#booked');
-
+    el.availableHours=$('#availableHours'); el.timeslots=$('#timeslots'); el.availableDates=$('#availableDates'); el.closed=$('#closed'); el.booked=$('#booked');
     el.publishBtn=$('#publishBtn'); el.saveDraftBtn=$('#saveDraftBtn'); el.saveBtn=$('#saveBtn');
   }
 
@@ -164,7 +105,7 @@
     `).join('');
   }
 
-  // ---------- Bind ----------
+  // ----- Bind -----
   function bind(){
     el.thumbTrigger?.addEventListener('click',()=>el.thumbFile?.click());
     el.subsTrigger?.addEventListener('click',()=>el.subsFile?.click());
@@ -225,7 +166,7 @@
     el.publishBtn?.addEventListener('click',   e=>{e.preventDefault(); submit('published');});
   }
 
-  // ---------- Load (edit) ----------
+  // ----- Load (edit) -----
   async function loadIfEdit(){
     if(!state.id) return;
     try{
@@ -266,9 +207,9 @@
     }catch(e){ say('불러오기 실패: '+(e.message||'오류')); }
   }
 
-  // ---------- Save ----------
+  // ----- Save -----
   function collect(status){
-    const csv = (v) => v.split(',').map(s=>s.trim()).filter(Boolean);
+    const csv = (v='') => v.split(',').map(s=>s.trim()).filter(Boolean);
     const d=state.doc;
     d.status=status||'draft';
     d.name=$('#name').value.trim();
@@ -302,8 +243,14 @@
       const j=await r.json().catch(()=>({}));
       if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
       say('완료되었습니다',true);
-      if(!state.id){
-        const newId=(j.data||j)._id; if(newId) location.replace(location.pathname+'?id='+encodeURIComponent(newId));
+
+      // 뷰 페이지 폴백용으로 마지막 저장 ID 기록
+      const saved = j.data || j;
+      const newId = saved._id;
+      if(newId){ localStorage.setItem('byhen:lastId', newId); localStorage.setItem('byhen:lastSlug', saved.slug || doc.slug); }
+
+      if(!state.id && newId){
+        location.replace(location.pathname+'?id='+encodeURIComponent(newId));
       }
     }catch(e){ say('저장 실패: '+(e.message||'오류')); }
   }
