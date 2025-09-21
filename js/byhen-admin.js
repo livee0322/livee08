@@ -1,5 +1,6 @@
-/* byhen-admin.js — v3.1 (signed → unsigned 자동 폴백)
-   - HTML ids: thumbTrigger/thumbFile/thumbPrev, subsTrigger/subsFile/subsGrid, galleryTrigger/galleryFile/galleryGrid
+/* byhen-admin.js — v3.2 (Unsigned 우선, Signed 폴백)
+   - HTML ids: thumbTrigger/thumbFile/thumbPrev, subsTrigger/subsFile/subsGrid,
+               galleryTrigger/galleryFile/galleryGrid, publishBtn/saveDraftBtn/saveBtn
 */
 (function () {
   'use strict';
@@ -17,8 +18,8 @@
 
   // Cloudinary transform presets
   const THUMB = {
-    main:   CFG.thumb?.cover169 || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
-    square: CFG.thumb?.square   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
+    main:   (CFG.thumb && CFG.thumb.cover169) || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
+    square: (CFG.thumb && CFG.thumb.square)   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
   };
 
   // ---------- Helpers ----------
@@ -27,7 +28,31 @@
   const say=(m,ok=false)=>{const n=$('#admMsg'); if(!n) return; n.textContent=m; n.classList.add('show'); n.classList.toggle('ok',!!ok); };
   const withTr=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url||'';} };
 
-  // ----- Upload: signed first, then unsigned fallback -----
+  // ----- Upload: Unsigned 우선, 실패 시 Signed 폴백 -----
+  function getUnsignedCfg(){
+    const c = CFG.cloudinaryUnsigned || CFG.cloudinary || {};
+    const cloudName    = c.cloudName || c.name;
+    const uploadPreset = c.uploadPreset || c.unsignedPreset || c.preset;
+    return { cloudName, uploadPreset };
+  }
+
+  async function uploadUnsigned(file){
+    const u = getUnsignedCfg();
+    if(!u.cloudName || !u.uploadPreset){
+      const e = new Error('UNSIGNED_NOT_CONFIGURED');
+      e.code = 'UNSIGNED_NOT_CONFIGURED';
+      throw e;
+    }
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', u.uploadPreset);
+    const url = `https://api.cloudinary.com/v1_1/${u.cloudName}/image/upload`;
+    const res = await fetch(url, { method:'POST', body:fd });
+    const j = await res.json().catch(()=>({}));
+    if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
+    return j.secure_url;
+  }
+
   async function getSignature() {
     const r = await fetch(API_BASE + SIGN_EP, { headers:{Accept:'application/json'} });
     const j = await r.json().catch(()=>({}));
@@ -41,16 +66,6 @@
       if(!d[k]) throw new Error('Invalid signature payload');
     });
     return d;
-  }
-
-  // unsigned config from config.js
-  function getUnsignedCfg(){
-    // 지원 키: cloudinaryUnsigned {cloudName, uploadPreset}
-    //         또는 cloudinary { cloudName, unsignedPreset|uploadPreset }
-    const c = CFG.cloudinaryUnsigned || CFG.cloudinary || {};
-    const cloudName   = c.cloudName || c.name;
-    const uploadPreset= c.uploadPreset || c.unsignedPreset || c.preset;
-    return { cloudName, uploadPreset };
   }
 
   async function uploadSigned(file){
@@ -67,36 +82,34 @@
     return j.secure_url;
   }
 
-  async function uploadUnsigned(file){
-    const ucfg = getUnsignedCfg();
-    if(!ucfg.cloudName || !ucfg.uploadPreset) {
-      const e = new Error('UNSIGNED_NOT_CONFIGURED');
-      e.code = 'UNSIGNED_NOT_CONFIGURED';
-      throw e;
-    }
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', ucfg.uploadPreset);
-    const url = `https://api.cloudinary.com/v1_1/${ucfg.cloudName}/image/upload`;
-    const res = await fetch(url, { method:'POST', body:fd });
-    const j = await res.json().catch(()=>({}));
-    if(!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
-    return j.secure_url;
-  }
-
   async function uploadImage(file){
     if(!file) throw new Error('no file');
     if(!/^image\//.test(file.type)) throw new Error('이미지 파일만 업로드');
     if(file.size>10*1024*1024) throw new Error('최대 10MB');
 
-    // 1) signed
-    try { return await uploadSigned(file); }
-    catch(err){
-      // 2) fallback to unsigned on 401/403/404 or any failure
+    const useUnsignedFirst = !!(getUnsignedCfg().cloudName && getUnsignedCfg().uploadPreset);
+
+    // 1) Unsigned 우선
+    if(useUnsignedFirst){
       try { return await uploadUnsigned(file); }
-      catch(e2){
-        if(e2.code==='UNSIGNED_NOT_CONFIGURED') {
-          throw new Error('공개 업로드 설정 필요: config.js에 cloudinaryUnsigned {cloudName, uploadPreset} 추가');
+      catch (eUnsigned) {
+        // Unsigned 설정은 있는데 실패 → 마지막 시도로 signed
+        try { return await uploadSigned(file); }
+        catch (eSigned) {
+          // 가장 유의미한 메시지 선택
+          throw new Error(eUnsigned.message || eSigned.message || '업로드 실패');
+        }
+      }
+    }
+
+    // 2) Unsigned 설정이 없으면 Signed 먼저
+    try { return await uploadSigned(file); }
+    catch (e1) {
+      // Signed 실패 시 Unsigned 시도(공개 preset이 나중에 들어올 수도 있으니)
+      try { return await uploadUnsigned(file); }
+      catch (e2){
+        if(e2.code==='UNSIGNED_NOT_CONFIGURED'){
+          throw new Error('업로드 실패: 서버 서명 오류 또는 공개 업로드 미설정');
         }
         throw e2;
       }
@@ -120,7 +133,7 @@
   };
   const bump=(n)=>{ state.uploads=Math.max(0,state.uploads+n); };
 
-  // ---------- DOM ----------
+  // ---------- DOM Cache ----------
   const el={};
   function cacheDom(){
     el.name=$('#name'); el.slug=$('#slug');
@@ -142,6 +155,7 @@
     el.publishBtn=$('#publishBtn'); el.saveDraftBtn=$('#saveDraftBtn'); el.saveBtn=$('#saveBtn');
   }
 
+  // ---------- Draw ----------
   function drawSubs(){
     el.subsGrid.innerHTML = state.doc.subThumbnails.map((u,i)=>`
       <div class="thumb"><img src="${u}" alt="sub-${i}"><button type="button" class="rm" data-i="${i}">×</button></div>
