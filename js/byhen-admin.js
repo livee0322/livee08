@@ -1,230 +1,221 @@
-/* byhen-admin.js — v1.2.0
-   - Cloudinary 서버 서명(/uploads/signature)로 업로드
-   - 업로드 완료 시 입력창에 URL 주입 + 미리보기 반영
-   - 서버 저장 실패 시 LocalStorage로 폴백
+/* byhen-admin.js — v1.0.0
+   - 같은 스키마(Brand)로 생성/수정
+   - Cloudinary 업로드(/uploads/signature) + 미리보기
+   - 폼 id는 byhen-admin.html 분리본과 동일 가정
 */
-(function () {
-  'use strict';
-
-  // ---- CFG / endpoints ----
+(() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP = Object.assign({ byhen: '/brands-test', uploadsSignature: '/uploads/signature' }, CFG.endpoints || {});
+  const EP = (CFG.endpoints || {});
+  const BRANDS_BASE = (EP.byhen || '/brands-test').replace(/^\/*/, '/'); // '/brands-test'
+
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
-  const HEAD = (json = true) => {
-    const h = { Accept: 'application/json' };
-    if (json) h['Content-Type'] = 'application/json';
-    if (TOKEN) h.Authorization = `Bearer ${TOKEN}`;
-    return h;
-  };
 
+  const $  = (s, el=document) => el.querySelector(s);
+  const $id= (s) => document.getElementById(s);
+  const say=(t,ok=false)=>{ const el=$id('admMsg'); if(!el) return; el.textContent=t; el.classList.add('show'); el.classList.toggle('ok',ok); };
+
+  // --- 이미지 업로드 헬퍼 ---
   const THUMB = {
-    cover169: 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
-    square:   'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
+    square:  'c_fill,g_auto,w_640,h_640,f_auto,q_auto',
+    cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto'
   };
+  const withTr=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url;} };
+  const headers = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h.Authorization=`Bearer ${TOKEN}`; return h; };
 
-  // ---- DOM ----
-  const $ = (s, el = document) => el.querySelector(s);
-  const toast = (m) => {
-    const t = $('#toast'); if (!t) return;
-    t.textContent = m; t.classList.add('show');
-    clearTimeout(t.__to); t.__to = setTimeout(() => t.classList.remove('show'), 1400);
-  };
-
-  const heroBtn = $('#pickHero'), heroFile = $('#fileHero'), heroPrev = $('#prevHero'), heroUrl = $('#thumb');
-  const subsBtn = $('#pickSubs'), subsFile = $('#fileSubs'), subsPrev = $('#subsPrev'), subsTA = $('#subThumbs');
-  const galBtn = $('#pickGallery'), galFile = $('#fileGallery'), galPrev = $('#galleryPrev'), galTA = $('#gallery');
-  $('#save')?.addEventListener('click', save);
-
-  heroBtn?.addEventListener('click', () => heroFile?.click());
-  subsBtn?.addEventListener('click', () => subsFile?.click());
-  galBtn?.addEventListener('click',  () => galFile?.click());
-
-  heroFile?.addEventListener('change', (e) => handleOneUpload(e, heroPrev, heroUrl, THUMB.cover169));
-  subsFile?.addEventListener('change', (e) => handleMultiUpload(e, subsPrev, subsTA, THUMB.square));
-  galFile?.addEventListener('change',  (e) => handleMultiUpload(e, galPrev, galTA,  THUMB.cover169));
-
-  function withTransform(url, t) {
-    try {
-      if (!url || !/\/upload\//.test(url)) return url || '';
-      const i = url.indexOf('/upload/');
-      return url.slice(0, i + 8) + t + '/' + url.slice(i + 8);
-    } catch { return url; }
+  async function getSignature(){
+    const r=await fetch(`${API_BASE}${(EP.uploadsSignature||'/uploads/signature')}`,{headers:headers(false)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+    return j.data||j;
   }
-  function isImgOk(f) {
-    if (!/^image\//.test(f.type)) { toast('이미지 파일만 업로드'); return false; }
-    if (f.size > 8 * 1024 * 1024) { toast('이미지는 8MB 이하'); return false; }
+  async function uploadImage(file){
+    const {cloudName,apiKey,timestamp,signature}=await getSignature();
+    const fd=new FormData(); fd.append('file',file); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature);
+    const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
+    const j=await res.json().catch(()=>({})); if(!res.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${res.status}`);
+    return j.secure_url;
+  }
+
+  // --- 요소 참조(샘플: 필요한 항목만) ---
+  const f = {
+    slug:           $id('slug'),
+    name:           $id('name'),
+    intro:          $id('intro'),
+    usageGuide:     $id('usageGuide'),
+    priceInfo:      $id('priceInfo'),
+    address:        $id('address'),
+    phone:          $id('phone'),
+    email:          $id('email'),
+    kakao:          $id('kakao'),
+    mapLink:        $id('mapLink'),
+    availableHours: $id('availableHours'),
+    timeslots:      $id('timeslots'),   // 콤마(,) 구분 입력
+    availableDates: $id('availableDates'), // YYYY-MM-DD 콤마 구분
+    closed:         $id('closedDates'),
+    booked:         $id('bookedDates'),
+
+    // 이미지
+    mainFile: $id('mainFile'),
+    subsFile: $id('subsFile'),
+    mainPrev: $id('mainPrev'),
+    subsGrid: $id('subsGrid'),
+
+    // 버튼
+    saveDraft:  $id('saveDraftBtn'),
+    publishBtn: $id('publishBtn'),
+  };
+
+  const state = {
+    id: '',
+    thumbnail: '',
+    subThumbnails: []
+  };
+
+  // --- 프리뷰 그리기 ---
+  function drawSubs(){
+    if(!f.subsGrid) return;
+    f.subsGrid.innerHTML = state.subThumbnails.map((u,i)=>`
+      <div class="sub"><img src="${u}" alt="sub-${i}"><button type="button" class="rm" data-i="${i}">×</button></div>
+    `).join('');
+  }
+  f.subsGrid?.addEventListener('click', e=>{
+    const b=e.target.closest('.rm'); if(!b) return;
+    state.subThumbnails.splice(Number(b.dataset.i),1);
+    drawSubs();
+  });
+
+  // --- 업로드 바인딩 ---
+  f.mainFile?.addEventListener('change', async e=>{
+    const file = e.target.files?.[0]; if(!file) return;
+    try{
+      say('메인 이미지 업로드 중…');
+      const url = await uploadImage(file);
+      state.thumbnail = withTr(url, THUMB.cover169);
+      if(f.mainPrev){ f.mainPrev.src = state.thumbnail; f.mainPrev.style.display='block'; }
+      say('메인 이미지 업로드 완료', true);
+    }catch(err){ console.error(err); say('업로드 실패: '+(err.message||'오류')); }
+    finally{ e.target.value=''; }
+  });
+
+  f.subsFile?.addEventListener('change', async e=>{
+    const files = [...(e.target.files||[])].slice(0, Math.max(0, 8 - state.subThumbnails.length));
+    for(const file of files){
+      try{
+        say('서브 이미지 업로드 중…');
+        const url = await uploadImage(file);
+        state.subThumbnails.push(withTr(url, THUMB.square));
+        drawSubs();
+        say('서브 이미지 업로드 완료', true);
+      }catch(err){ console.error(err); say('업로드 실패: '+(err.message||'오류')); }
+    }
+    e.target.value='';
+  });
+
+  // --- 페이로드 구성(공용 스키마) ---
+  const arr=(el)=> (el?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  function payload(status='draft'){
+    return {
+      type:'brand',
+      status,
+      slug: (f.slug?.value || '').trim().toLowerCase(),
+      name: (f.name?.value || '').trim(),
+      thumbnail: state.thumbnail || undefined,
+      subThumbnails: state.subThumbnails,
+
+      intro:      (f.intro?.value || '').trim(),
+      usageGuide: (f.usageGuide?.value || '').trim(),
+      priceInfo:  (f.priceInfo?.value || '').trim(),
+      address:    (f.address?.value || '').trim(),
+
+      contact: {
+        phone: (f.phone?.value || '').trim() || undefined,
+        email: (f.email?.value || '').trim() || undefined,
+        kakao: (f.kakao?.value || '').trim() || undefined
+      },
+      map: { link: (f.mapLink?.value || '').trim() || undefined },
+
+      gallery: state.subThumbnails.slice(0, 12), // 필요 시 별도 입력도 가능
+      schedule: {
+        availableHours: (f.availableHours?.value || '').trim() || undefined,
+        timeslots:      arr(f.timeslots),
+        availableDates: arr(f.availableDates),
+        closed:         arr(f.closed),
+        booked:         arr(f.booked)
+      }
+    };
+  }
+
+  function validate(pub=false){
+    if(pub){
+      if(!f.slug?.value.trim()) { say('슬러그를 입력하세요'); return false; }
+      if(!f.name?.value.trim()) { say('브랜드명을 입력하세요'); return false; }
+      if(!state.thumbnail){ say('메인 썸네일을 업로드하세요'); return false; }
+    }
     return true;
   }
 
-  async function getSignature() {
-    const r = await fetch(API_BASE + EP.uploadsSignature, { headers: HEAD(false) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
-    return j.data || j;
-  }
-  async function uploadImage(file, variant) {
-    const { cloudName, apiKey, timestamp, signature } = await getSignature();
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('api_key', apiKey);
-    fd.append('timestamp', timestamp);
-    fd.append('signature', signature);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: fd });
-    const j = await res.json().catch(() => ({}));
-    if (!res.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${res.status}`);
-    return variant ? withTransform(j.secure_url, variant) : j.secure_url;
+  async function submit(status){
+    if(!validate(status==='published')) return;
+    try{
+      say(status==='published'?'발행 중…':'임시저장 중…');
+      const body = JSON.stringify(payload(status));
+      const url  = state.id ? `${API_BASE}${BRANDS_BASE}/${state.id}` : `${API_BASE}${BRANDS_BASE}`;
+      const method = state.id ? 'PUT' : 'POST';
+      const r = await fetch(url, { method, headers: headers(true), body });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+      say('저장 완료', true);
+    }catch(err){ console.error(err); say('저장 실패: '+(err.message||'오류')); }
   }
 
-  async function handleOneUpload(e, imgPrev, inputEl, variant) {
-    const f = e.target.files?.[0]; if (!f) return; if (!isImgOk(f)) { e.target.value = ''; return; }
-    const local = URL.createObjectURL(f); imgPrev && (imgPrev.src = local);
-    toast('업로드 중…');
-    try {
-      const url = await uploadImage(f, variant);
-      if (imgPrev) imgPrev.src = url;
-      if (inputEl) inputEl.value = url;
-      toast('업로드 완료');
-    } catch (err) {
-      console.error('[upload]', err); toast('업로드 실패');
-    } finally {
-      URL.revokeObjectURL(local); e.target.value = '';
-    }
-  }
+  f.saveDraft?.addEventListener('click', (e)=>{ e.preventDefault(); submit('draft'); });
+  f.publishBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit('published'); });
 
-  async function handleMultiUpload(e, gridPrev, taEl, variant) {
-    const files = Array.from(e.target.files || []); if (!files.length) return;
-    toast('업로드 중…');
-    const urls = [];
-    for (const f of files) {
-      if (!isImgOk(f)) continue;
-      try {
-        const url = await uploadImage(f, variant);
-        urls.push(url);
-      } catch (err) {
-        console.warn('[multi upload]', err);
-      }
-    }
-    if (urls.length) {
-      // textarea 병합(줄바꿈)
-      if (taEl) {
-        const cur = (taEl.value || '').trim();
-        taEl.value = (cur ? cur + '\n' : '') + urls.join('\n');
-      }
-      // 프리뷰 그리드
-      if (gridPrev) {
-        const all = (taEl?.value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        drawThumbGrid(gridPrev, all);
-      }
-      toast(`${urls.length}건 업로드 완료`);
-    } else {
-      toast('업로드 실패/취소');
-    }
-    e.target.value = '';
-  }
+  // --- edit 모드(쿼리 id 또는 slug) ---
+  (async function init(){
+    const qs = new URLSearchParams(location.search);
+    const id  = qs.get('id');
+    const slug= qs.get('slug');
 
-  function drawThumbGrid(el, urls) {
-    if (!el) return;
-    el.innerHTML = urls.map((u, i) => `
-      <div class="it">
-        <img src="${u}" alt="thumb-${i}">
-      </div>`).join('');
-  }
+    if(!id && !slug) return; // create 모드
 
-  // ---- Save ----
-  function readForm() {
-    const toArrLines = v => (v || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    const toArrCSV = v => (v || '').split(',').map(s => s.trim()).filter(Boolean);
-    const slug = $('#slug').value.trim() || 'byhen';
-    return {
-      slug,
-      name: $('#name').value.trim() || 'BYHEN',
-      thumbnail: $('#thumb').value.trim(),
-      subThumbnails: toArrLines($('#subThumbs').value),
-      availableHours: $('#hours').value.trim(),
-      timeslots: toArrCSV($('#timeslots').value),
-      availableDates: toArrCSV($('#availableDates').value),
-      contact: { phone: $('#phone').value.trim(), email: $('#email').value.trim(), kakao: $('#kakao').value.trim() },
-      intro: $('#intro').value,
-      usageGuide: $('#guide').value,
-      priceInfo: $('#pricing').value,
-      address: $('#address').value.trim(),
-      map: { link: $('#mapLink').value.trim() },
-      gallery: toArrLines($('#gallery').value),
-      closed: [], booked: []
-    };
-  }
+    try{
+      say('불러오는 중…');
+      const key = id || slug;
+      const url = id ? `${API_BASE}${BRANDS_BASE}/${id}` : `${API_BASE}${BRANDS_BASE}/${encodeURIComponent(slug)}`;
+      const r = await fetch(url, { headers: headers(false) });
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+      const d = j.data || j;
 
-  async function save() {
-    const data = readForm();
-    // 서버 스키마 맞추기(테스트 라우터용)
-    const payload = {
-      slug: data.slug,
-      type: 'brand',
-      status: 'published',
-      name: data.name,
-      hours: data.availableHours,
-      hero: { image: data.thumbnail, logo: '' },
-      contact: { phone: data.contact.phone, email: data.contact.email, kakaoUrl: data.contact.kakao },
-      links: { map: data.map.link },
-      studioPhotos: data.subThumbnails,
-      portfolioPhotos: data.gallery,
-      pricing: parsePricing(data.priceInfo),
-      availability: {
-        leadDays: 0,
-        timeslots: data.timeslots,
-        booked: data.booked,
-        closed: data.closed
-      },
-      faq: [],
-      policy: '',
-      shorts: [],
-      // 추가 필드
-      tagline: '',
-      location: data.address,
-      description: data.intro,
-      // 안내는 policy로 보내거나 description 하단에 병합 가능
-      // 여기서는 policy에 저장
-      policyAppend: data.usageGuide
-    };
+      state.id = d._id || d.id || '';
+      state.thumbnail = d.thumbnail || '';
+      state.subThumbnails = Array.isArray(d.subThumbnails) ? d.subThumbnails : [];
 
-    try {
-      // POST upsert (slug 기준) → /brands-test
-      const res = await fetch(API_BASE + (CFG.endpoints?.byhen || '/brands-test'), {
-        method: 'POST',
-        headers: HEAD(true),
-        body: JSON.stringify(payload)
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || j.ok === false) throw new Error(j.message || `HTTP_${res.status}`);
-      toast('서버 저장 완료');
-    } catch (e) {
-      console.warn('[save:local fallback]', e);
-      localStorage.setItem('brand:' + data.slug, JSON.stringify(data));
-      toast('서버 실패 → 로컬에 저장됨');
-    }
-  }
+      // fill
+      f.slug && (f.slug.value = d.slug || '');
+      f.name && (f.name.value = d.name || '');
+      if(f.mainPrev && state.thumbnail){ f.mainPrev.src = state.thumbnail; f.mainPrev.style.display='block'; }
+      drawSubs();
 
-  function parsePricing(text) {
-    // 줄마다 "이름 | 금액 | 소요시간 | 포함사항(,)" 형태를 느슨히 파싱
-    // 예: 베이직 | 350000 | 2h | 스튜디오 1시간, 라이트 세팅, 컷 편집 10장
-    const lines = (text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    return lines.map(line => {
-      const p = line.split('|').map(s => s.trim());
-      return {
-        name: p[0] || '',
-        price: p[1] ? Number(p[1].replace(/[^\d]/g, '')) : 0,
-        duration: p[2] || '',
-        includes: p[3] ? p[3].split(',').map(s => s.trim()).filter(Boolean) : []
-      };
-    }).filter(x => x.name);
-  }
+      f.intro && (f.intro.value = d.intro || '');
+      f.usageGuide && (f.usageGuide.value = d.usageGuide || '');
+      f.priceInfo && (f.priceInfo.value = d.priceInfo || '');
+      f.address && (f.address.value = d.address || '');
 
-  // ---- Init: draw previews from textareas if any ----
-  (function initPreviews() {
-    const subs = ($('#subThumbs').value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    drawThumbGrid($('#subsPrev'), subs);
-    const gal = ($('#gallery').value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    drawThumbGrid($('#galleryPrev'), gal);
+      f.phone && (f.phone.value = d.contact?.phone || '');
+      f.email && (f.email.value = d.contact?.email || '');
+      f.kakao && (f.kakao.value = d.contact?.kakao || '');
+      f.mapLink && (f.mapLink.value = d.map?.link || '');
+
+      f.availableHours && (f.availableHours.value = d.schedule?.availableHours || '');
+      f.timeslots && (f.timeslots.value = (d.schedule?.timeslots||[]).join(', '));
+      f.availableDates && (f.availableDates.value = (d.schedule?.availableDates||[]).join(', '));
+      f.closed && (f.closed.value = (d.schedule?.closed||[]).join(', '));
+      f.booked && (f.booked.value = (d.schedule?.booked||[]).join(', '));
+
+      say('로드 완료', true);
+    }catch(err){ console.error(err); say('불러오기 실패: '+(err.message||'오류')); }
   })();
 })();
