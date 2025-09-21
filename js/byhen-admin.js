@@ -1,275 +1,370 @@
-/* byhen-admin.js — v1.0.3
-   - Cloudinary 서명 GET 호출 (+필드명 호환)
-   - 업로드 안정화 / 오류 메시지 개선
-   - /brand-test 스키마 저장(서버가 brands-test면 자동 폴백)
-*/
+/* byhen-admin.js — v2.4 (robust bindings + upload fix + schema aligned) */
 (function () {
+  'use strict';
+
+  // ---------- Config ----------
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (() => {
     const raw = (CFG.API_BASE || '/api/v1').toString().trim() || '/api/v1';
-    let p = raw.replace(/\/+$/, '');
-    return /^https?:\/\//i.test(p) ? p : (location.origin + (p.startsWith('/') ? p : '/' + p));
+    const base = raw.replace(/\/+$/, '');
+    return /^https?:\/\//i.test(base) ? base : (location.origin + (base.startsWith('/') ? '' : '/') + base);
   })();
+  const EP = CFG.endpoints || {};
+  const BRAND_BASE = (EP.brandBase || '/brand-test').replace(/^\/*/, '/');
+  const SIGN_EP = (EP.uploadsSignature || '/uploads/signature').replace(/^\/*/, '/');
 
-  const BRAND_BASE = (CFG.endpoints?.byhen || '/brand-test').replace(/^\/+/, '');
-  const BRAND_URL_PRIMARY   = `${API_BASE}/${BRAND_BASE.replace(/^brands-test$/,'brand-test')}`;
-  const BRAND_URL_ALTERNATE = `${API_BASE}/brand-test`;
-
-  const THUMB = CFG.thumb || {
-    card169: 'c_fill,g_auto,w_640,h_360,f_auto,q_auto',
-    cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
-    square:  'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
+  // Cloudinary 변환 프리셋
+  const THUMB = {
+    main:  CFG.thumb?.cover169 || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
+    square:CFG.thumb?.square   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
   };
 
-  // ------- DOM -------
-  const $  = (s, el=document) => el.querySelector(s);
-  const $id = (s) => document.getElementById(s);
-  const say = (t, ok=false) => { const el=$id('admMsg'); el.textContent=t; el.classList.add('show'); el.classList.toggle('ok', ok); };
+  // ---------- DOM Helpers ----------
+  const $  = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const on = (el, ev, fn, opt) => el && el.addEventListener(ev, fn, opt);
 
-  const form = $id('brandForm');
-  const nameEl=$id('name'), slugEl=$id('slug');
-  const introEl=$id('intro'), descEl=$id('description');
-  const guideEl=$id('usageGuide'), priceEl=$id('priceInfo');
-
-  const phoneEl=$id('phone'), emailEl=$id('email'), kakaoEl=$id('kakao');
-  const addressEl=$id('address'), mapLinkEl=$id('mapLink');
-
-  const availableHoursEl=$id('availableHours'), timeslotsEl=$id('timeslots'), availableDatesEl=$id('availableDates');
-  const closedEl=$id('closed'), bookedEl=$id('booked');
-
-  const thumbTrigger=$id('thumbTrigger'), thumbFile=$id('thumbFile'), thumbPrev=$id('thumbPrev');
-  const subsTrigger=$id('subsTrigger'),  subsFile=$id('subsFile'),   subsGrid=$id('subsGrid');
-  const galleryTrigger=$id('galleryTrigger'), galleryFile=$id('galleryFile'), galleryGrid=$id('galleryGrid');
-
-  // 상태
-  const state = {
-    id: new URLSearchParams(location.search).get('id') || '',
-    slugQuery: new URLSearchParams(location.search).get('slug') || '',
-    uploading: 0,
-    thumbnail: '',
-    subThumbnails: [],
-    gallery: []
+  const toast = (msg, ok=false) => {
+    let t = document.getElementById('__toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = '__toast';
+      t.style.cssText = 'position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;z-index:9999;transition:opacity .2s;opacity:0;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.background = ok ? '#065f46' : '#111827';
+    t.style.opacity = '1';
+    clearTimeout(t._to);
+    t._to = setTimeout(() => (t.style.opacity = '0'), 1400);
   };
-  const bump = (n)=>{ state.uploading=Math.max(0, state.uploading+n); };
 
-  // ------- helpers -------
-  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
-  const headers = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h.Authorization=`Bearer ${TOKEN}`; return h; };
-  const withTr = (url, t) => { try{ if(!/\/upload\//.test(url)) return url; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8); }catch{return url;} };
-  const toArr = (v) => (String(v||'').trim()? String(v).split(',').map(s=>s.trim()).filter(Boolean):[]);
+  // 파일 input/미리보기/그리드
+  const el = {};
+  function cacheDom() {
+    el.id            = new URLSearchParams(location.search).get('id') || '';
+    el.name          = $('#name');
+    el.slug          = $('#slug');
+    el.status        = $('#status'); // 선택값이 있으면 사용
 
-  async function getSignature(){
-    const sigPath = (CFG.endpoints?.uploadsSignature || '/uploads/signature').replace(/^\/+/, '');
-    const r = await fetch(`${API_BASE}/${sigPath}`, { headers: headers(false) }); // ✅ GET
-    const j = await r.json().catch(()=>({}));
-    if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+    el.mainFile      = $('#mainFile');
+    el.mainPrev      = $('#mainPrev');
 
+    el.subsFile      = $('#subsFile');
+    el.subsGrid      = $('#subsGrid');
+
+    el.galFile       = $('#galFile');
+    el.galGrid       = $('#galGrid');
+
+    el.hours         = $('#hours');
+    el.timeslots     = $('#timeslots');
+    el.availDates    = $('#availDates');
+
+    el.phone         = $('#phone');
+    el.email         = $('#email');
+    el.kakao         = $('#kakao');
+
+    el.address       = $('#address');
+    el.intro         = $('#intro');
+    el.guide         = $('#guide');
+    el.pricing       = $('#pricing');
+
+    el.publishBtn    = $('#publishBtn');
+    el.saveBtn       = $('#saveDraftBtn');
+
+    // 트리거(여러 형태 지원)
+    el.mainTrig      = $('#mainTrigger');
+    el.subsTrig      = $('#subsTrigger');
+    el.galTrig       = $('#galTrigger');
+  }
+
+  // ---------- Cloudinary upload ----------
+  const withTr = (url, t) => {
+    try {
+      if (!url || !/\/upload\//.test(url)) return url || '';
+      const i = url.indexOf('/upload/');
+      return url.slice(0, i + 8) + t + '/' + url.slice(i + 8);
+    } catch { return url || ''; }
+  };
+
+  async function getSignature() {
+    const r = await fetch(API_BASE + SIGN_EP, { headers: { Accept: 'application/json' } });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
     const d = j.data || j;
-    const cloudName = d.cloudName || d.cloud_name;
-    const apiKey    = d.apiKey    || d.api_key;
-    const timestamp = d.timestamp;
-    const signature = d.signature;
-    if(!cloudName || !apiKey || !timestamp || !signature){
-      throw new Error('서명 응답 형식 오류(cloudName/apiKey/timestamp/signature)');
+    if (!d.cloudName || !d.apiKey || !d.signature || !d.timestamp) {
+      throw new Error('Invalid signature payload');
     }
-    return { cloudName, apiKey, timestamp, signature };
+    return d;
   }
 
-  async function uploadImage(file, kind='cover169'){
-    if(!file) throw new Error('파일이 없습니다.');
-    if(!/^image\//.test(file.type) || file.size>8*1024*1024) throw new Error('이미지(≤8MB)만 가능');
+  async function uploadImage(file) {
+    if (!file) throw new Error('no file');
+    if (!/^image\//.test(file.type)) throw new Error('이미지 파일만 업로드');
+    if (file.size > 10 * 1024 * 1024) throw new Error('최대 10MB');
 
-    const {cloudName,apiKey,timestamp,signature}=await getSignature();
-    const fd=new FormData();
+    const sig = await getSignature();
+    const fd = new FormData();
     fd.append('file', file);
-    fd.append('api_key', apiKey);
-    fd.append('timestamp', timestamp);
-    fd.append('signature', signature);
+    fd.append('api_key', sig.apiKey);
+    fd.append('timestamp', sig.timestamp);
+    fd.append('signature', sig.signature);
 
-    const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
-    const j=await res.json().catch(()=>({}));
-
-    if(!res.ok || !j.secure_url){
-      // Cloudinary 표준 에러 메시지 노출
-      throw new Error(j?.error?.message || `Cloudinary_${res.status}`);
-    }
-    const t = (kind==='square')?THUMB.square:(kind==='card169')?THUMB.card169:THUMB.cover169;
-    return { cover:j.secure_url, thumb:withTr(j.secure_url,t) };
+    const url = `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`;
+    const res = await fetch(url, { method: 'POST', body: fd });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.secure_url) throw new Error(j.error?.message || '업로드 실패');
+    return j.secure_url;
   }
 
-  // ------- 이미지 트리거 -------
-  thumbTrigger?.addEventListener('click', ()=> thumbFile?.click());
-  subsTrigger?.addEventListener('click', ()=> subsFile?.click());
-  galleryTrigger?.addEventListener('click', ()=> galleryFile?.click());
+  // ---------- State ----------
+  const state = {
+    uploads: 0,
+    doc: {
+      // Brand schema
+      type: 'brand',
+      status: 'draft',
+      name: '',
+      slug: '',
+      thumbnail: '',
+      subThumbnails: [],
+      gallery: [],
+      intro: '',
+      usageGuide: '',
+      priceInfo: '',
+      address: '',
+      availableHours: '',
+      timeslots: [],         // ['10:00','14:00']
+      availableDates: [],    // ['2025-09-22']
+      contact: { phone: '', email: '', kakao: '' }
+    }
+  };
+  const bump = (n) => { state.uploads = Math.max(0, state.uploads + n); };
 
-  function drawSubs(){
-    subsGrid.innerHTML = state.subThumbnails.map((u,i)=>`
-      <div class="sub"><img src="${u}" alt="sub-${i}" /><button class="rm" data-i="${i}" type="button" aria-label="삭제">×</button></div>
+  // ---------- UI Bindings ----------
+  function bindPickers() {
+    // 트리거 → 파일 input 클릭
+    document.body.addEventListener('click', (e) => {
+      const trg = e.target.closest('[data-pick], #mainTrigger, #subsTrigger, #galTrigger');
+      if (!trg) return;
+      const key = trg.getAttribute('data-pick') ||
+                  (trg.id === 'mainTrigger' ? 'main' : trg.id === 'subsTrigger' ? 'subs' :
+                   trg.id === 'galTrigger' ? 'gal' : '');
+      if (!key) return;
+      ({ main: el.mainFile, subs: el.subsFile, gal: el.galFile }[key])?.click();
+    });
+
+    // 메인 썸네일 업로드
+    on(el.mainFile, 'change', async (e) => {
+      const f = e.target.files?.[0]; if (!f) return;
+      const local = URL.createObjectURL(f);
+      el.mainPrev.src = local; el.mainPrev.style.display = 'block';
+      bump(+1);
+      try {
+        toast('메인 업로드 중…');
+        const u = await uploadImage(f);
+        state.doc.thumbnail = withTr(u, THUMB.main);
+        el.mainPrev.src = state.doc.thumbnail;
+        toast('메인 업로드 완료', true);
+      } catch (err) {
+        toast('메인 업로드 실패: ' + (err.message || '오류'));
+      } finally {
+        bump(-1);
+        URL.revokeObjectURL(local);
+        e.target.value = '';
+      }
+    });
+
+    // 서브 썸네일 여러 장
+    on(el.subsFile, 'change', async (e) => {
+      const files = [...(e.target.files || [])].slice(0, 5 - state.doc.subThumbnails.length);
+      for (const f of files) {
+        if (!/^image\//.test(f.type)) continue;
+        bump(+1);
+        try {
+          const u = await uploadImage(f);
+          state.doc.subThumbnails.push(withTr(u, THUMB.square));
+          drawSubs();
+        } catch (err) {
+          toast('서브 업로드 실패: ' + (err.message || '오류'));
+        } finally { bump(-1); }
+      }
+      e.target.value = '';
+    });
+
+    // 서브 삭제
+    on(el.subsGrid, 'click', (e) => {
+      const b = e.target.closest('.rm'); if (!b) return;
+      const i = Number(b.dataset.i);
+      state.doc.subThumbnails.splice(i, 1);
+      drawSubs();
+    });
+
+    // 갤러리 여러 장
+    on(el.galFile, 'change', async (e) => {
+      const files = [...(e.target.files || [])];
+      for (const f of files) {
+        if (!/^image\//.test(f.type)) continue;
+        bump(+1);
+        try {
+          const u = await uploadImage(f);
+          state.doc.gallery.push(withTr(u, THUMB.square));
+          drawGallery();
+        } catch (err) {
+          toast('갤러리 업로드 실패: ' + (err.message || '오류'));
+        } finally { bump(-1); }
+      }
+      e.target.value = '';
+    });
+
+    // 갤러리 삭제
+    on(el.galGrid, 'click', (e) => {
+      const b = e.target.closest('.rm'); if (!b) return;
+      const i = Number(b.dataset.i);
+      state.doc.gallery.splice(i, 1);
+      drawGallery();
+    });
+  }
+
+  function drawSubs() {
+    if (!el.subsGrid) return;
+    el.subsGrid.innerHTML = state.doc.subThumbnails.map((u, i) => `
+      <div class="thumb"><img src="${u}" alt="sub-${i}"><button type="button" class="rm" data-i="${i}" aria-label="삭제">×</button></div>
     `).join('');
   }
-  subsGrid?.addEventListener('click', (e)=>{
-    const b=e.target.closest('.rm'); if(!b) return;
-    state.subThumbnails.splice(Number(b.dataset.i),1); drawSubs();
-  });
 
-  function drawGallery(){
-    galleryGrid.innerHTML = state.gallery.map((u,i)=>`
-      <div class="sub"><img src="${u}" alt="g-${i}" /><button class="rm" data-i="${i}" type="button" aria-label="삭제">×</button></div>
+  function drawGallery() {
+    if (!el.galGrid) return;
+    el.galGrid.innerHTML = state.doc.gallery.map((u, i) => `
+      <div class="thumb"><img src="${u}" alt="gal-${i}"><button type="button" class="rm" data-i="${i}" aria-label="삭제">×</button></div>
     `).join('');
   }
-  galleryGrid?.addEventListener('click', (e)=>{
-    const b=e.target.closest('.rm'); if(!b) return;
-    state.gallery.splice(Number(b.dataset.i),1); drawGallery();
-  });
 
-  thumbFile?.addEventListener('change', async (e)=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    const local=URL.createObjectURL(f); thumbPrev.src=local; thumbPrev.style.display='block'; bump(+1);
-    try{
-      say('메인 이미지 업로드 중…');
-      const u=await uploadImage(f,'cover169');
-      state.thumbnail = u.thumb;
-      thumbPrev.src = state.thumbnail;
-      say('업로드 완료',true);
-    }catch(err){ console.error(err); say('메인 업로드 실패: '+(err.message||'오류')); }
-    finally{ URL.revokeObjectURL(local); bump(-1); e.target.value=''; }
-  });
+  // ---------- Load / Fill ----------
+  async function loadIfEdit() {
+    if (!el.id) return;
+    try {
+      const r = await fetch(`${API_BASE}${BRAND_BASE}/${el.id}`, { headers: { Accept: 'application/json' } });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
+      const d = j.data || j;
 
-  subsFile?.addEventListener('change', async (e)=>{
-    const files=[...(e.target.files||[])].slice(0, Math.max(0,5-state.subThumbnails.length));
-    for(const f of files){
-      bump(+1);
-      try{
-        const u=await uploadImage(f,'card169');
-        state.subThumbnails.push(u.thumb);
-        drawSubs();
-      }catch(err){ console.error(err); say('서브 업로드 실패: '+(err.message||'오류')); }
-      finally{ bump(-1); }
-    }
-    e.target.value='';
-  });
+      // fill state
+      Object.assign(state.doc, {
+        status: d.status || 'draft',
+        name: d.name || '',
+        slug: d.slug || '',
+        thumbnail: d.thumbnail || '',
+        subThumbnails: Array.isArray(d.subThumbnails) ? d.subThumbnails : [],
+        gallery: Array.isArray(d.gallery) ? d.gallery : [],
+        intro: d.intro || '',
+        usageGuide: d.usageGuide || '',
+        priceInfo: d.priceInfo || '',
+        address: d.address || '',
+        availableHours: d.availableHours || '',
+        timeslots: Array.isArray(d.timeslots) ? d.timeslots : [],
+        availableDates: Array.isArray(d.availableDates) ? d.availableDates : [],
+        contact: {
+          phone: d.contact?.phone || '',
+          email: d.contact?.email || '',
+          kakao: d.contact?.kakao || ''
+        }
+      });
 
-  galleryFile?.addEventListener('change', async (e)=>{
-    const files=[...(e.target.files||[])];
-    for(const f of files){
-      bump(+1);
-      try{
-        const u=await uploadImage(f,'card169');
-        state.gallery.push(u.thumb);
-        drawGallery();
-      }catch(err){ console.error(err); say('갤러리 업로드 실패: '+(err.message||'오류')); }
-      finally{ bump(-1); }
-    }
-    e.target.value='';
-  });
+      // fill UI
+      if (el.status) el.status.value = state.doc.status;
+      if (el.name)   el.name.value   = state.doc.name;
+      if (el.slug)   el.slug.value   = state.doc.slug;
 
-  // ------- 동기화 -------
-  nameEl?.addEventListener('input', ()=>{
-    if(!slugEl.value || slugEl.dataset.autofill==='1'){
-      slugEl.dataset.autofill='1';
-      slugEl.value = (nameEl.value||'').toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    }
-  });
-  slugEl?.addEventListener('input', ()=>{ slugEl.dataset.autofill='0'; slugEl.value=slugEl.value.toLowerCase().trim().replace(/\s+/g,'-'); });
-
-  // ------- payload & 저장 -------
-  const toArr = (v) => (String(v||'').trim()? String(v).split(',').map(s=>s.trim()).filter(Boolean):[]);
-  const buildPayload = (status='draft') => ({
-    type:'brand',
-    status,
-    slug: (slugEl.value||'').toLowerCase().trim(),
-    name: (nameEl.value||'').trim(),
-    thumbnail: state.thumbnail || undefined,
-    subThumbnails: state.subThumbnails,
-    gallery: state.gallery,
-    intro: (introEl.value||'').trim(),
-    description: (descEl.value||'').trim(),
-    usageGuide: (guideEl.value||'').trim(),
-    priceInfo: (priceEl.value||'').trim(),
-    contact: {
-      phone:(phoneEl.value||'').trim(),
-      email:(emailEl.value||'').trim(),
-      kakao:(kakaoEl.value||'').trim()
-    },
-    address:(addressEl.value||'').trim(),
-    map:{ link:(mapLinkEl.value||'').trim() },
-    availableHours:(availableHoursEl.value||'').trim(),
-    timeslots: toArr(timeslotsEl.value),
-    availableDates: toArr(availableDatesEl.value),
-    closed: toArr(closedEl.value),
-    booked: toArr(bookedEl.value)
-  });
-
-  function validate(pub){
-    if(state.uploading>0){ say('이미지 업로드 중입니다. 잠시만요…'); return false; }
-    if(pub){
-      if(!nameEl.value.trim()){ say('브랜드명을 입력하세요'); return false; }
-      if(!slugEl.value.trim()){ say('슬러그를 입력하세요'); return false; }
-      if(!state.thumbnail){ say('메인 썸네일을 업로드하세요'); return false; }
-    }
-    return true;
-  }
-
-  async function save(status='draft'){
-    if(!validate(status==='published')) return;
-    try{
-      say(status==='published'?'발행 중…':'저장 중…');
-      const url = state.id ? `${BRAND_URL_PRIMARY}/${state.id}` : `${BRAND_URL_PRIMARY}`;
-      const method = state.id ? 'PUT' : 'POST';
-      let res = await fetch(url,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))});
-      if(!res.ok && res.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE){
-        res = await fetch(state.id?`${BRAND_URL_ALTERNATE}/${state.id}`:BRAND_URL_ALTERNATE,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))});
-      }
-      const j=await res.json().catch(()=>({}));
-      if(!res.ok || j.ok===false) throw new Error(j.message||`HTTP_${res.status}`);
-      say(status==='published'?'발행되었습니다.':'저장되었습니다.', true);
-      setTimeout(()=>location.href='byhen.html?slug='+(slugEl.value||'byhen'), 600);
-    }catch(e){ console.error(e); say('저장 실패: '+(e.message||'오류')); }
-  }
-
-  $id('saveBtn')?.addEventListener('click', ()=> save('published'));
-  $id('publishBtn')?.addEventListener('click', ()=> save('published'));
-  $id('saveDraftBtn')?.addEventListener('click', ()=> save('draft'));
-
-  // ------- 로드 -------
-  (async function load(){
-    try{
-      if(!state.id && !state.slugQuery) return;
-      say('불러오는 중…');
-      const path = state.id ? `/${state.id}` : `/${(state.slugQuery||'').toLowerCase()}`;
-      let r = await fetch(BRAND_URL_PRIMARY+path,{headers:headers(false)});
-      if(!r.ok && r.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE){
-        r = await fetch(BRAND_URL_ALTERNATE+path,{headers:headers(false)});
-      }
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-      const d=j.data||j;
-
-      state.id = d._id || state.id;
-      nameEl.value = d.name||'';
-      slugEl.value = d.slug||'';
-      introEl.value = d.intro||'';
-      descEl.value  = d.description||'';
-      guideEl.value = d.usageGuide||'';
-      priceEl.value = d.priceInfo||'';
-      phoneEl.value = d.contact?.phone||'';
-      emailEl.value = d.contact?.email||'';
-      kakaoEl.value = d.contact?.kakao||'';
-      addressEl.value = d.address||'';
-      mapLinkEl.value = d.map?.link||'';
-      availableHoursEl.value = d.availableHours||'';
-      timeslotsEl.value = (d.timeslots||[]).join(',');
-      availableDatesEl.value = (d.availableDates||[]).join(',');
-      closedEl.value = (d.closed||[]).join(',');
-      bookedEl.value = (d.booked||[]).join(',');
-
-      state.thumbnail = d.thumbnail||'';
-      state.subThumbnails = Array.isArray(d.subThumbnails)?d.subThumbnails:[];
-      state.gallery = Array.isArray(d.gallery)?d.gallery:[];
-      if(state.thumbnail){ thumbPrev.src=state.thumbnail; thumbPrev.style.display='block'; }
+      if (state.doc.thumbnail) { el.mainPrev.src = state.doc.thumbnail; el.mainPrev.style.display = 'block'; }
       drawSubs(); drawGallery();
 
-      say('로드 완료',true);
-    }catch(e){ console.error(e); say('불러오기 실패: '+(e.message||'오류')); }
-  })();
+      el.hours.value      = state.doc.availableHours || '';
+      el.timeslots.value  = (state.doc.timeslots || []).join(', ');
+      el.availDates.value = (state.doc.availableDates || []).join(', ');
+
+      el.phone.value  = state.doc.contact.phone || '';
+      el.email.value  = state.doc.contact.email || '';
+      el.kakao.value  = state.doc.contact.kakao || '';
+
+      el.address.value = state.doc.address || '';
+      el.intro.value   = state.doc.intro || '';
+      el.guide.value   = state.doc.usageGuide || '';
+      el.pricing.value = state.doc.priceInfo || '';
+
+    } catch (e) {
+      toast('불러오기 실패: ' + (e.message || '오류'));
+    }
+  }
+
+  // ---------- Save ----------
+  function collect(status) {
+    // 기본
+    state.doc.name = el.name?.value?.trim() || '';
+    state.doc.slug = (el.slug?.value || '').toLowerCase().trim();
+    state.doc.status = status || (el.status?.value || 'draft');
+
+    // 가능 시간/타임/가능일
+    state.doc.availableHours = el.hours?.value?.trim() || '';
+    state.doc.timeslots = (el.timeslots?.value || '')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    state.doc.availableDates = (el.availDates?.value || '')
+      .split(',').map(s => s.trim()).filter(Boolean);
+
+    // 연락/주소/텍스트
+    state.doc.contact = {
+      phone: el.phone?.value?.trim() || '',
+      email: el.email?.value?.trim() || '',
+      kakao: el.kakao?.value?.trim() || ''
+    };
+    state.doc.address    = el.address?.value?.trim() || '';
+    state.doc.intro      = el.intro?.value?.trim() || '';
+    state.doc.usageGuide = el.guide?.value?.trim() || '';
+    state.doc.priceInfo  = el.pricing?.value?.trim() || '';
+
+    return state.doc;
+  }
+
+  async function submit(status) {
+    if (state.uploads > 0) { toast('이미지 업로드 중입니다. 잠시 후 시도'); return; }
+    const doc = collect(status);
+
+    if (!doc.name) return toast('브랜드명을 입력하세요');
+    if (!doc.slug) return toast('슬러그를 입력하세요');
+
+    try {
+      const url = el.id ? `${API_BASE}${BRAND_BASE}/${el.id}` : `${API_BASE}${BRAND_BASE}`;
+      const method = el.id ? 'PUT' : 'POST';
+      const r = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(doc)
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.message || `HTTP_${r.status}`);
+      toast(el.id ? '수정 완료' : '등록 완료', true);
+      if (!el.id) {
+        // 신규 생성 시 id 갱신
+        const newId = (j.data || j)._id;
+        if (newId) location.replace(location.pathname + '?id=' + encodeURIComponent(newId));
+      }
+    } catch (e) {
+      toast('저장 실패: ' + (e.message || '오류'));
+    }
+  }
+
+  // ---------- Init ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    cacheDom();
+    bindPickers();
+    loadIfEdit();
+
+    on(el.publishBtn, 'click', (e) => { e.preventDefault(); submit('published'); });
+    on(el.saveBtn,    'click', (e) => { e.preventDefault(); submit('draft'); });
+
+    // 혹시 트리거 버튼이 없을 때도 대비: data-pick 사용 권장
+    if (el.mainTrig) el.mainTrig.setAttribute('data-pick', 'main');
+    if (el.subsTrig) el.subsTrig.setAttribute('data-pick', 'subs');
+    if (el.galTrig)  el.galTrig.setAttribute('data-pick', 'gal');
+  });
 })();
