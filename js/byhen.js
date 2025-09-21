@@ -1,74 +1,145 @@
-/* byhen.js — v1.0.1 (브랜드 뷰) */
-(function(){
-  const CFG=window.LIVEE_CONFIG||{};
-  const API_BASE=((CFG.API_BASE||'/api/v1').toString().trim()||'/api/v1').replace(/\/+$/,'');
-  const BRAND_BASE=(CFG.endpoints?.byhen||'/brand-test').replace(/^\/+/,'');
+/* byhen.js — v1.3
+   - /brand-test/:idOrSlug 우선 조회
+   - 404 시 /brand-test 리스트에서 slug 매칭 폴백
+   - ?id= or ?slug= 지원 (기본 slug: 'byhen')
+*/
+(function () {
+  'use strict';
 
-  const $=(s,e=document)=>e.querySelector(s);
-  const $$=(s,e=document)=>[...e.querySelectorAll(s)];
-  const ymd=(d)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const slug=new URLSearchParams(location.search).get('slug')||'byhen';
-
-  async function getBrand(){
-    const primary=`${API_BASE}/${BRAND_BASE.replace(/^brands-test$/,'brand-test')}/${slug}`;
-    const alt    =`${API_BASE}/brand-test/${slug}`;
-    let r=await fetch(primary); if(!r.ok && r.status===404) r=await fetch(alt);
-    const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-    return j.data||j;
-  }
-
-  function mount(d){
-    // hero
-    $('#mainThumb').src = d.thumbnail||'';
-    const subs = (d.subThumbnails||[]).map((s,i)=>`<img src="${s}" data-i="${i}">`).join('');
-    $('#subThumbs').innerHTML = subs;
-    $('#subThumbs').onclick=(e)=>{const im=e.target.closest('img'); if(!im) return; $('#mainThumb').src=im.src; $$('#subThumbs img').forEach(x=>x.classList.toggle('sel',x===im)); };
-    const first=$('#subThumbs img'); first&&first.classList.add('sel');
-
-    // chips
-    $('#chips').innerHTML = [
-      d.availableHours?`<span class="chip"><i class="ri-time-line"></i>${d.availableHours}</span>`:'',
-      (d.timeslots?.length?`<span class="chip"><i class="ri-checkbox-circle-line"></i>타임슬롯 ${d.timeslots.length}</span>`:'')
-    ].join('');
-    $('#intro').textContent = d.description || d.intro || '-';
-
-    // 연락/주소
-    $('#phone').textContent=d.contact?.phone||'-';
-    $('#email').textContent=d.contact?.email||'-';
-    $('#kakao').innerHTML=d.contact?.kakao?`<a href="${d.contact.kakao}" target="_blank" rel="noopener">${d.contact.kakao}</a>`:'-';
-    $('#address').textContent=d.address||'-';
-    $('#mapLink').innerHTML=d.map?.link?`<a class="btn" href="${d.map.link}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도 열기</a>`:''
-
-    // 안내/가격/갤러리
-    $('#guide').textContent=d.usageGuide||'-';
-    $('#pricing').textContent=d.priceInfo||'-';
-    $('#gallery').innerHTML=(d.gallery||[]).map(s=>`<img src="${s}" alt="">`).join('');
-
-    // 스케줄 달력
-    const closed=new Set(d.closed||[]), booked=new Set(d.booked||[]);
-    const today=new Date(); let cur=new Date(today.getFullYear(),today.getMonth(),1); let picked=null;
-    function dayStatus(s){ if(closed.has(s)) return 'closed'; if(booked.has(s)) return 'booked'; if(d.availableDates?.length) return d.availableDates.includes(s)?'ok':'closed'; return 'ok'; }
-    function ym(x){return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}`;}
-    function renderCal(){
-      $('#monTitle').textContent=ym(cur);
-      const first=new Date(cur.getFullYear(),cur.getMonth(),1);
-      const start=new Date(first); start.setDate(first.getDay()===0? -5 : 1-first.getDay()+1);
-      let html='';
-      for(let i=0;i<42;i++){
-        const dt=new Date(start); dt.setDate(start.getDate()+i);
-        const s=ymd(dt); const st=dayStatus(s); const sel=(picked===s);
-        html+=`<div class="day ${st} ${st==='ok'?'ok':''} ${sel?'sel':''}" data-ymd="${s}"><span class="dn">${dt.getDate()}</span><i class="dot ${st}"></i></div>`;
-      }
-      $('#calGrid').innerHTML=html;
-    }
-    $('#prevM').onclick=()=>{cur.setMonth(cur.getMonth()-1);renderCal();}
-    $('#nextM').onclick=()=>{cur.setMonth(cur.getMonth()+1);renderCal();}
-    $('#calGrid').onclick=(e)=>{const cell=e.target.closest('.day.ok'); if(!cell) return; picked=cell.dataset.ymd; renderCal(); }
-    renderCal();
-  }
-
-  (async function init(){
-    try{ const d=await getBrand(); mount(d); }
-    catch(e){ console.error(e); alert('브랜드 로드 실패: '+(e.message||'오류')); }
+  // ----- Config -----
+  const CFG = window.LIVEE_CONFIG || {};
+  const EP  = CFG.endpoints || {};
+  const API_BASE = (() => {
+    const raw = (CFG.API_BASE || '/api/v1').toString().trim() || '/api/v1';
+    const base = raw.replace(/\/+$/, '');
+    return /^https?:\/\//i.test(base) ? base : (location.origin + (base.startsWith('/') ? '' : '/') + base);
   })();
+  const BRAND_BASE = (EP.brandBase || '/brand-test').replace(/^\/*/, '/');
+
+  // ----- Utils -----
+  const $  = (s, el=document)=>el.querySelector(s);
+  const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
+  const toast=(m)=>{const t=$("#toast"); if(!t) return; t.textContent=m; t.classList.add("show"); clearTimeout(t._); t._=setTimeout(()=>t.classList.remove("show"),1600);};
+
+  async function getJSON(url, opt={}) {
+    const r = await fetch(url, { headers:{Accept:'application/json'}, ...opt });
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok || j.ok === false) {
+      const err = new Error(j.message || `HTTP_${r.status}`);
+      err.status = r.status; err.url = url; err.body = j;
+      throw err;
+    }
+    return j.data ?? j;
+  }
+
+  // ----- Data Load (robust) -----
+  async function loadBrand() {
+    const qs   = new URLSearchParams(location.search);
+    const id   = qs.get('id');
+    const slug = (qs.get('slug') || 'byhen').trim().toLowerCase();
+
+    // 1) id가 있으면 id로
+    if (id) {
+      try { return await getJSON(`${API_BASE}${BRAND_BASE}/${encodeURIComponent(id)}`); }
+      catch (e) {
+        alert(`브랜드 로드 실패: ${e.message}\n\nURL: ${e.url||'-'}`);
+        throw e;
+      }
+    }
+
+    // 2) slug로 단건
+    try {
+      return await getJSON(`${API_BASE}${BRAND_BASE}/${encodeURIComponent(slug)}`);
+    } catch (e) {
+      // 404면 리스트에서 한 번 더 (상태/정렬 무관)
+      if (e.status === 404) {
+        try {
+          const list = await getJSON(`${API_BASE}${BRAND_BASE}`);
+          const found = (list.items || list || []).find(x => (x.slug||'').toLowerCase() === slug);
+          if (found) return found;
+        } catch(_) { /* 리스트 실패는 아래 공통 오류 처리 */ }
+      }
+      alert(`브랜드 로드 실패: ${e.message}\n\n시도한 경로: ${e.url||'-'}\nslug: ${slug}`);
+      throw e;
+    }
+  }
+
+  // ----- Render -----
+  function render(doc){
+    // 필드 호환(예전 스키마 대비)
+    const D = {
+      name: doc.name || 'BYHEN',
+      thumbnail: doc.thumbnail || doc.mainThumbnailUrl || '',
+      subThumbnails: Array.isArray(doc.subThumbnails) ? doc.subThumbnails
+                    : (Array.isArray(doc.subImages) ? doc.subImages : []),
+      gallery: Array.isArray(doc.gallery) ? doc.gallery : [],
+      intro: doc.intro || '',
+      description: doc.description || '',
+      usageGuide: doc.usageGuide || doc.rules || '',
+      priceInfo: doc.priceInfo || '',
+      contact: {
+        phone: doc.contact?.phone || '',
+        email: doc.contact?.email || '',
+        kakao: doc.contact?.kakao || ''
+      },
+      address: doc.address || '',
+      mapLink: doc.map?.link || '',
+      availableHours: doc.availableHours || '',
+      timeslots: Array.isArray(doc.timeslots) ? doc.timeslots : (doc.availability?.timeslots||[]),
+      availableDates: Array.isArray(doc.availableDates) ? doc.availableDates : (doc.availability?.availableDates||[]),
+      closed: Array.isArray(doc.closed) ? doc.closed : (doc.availability?.closed||[]),
+      booked: Array.isArray(doc.booked) ? doc.booked : (doc.availability?.booked||[])
+    };
+
+    // 헤더 썸네일
+    const main = $('#mainThumb');
+    const subs = $('#subThumbs');
+    if (main) main.src = D.thumbnail || '';
+    if (subs) {
+      subs.innerHTML = (D.subThumbnails||[]).map((u,i)=>`<img src="${u}" data-i="${i}" alt="sub-${i}">`).join('');
+      const first = subs.querySelector('img'); if (first) first.classList.add('sel');
+      subs.addEventListener('click', e=>{
+        const im=e.target.closest('img'); if(!im) return;
+        main.src = im.src; $$('#subThumbs img').forEach(x=>x.classList.toggle('sel', x===im));
+      });
+    }
+
+    // chips/텍스트/연락처/주소
+    $('#chips').innerHTML = [
+      D.availableHours ? `<span class="chip"><i class="ri-time-line"></i>${D.availableHours}</span>` : '',
+      (D.availableDates && D.availableDates.length) ? `<span class="chip"><i class="ri-calendar-event-line"></i>예약 가능 ${D.availableDates.length}일</span>` : ''
+    ].join('');
+    $('#intro')    && ($('#intro').textContent = D.intro || D.description || '-');
+    $('#guide')    && ($('#guide').textContent = D.usageGuide || '-');
+    $('#pricing')  && ($('#pricing').textContent = D.priceInfo || '-');
+    $('#address')  && ($('#address').textContent = D.address || '-');
+    $('#mapLink')  && ($('#mapLink').innerHTML = D.mapLink ? `<a class="btn" href="${D.mapLink}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도 열기</a>` : '');
+
+    $('#phone') && ($('#phone').textContent = D.contact.phone || '-');
+    $('#email') && ($('#email').textContent = D.contact.email || '-');
+    $('#kakao') && ($('#kakao').innerHTML   = D.contact.kakao ? `<a href="${D.contact.kakao}" target="_blank" rel="noopener">${D.contact.kakao}</a>` : '-');
+
+    // 갤러리
+    $('#gallery') && ($('#gallery').innerHTML = (D.gallery||[]).map(u=>`<img src="${u}" alt="">`).join(''));
+
+    // 캘린더
+    window.__BRAND_CAL__ = {
+      availableDates: D.availableDates,
+      closed: D.closed,
+      booked: D.booked,
+      timeslots: D.timeslots
+    };
+    if (typeof renderCalendar === 'function') renderCalendar(); // 기존 함수 있으면 호출
+  }
+
+  // ----- Init -----
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    try{
+      const doc = await loadBrand();
+      render(doc);
+    }catch(_e){
+      // 화면이 비어있지 않도록 최소 토스트
+      toast('브랜드 로드 실패');
+    }
+  });
 })();
