@@ -3,115 +3,138 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BYHEN 관리자</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <link rel="stylesheet" href="css/byhen-admin.css?v=1.2.0">
-  <script src="js/config.js?v=2.13"></script>
+  <title>BYHEN · 관리자</title>
+  <link rel="stylesheet" href="css/byhen-admin.css?v=1.0.2" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
 </head>
 <body>
-  <div class="hd">BYHEN 관리자</div>
+  <header class="adm-appbar">
+    <a class="ic" href="byhen.html" aria-label="브랜드 페이지"><i class="ri-home-2-line"></i></a>
+    <strong>BYHEN · 관리자</strong>
+    <button id="publishBtn" class="btn pri sm"><i class="ri-upload-2-line"></i> 발행</button>
+  </header>
 
-  <main class="wrap">
-    <div id="toast" role="status" aria-live="polite"></div>
+  <main class="adm-wrap">
+    <div id="admMsg" class="note" role="status" aria-live="polite"></div>
 
-    <form id="f" novalidate>
-      <!-- 기본/히어로 -->
-      <section class="card grid2">
-        <div>
-          <label class="label">브랜드 슬러그</label>
-          <input class="input" id="slug" value="byhen" />
-
-          <label class="label">브랜드명</label>
-          <input class="input" id="name" placeholder="BYHEN" />
-
-          <label class="label">영업/이용가능 시간</label>
-          <input class="input" id="hours" placeholder="10:00–19:00 (일·공휴일 휴무)" />
-
-          <div class="row">
-            <div class="upl">
-              <div class="upl__head">
-                <span>메인 썸네일</span>
-                <button type="button" id="pickHero" class="btn sm"><i class="ri-image-add-line"></i> 업로드</button>
-                <input id="fileHero" type="file" accept="image/*" hidden />
-              </div>
-              <img id="prevHero" class="preview" alt="">
-              <input id="thumb" class="input" placeholder="https://..." />
-            </div>
-          </div>
-
-          <div class="upl">
-            <div class="upl__head">
-              <span>서브 썸네일(여러 장)</span>
-              <button type="button" id="pickSubs" class="btn sm"><i class="ri-image-add-line"></i> 업로드</button>
-              <input id="fileSubs" type="file" accept="image/*" hidden multiple />
-            </div>
-            <div id="subsPrev" class="gridThumbs"></div>
-            <textarea id="subThumbs" class="input" placeholder="https://...\nhttps://..."></textarea>
-          </div>
-        </div>
-
-        <div>
-          <label class="label">연락처 - 전화</label>
-          <input id="phone" class="input" placeholder="02-000-0000" />
-
-          <label class="label">연락처 - 이메일</label>
-          <input id="email" class="input" placeholder="hello@byhen.studio" />
-
-          <label class="label">연락처 - 카카오 URL</label>
-          <input id="kakao" class="input" placeholder="https://pf.kakao.com/..." />
-
-          <label class="label">예약 가능 시간대(쉼표)</label>
-          <input id="timeslots" class="input" placeholder="10:00,14:00,19:00" />
-
-          <label class="label">예약 가능 날짜(YYYY-MM-DD, 쉼표)</label>
-          <input id="availableDates" class="input" placeholder="2025-10-01,2025-10-03" />
-        </div>
-      </section>
-
-      <!-- 소개/안내/가격 -->
+    <form id="brandForm" novalidate>
+      <!-- 기본 -->
       <section class="card">
-        <label class="label">소개</label>
-        <textarea id="intro" class="input" placeholder="간단 소개"></textarea>
+        <div class="sec-hd"><h2>기본 정보</h2></div>
+        <div class="grid2">
+          <div>
+            <label class="lb">브랜드명 *</label>
+            <input id="name" class="input" required placeholder="예) BYHEN" />
+          </div>
+          <div>
+            <label class="lb">슬러그 *</label>
+            <input id="slug" class="input" required placeholder="예) byhen" />
+            <small class="help">URL 키 (자동 소문자)</small>
+          </div>
+        </div>
 
-        <label class="label">이용 안내</label>
-        <textarea id="guide" class="input" placeholder="환불/유의사항 등"></textarea>
+        <div class="grid2">
+          <div>
+            <label class="lb">메인 썸네일 *</label>
+            <div class="upload">
+              <img id="thumbPrev" alt="미리보기" />
+              <button id="thumbTrigger" type="button" class="btn"><i class="ri-image-add-line"></i> 이미지 삽입</button>
+              <input id="thumbFile" type="file" accept="image/*" hidden />
+            </div>
+            <small class="help">16:9 권장 · 업로드 즉시 미리보기</small>
+          </div>
 
-        <label class="label">금액 안내</label>
-        <textarea id="pricing" class="input" placeholder="상품/옵션 등"></textarea>
+          <div>
+            <label class="lb">서브 썸네일(최대 5장)</label>
+            <div class="upload-row">
+              <button id="subsTrigger" type="button" class="btn"><i class="ri-images-line"></i> 추가</button>
+              <input id="subsFile" type="file" accept="image/*" hidden multiple />
+            </div>
+            <div id="subsGrid" class="thumb-grid"></div>
+          </div>
+        </div>
       </section>
 
-      <!-- 주소/지도 -->
-      <section class="card grid2">
-        <div>
-          <label class="label">주소</label>
-          <input id="address" class="input" placeholder="서울 성수동 ..." />
+      <!-- 소개/안내 -->
+      <section class="card">
+        <div class="sec-hd"><h2>소개 · 이용안내 · 금액</h2></div>
+        <label class="lb">한 줄 소개</label>
+        <input id="intro" class="input" placeholder="예) 성수동 다목적 촬영 스튜디오" />
+        <label class="lb">상세 소개</label>
+        <textarea id="description" class="ta" placeholder="스튜디오 상세 설명"></textarea>
+        <div class="grid2">
+          <div>
+            <label class="lb">이용 안내</label>
+            <textarea id="usageGuide" class="ta" placeholder="예약/환불/주의사항 등"></textarea>
+          </div>
+          <div>
+            <label class="lb">금액 안내</label>
+            <textarea id="priceInfo" class="ta" placeholder="패키지/옵션/부가세 등"></textarea>
+          </div>
         </div>
-        <div>
-          <label class="label">지도 링크(URL)</label>
-          <input id="mapLink" class="input" placeholder="https://map.naver.com/..." />
+      </section>
+
+      <!-- 연락/주소 -->
+      <section class="card">
+        <div class="sec-hd"><h2>연락처 · 주소</h2></div>
+        <div class="grid3">
+          <div><label class="lb">전화</label><input id="phone" class="input" placeholder="02-000-0000" /></div>
+          <div><label class="lb">이메일</label><input id="email" class="input" type="email" placeholder="hello@brand.com" /></div>
+          <div><label class="lb">카카오</label><input id="kakao" class="input" placeholder="https://pf.kakao.com/..." /></div>
         </div>
+        <label class="lb">주소</label>
+        <input id="address" class="input" placeholder="예) 서울 성수동 ..." />
+        <label class="lb">지도 링크</label>
+        <input id="mapLink" class="input" placeholder="네이버/카카오 지도 URL" />
       </section>
 
       <!-- 갤러리 -->
       <section class="card">
-        <div class="upl__head">
-          <span>갤러리 이미지(여러 장)</span>
-          <button type="button" id="pickGallery" class="btn sm"><i class="ri-image-add-line"></i> 업로드</button>
-          <input id="fileGallery" type="file" accept="image/*" hidden multiple />
+        <div class="sec-hd"><h2>갤러리</h2></div>
+        <div class="upload-row">
+          <button id="galleryTrigger" type="button" class="btn"><i class="ri-image-add-line"></i> 갤러리 추가</button>
+          <input id="galleryFile" type="file" accept="image/*" hidden multiple />
         </div>
-        <div id="galleryPrev" class="gridThumbs"></div>
-        <textarea id="gallery" class="input" placeholder="https://...\nhttps://..."></textarea>
+        <div id="galleryGrid" class="thumb-grid"></div>
       </section>
 
-      <!-- 액션 -->
-      <section class="card row">
-        <button type="button" class="btn pri" id="save"><i class="ri-save-3-line"></i> 저장</button>
-        <span class="small">※ 서버 응답이 없으면 LocalStorage에 저장됩니다.</span>
-        <a class="btn" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 공개페이지 보기</a>
+      <!-- 스케줄 -->
+      <section class="card">
+        <div class="sec-hd"><h2>스케줄</h2></div>
+        <div class="grid3">
+          <div>
+            <label class="lb">영업/이용 가능 시간</label>
+            <input id="availableHours" class="input" placeholder="예) 10:00–19:00 (일/공휴일 휴무)" />
+          </div>
+          <div>
+            <label class="lb">타임슬롯(,로 구분)</label>
+            <input id="timeslots" class="input" placeholder="예) 10:00,14:00,19:00" />
+          </div>
+          <div>
+            <label class="lb">예약 가능일(선택, ,로 구분)</label>
+            <input id="availableDates" class="input" placeholder="YYYY-MM-DD,YYYY-MM-DD" />
+          </div>
+        </div>
+        <div class="grid2">
+          <div>
+            <label class="lb">휴무일(,로 구분)</label>
+            <input id="closed" class="input" placeholder="YYYY-MM-DD,YYYY-MM-DD" />
+          </div>
+          <div>
+            <label class="lb">마감일(,로 구분)</label>
+            <input id="booked" class="input" placeholder="YYYY-MM-DD,YYYY-MM-DD" />
+          </div>
+        </div>
       </section>
+
+      <div class="actions">
+        <button id="saveDraftBtn" class="btn" type="button"><i class="ri-save-3-line"></i> 임시저장</button>
+        <button id="saveBtn" class="btn pri" type="button"><i class="ri-check-line"></i> 저장</button>
+      </div>
     </form>
   </main>
 
-  <script src="js/byhen-admin.js?v=1.2.0"></script>
+  <script src="js/config.js?v=2.12"></script>
+  <script src="js/byhen-admin.js?v=1.0.2"></script>
 </body>
 </html>
