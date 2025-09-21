@@ -1,171 +1,160 @@
-<!-- public/byhen-admin.html -->
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BYHEN 관리자</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <link rel="stylesheet" href="css/byhen-admin.css?v=1.1.0" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BYHEN 관리자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+<style>
+:root{--bg:#ffffff;--ink:#0f172a;--sub:#64748b;--line:#e6e9f0;--pri:#5449ff;--r:12px}
+*{box-sizing:border-box} body{margin:0;background:#f7f8fb;color:var(--ink);font-family:SUIT,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+.hd{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;font-weight:900;z-index:10}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.grid2{display:grid;gap:10px}
+@media(min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+.label{display:block;font-weight:800;margin:10px 2px 6px}
+.input,.select,textarea{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;font:inherit}
+textarea{min-height:120px;height:auto;resize:vertical}
+.small{color:var(--sub);font-size:12.5px}
+.btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:900}
+.btn.pri{background:var(--pri);color:#fff;border-color:transparent}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;transition:.2s}
+#toast.show{opacity:1}
+</style>
 </head>
 <body>
-  <header class="ad-appbar">
-    <div class="ad-title">BYHEN 관리자</div>
-    <div class="ad-actions">
-      <a class="btn ghost" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 미리보기</a>
-      <button id="adSave" class="btn pri"><i class="ri-save-3-line"></i> 저장</button>
-    </div>
-  </header>
-
-  <main class="container">
-    <div id="adMsg" class="notice" aria-live="polite"></div>
-
-    <!-- 기본정보 -->
-    <section class="card">
-      <h3>기본 정보</h3>
-      <div class="grid2">
-        <label class="field"><span>브랜드명</span><input id="name" class="input" placeholder="BYHEN"></label>
-        <label class="field"><span>슬러그</span><input class="input" value="byhen" disabled></label>
-      </div>
-      <label class="field"><span>태그라인</span><input id="tagline" class="input" placeholder="브랜드가 사랑하는 크리에이티브 스튜디오"></label>
-      <div class="grid2">
-        <label class="field"><span>지역</span><input id="location" class="input" placeholder="서울 성수동"></label>
-        <label class="field"><span>운영시간</span><input id="hours" class="input" placeholder="10:00–19:00 (일·공휴일 휴무)"></label>
-      </div>
-      <div class="grid3">
-        <label class="field"><span>연락처(전화)</span><input id="phone" class="input" placeholder="02-000-0000"></label>
-        <label class="field"><span>카카오톡 채널 URL</span><input id="kakaoUrl" class="input" placeholder="https://pf.kakao.com/..."></label>
-        <label class="field"><span>이메일</span><input id="email" class="input" type="email" placeholder="brand@mail.com"></label>
-      </div>
-    </section>
-
-    <!-- 히어로 이미지(대표/로고) -->
-    <section class="card">
-      <h3>히어로 이미지 (대표 1장 + 로고)</h3>
-      <div class="grid2">
-        <label class="field"><span>배경 이미지 URL</span><input id="heroImage" class="input" placeholder="https://..."></label>
-        <label class="field"><span>로고 이미지 URL</span><input id="heroLogo" class="input" placeholder="https://..."></label>
-      </div>
-      <div class="upload-row">
-        <button id="upHeroImage" class="btn"><i class="ri-upload-2-line"></i> 배경 업로드</button>
-        <button id="upHeroLogo" class="btn"><i class="ri-upload-2-line"></i> 로고 업로드</button>
-        <input id="fileHeroImage" type="file" accept="image/*" hidden />
-        <input id="fileHeroLogo"  type="file" accept="image/*" hidden />
-      </div>
-      <div class="preview-row">
-        <img id="prevHeroImage" alt="">
-        <img id="prevHeroLogo" alt="">
-      </div>
-    </section>
-
-    <!-- 히어로 배경 슬라이드(여러 장) -->
-    <section class="card">
-      <h3>히어로 배경 슬라이드 (여러 장)</h3>
-      <label class="field">
-        <span>이미지 URL (줄바꿈 구분)</span>
-        <textarea id="heroImages" class="input" rows="4" placeholder="https://...\nhttps://..."></textarea>
-      </label>
-      <div class="upload-row">
-        <button id="upHeroImages" class="btn"><i class="ri-upload-2-line"></i> 이미지 업로드</button>
-        <input id="fileHeroImages" type="file" accept="image/*" multiple hidden />
-      </div>
-      <div id="prevHeroImages" class="preview-list"></div>
-    </section>
-
-    <!-- 평점 -->
-    <section class="card">
-      <h3>리뷰 / 평점</h3>
-      <div class="grid3">
-        <label class="field"><span>평균 평점 (0~5)</span><input id="ratingAvg" class="input" type="number" step="0.1" min="0" max="5" placeholder="4.8"></label>
-        <label class="field"><span>리뷰 수</span><input id="ratingCount" class="input" type="number" min="0" placeholder="45"></label>
-        <div></div>
-      </div>
-    </section>
-
-    <!-- 소개 / 규칙 -->
-    <section class="card">
-      <h3>소개 / 이용 규칙</h3>
-      <label class="field"><span>소개(설명)</span><textarea id="description" class="input" rows="5" placeholder="플레이스/브랜드 소개를 입력하세요."></textarea></label>
-      <label class="field"><span>이용 규칙</span><textarea id="rules" class="input" rows="5" placeholder="이용 규칙을 입력하세요."></textarea></label>
-    </section>
-
-    <!-- 지도 -->
-    <section class="card">
-      <h3>위치 지도</h3>
-      <div class="grid2">
-        <label class="field"><span>지도 임베드 URL</span><input id="mapEmbedUrl" class="input" placeholder="https://... (네이버/카카오/구글 임베드)"></label>
-        <label class="field"><span>지도 외부 링크</span><input id="mapLink" class="input" placeholder="https://map.naver.com/..."></label>
-      </div>
-      <div class="grid2">
-        <label class="field"><span>정적 지도 이미지 URL</span><input id="mapStaticImage" class="input" placeholder="https://..."></label>
-        <div class="upload-row">
-          <button id="upMapImage" class="btn"><i class="ri-upload-2-line"></i> 지도 이미지 업로드</button>
-          <input id="fileMapImage" type="file" accept="image/*" hidden />
+  <div class="hd">BYHEN 관리자</div>
+  <main class="wrap">
+    <form id="f">
+      <div class="card grid2">
+        <div>
+          <label class="label">브랜드 슬러그</label>
+          <input class="input" id="slug" value="byhen">
+          <label class="label">브랜드명</label>
+          <input class="input" id="name" placeholder="BYHEN">
+          <label class="label">메인 썸네일 URL</label>
+          <input class="input" id="thumb" placeholder="https://...">
+          <label class="label">서브 썸네일(줄바꿈 구분)</label>
+          <textarea id="subThumbs" class="input" placeholder="https://...\nhttps://..."></textarea>
+          <label class="label">영업/이용가능 시간</label>
+          <input class="input" id="hours" placeholder="10:00–19:00 (일·공휴일 휴무)">
+        </div>
+        <div>
+          <label class="label">연락처 - 전화</label>
+          <input id="phone" class="input" placeholder="02-000-0000">
+          <label class="label">연락처 - 이메일</label>
+          <input id="email" class="input" placeholder="hello@byhen.studio">
+          <label class="label">연락처 - 카카오 URL</label>
+          <input id="kakao" class="input" placeholder="https://pf.kakao.com/...">
+          <label class="label">예약 가능 시간대(쉼표 구분)</label>
+          <input id="timeslots" class="input" placeholder="10:00,14:00,19:00">
+          <label class="label">예약 가능 날짜(YYYY-MM-DD, 쉼표)</label>
+          <input id="availableDates" class="input" placeholder="2025-10-01,2025-10-03">
         </div>
       </div>
-      <div class="preview-row">
-        <img id="prevMapImage" alt="">
-      </div>
-    </section>
 
-    <!-- 가격/패키지 -->
-    <section class="card">
-      <h3>가격 & 패키지</h3>
-      <div id="plans"></div>
-      <button id="addPlan" class="btn"><i class="ri-add-line"></i> 패키지 추가</button>
-    </section>
+      <div class="card">
+        <label class="label">소개</label>
+        <textarea id="intro" class="input" placeholder="간단 소개"></textarea>
+        <label class="label">이용 안내</label>
+        <textarea id="guide" class="input" placeholder="환불/유의사항 등"></textarea>
+        <label class="label">금액 안내</label>
+        <textarea id="pricing" class="input" placeholder="상품/옵션 등"></textarea>
+      </div>
 
-    <!-- 예약/캘린더 -->
-    <section class="card">
-      <h3>예약 설정</h3>
-      <div class="grid3">
-        <label class="field"><span>리드타임(일)</span><input id="leadDays" class="input" type="number" min="0" value="3"></label>
-        <label class="field"><span>타임슬롯(쉼표로 구분)</span><input id="timeslots" class="input" placeholder="10:00, 14:00, 19:00"></label>
-        <div></div>
+      <div class="card grid2">
+        <div>
+          <label class="label">주소</label>
+          <input id="address" class="input" placeholder="서울 성수동 ...">
+        </div>
+        <div>
+          <label class="label">지도 링크(URL)</label>
+          <input id="mapLink" class="input" placeholder="https://map.naver.com/...">
+        </div>
       </div>
-      <div class="grid2">
-        <label class="field"><span>마감일(쉼표)</span><textarea id="booked" class="input" rows="3" placeholder="2025-09-15, 2025-09-20"></textarea></label>
-        <label class="field"><span>휴무일(쉼표)</span><textarea id="closed" class="input" rows="3" placeholder="2025-09-22"></textarea></label>
-      </div>
-    </section>
 
-    <!-- 갤러리 -->
-    <section class="card">
-      <h3>갤러리 이미지</h3>
-      <div class="grid2">
-        <label class="field"><span>스튜디오 사진(URL, 줄바꿈)</span><textarea id="studioPhotos" class="input" rows="5"></textarea></label>
-        <label class="field"><span>포트폴리오 사진(URL, 줄바꿈)</span><textarea id="portfolioPhotos" class="input" rows="5"></textarea></label>
+      <div class="card">
+        <label class="label">갤러리 이미지들(줄바꿈 구분)</label>
+        <textarea id="gallery" class="input" placeholder="https://...\nhttps://..."></textarea>
       </div>
-      <div class="upload-row">
-        <button id="upStudio" class="btn"><i class="ri-upload-2-line"></i> 스튜디오 업로드</button>
-        <button id="upPortfolio" class="btn"><i class="ri-upload-2-line"></i> 포트폴리오 업로드</button>
-        <input id="fileStudio" type="file" accept="image/*" multiple hidden />
-        <input id="filePortfolio" type="file" accept="image/*" multiple hidden />
-      </div>
-    </section>
 
-    <!-- 숏폼 -->
-    <section class="card">
-      <h3>하이라이트(숏폼)</h3>
-      <div id="shortsList"></div>
-      <div class="grid2">
-        <input id="shortUrl" class="input" placeholder="YouTube/Instagram/TikTok 링크 붙여넣기" />
-        <button id="addShort" class="btn"><i class="ri-add-line"></i> 추가</button>
+      <div class="card row">
+        <button type="button" class="btn pri" id="save"><i class="ri-save-3-line"></i> 저장</button>
+        <span class="small">※ 서버가 없으면 localStorage에 저장됩니다.</span>
+        <a class="btn" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 공개페이지 보기</a>
       </div>
-    </section>
-
-    <!-- FAQ / 정책 -->
-    <section class="card">
-      <h3>FAQ / 정책</h3>
-      <div id="faqList"></div>
-      <button id="addFaq" class="btn"><i class="ri-add-line"></i> FAQ 추가</button>
-      <label class="field" style="margin-top:10px"><span>정책</span><textarea id="policy" class="input" rows="4"></textarea></label>
-    </section>
+    </form>
   </main>
+  <div id="toast">saved</div>
 
-  <script src="js/config.js?v=2.12"></script>
-  <script src="js/byhen-admin.page.js?v=2.5"></script>
+<script>
+const API_BASE = ''; // 서버 붙이면 '/api' 등으로 지정
+const $=s=>document.querySelector(s); const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._);t._=setTimeout(()=>t.classList.remove("show"),1200)};
+
+function readForm(){
+  const toArrLines = v => (v||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const toArrCSV   = v => (v||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const slug = $("#slug").value.trim() || 'byhen';
+  return {
+    slug,
+    name: $("#name").value.trim() || 'BYHEN',
+    thumbnail: $("#thumb").value.trim(),
+    subThumbnails: toArrLines($("#subThumbs").value),
+    availableHours: $("#hours").value.trim(),
+    timeslots: toArrCSV($("#timeslots").value),
+    availableDates: toArrCSV($("#availableDates").value),
+    contact: { phone: $("#phone").value.trim(), email: $("#email").value.trim(), kakao: $("#kakao").value.trim() },
+    intro: $("#intro").value,
+    usageGuide: $("#guide").value,
+    priceInfo: $("#pricing").value,
+    address: $("#address").value.trim(),
+    map: { link: $("#mapLink").value.trim() },
+    gallery: toArrLines($("#gallery").value),
+    closed: [], booked: []
+  };
+}
+
+async function save(){
+  const data = readForm();
+  if(!API_BASE){
+    localStorage.setItem('brand:'+data.slug, JSON.stringify(data));
+    toast('로컬에 저장됨');
+    return;
+  }
+  const r = await fetch(API_BASE+'/brands/'+encodeURIComponent(data.slug),{
+    method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  });
+  if(!r.ok){ toast('저장 실패'); return; }
+  toast('저장됨');
+}
+
+$("#save").onclick=save;
+
+// 초기값: 로컬에서 불러오기
+(function init(){
+  const raw = localStorage.getItem('brand:byhen'); if(!raw) return;
+  try{
+    const d=JSON.parse(raw);
+    $("#slug").value = d.slug||'byhen';
+    $("#name").value = d.name||'';
+    $("#thumb").value = d.thumbnail||'';
+    $("#subThumbs").value = (d.subThumbnails||[]).join("\n");
+    $("#hours").value = d.availableHours||'';
+    $("#phone").value = d.contact?.phone||'';
+    $("#email").value = d.contact?.email||'';
+    $("#kakao").value = d.contact?.kakao||'';
+    $("#timeslots").value = (d.timeslots||[]).join(", ");
+    $("#availableDates").value = (d.availableDates||[]).join(", ");
+    $("#intro").value = d.intro||'';
+    $("#guide").value = d.usageGuide||'';
+    $("#pricing").value = d.priceInfo||'';
+    $("#address").value = d.address||'';
+    $("#mapLink").value = d.map?.link||'';
+    $("#gallery").value = (d.gallery||[]).join("\n");
+  }catch{}
+})();
+</script>
 </body>
 </html>
