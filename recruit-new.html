@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/recruit-new.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
 </head>
 <body>
   <header class="app-header">
@@ -20,15 +21,51 @@
     <div id="recruitMsg" class="notice" role="status" aria-live="polite"></div>
 
     <form id="recruitForm" novalidate>
+      <!-- 1. 브랜드명 -->
       <label for="brandName">브랜드명 *</label>
       <input id="brandName" class="input" placeholder="예) ACME" required />
 
+      <!-- 2. 말머리 -->
+      <label for="prefix">말머리 *</label>
+      <div class="chips" id="prefixChips" role="group" aria-label="말머리 선택">
+        <!-- 클릭 시 단일 선택 -->
+        <button type="button" class="chip" data-v="[쇼호스트모집]">쇼호스트모집</button>
+        <button type="button" class="chip" data-v="[촬영스태프]">촬영스태프</button>
+        <button type="button" class="chip" data-v="[모델모집]">모델모집</button>
+        <button type="button" class="chip" data-v="[기타모집]">기타모집</button>
+      </div>
+      <input id="prefix" class="input" placeholder="[쇼호스트모집]" />
+
+      <!-- 3. 제목 -->
       <label for="title">제목 *</label>
       <input id="title" class="input" placeholder="예) 9월 신제품 쇼핑라이브 진행" required />
 
-      <label for="desc">내용(브리프) <span class="helper">(선택)</span></label>
-      <textarea id="desc" placeholder="요구역량/브리프/참고링크 등을 자유롭게 입력"></textarea>
+      <!-- 4. 내용(직군 선택 포함) -->
+      <div class="grid grid-2">
+        <div>
+          <label>모집 직군(복수 선택 가능)</label>
+          <div id="roles" class="roles">
+            <label class="role"><input type="checkbox" value="쇼호스트"> 쇼호스트</label>
+            <label class="role"><input type="checkbox" value="촬영"> 촬영</label>
+            <label class="role"><input type="checkbox" value="작가"> 작가</label>
+            <label class="role"><input type="checkbox" value="영상편집"> 영상편집</label>
+            <label class="role"><input type="checkbox" value="보조"> 보조</label>
+            <label class="role"><input type="checkbox" value="기획"> 기획</label>
+            <label class="role"><input type="checkbox" value="장소섭외"> 장소섭외</label>
+            <label class="role"><input type="checkbox" value="스타일리스트"> 스타일리스트</label>
+            <label class="role"><input type="checkbox" value="사회"> 사회</label>
+            <label class="role"><input type="checkbox" value="모델"> 모델</label>
+            <label class="role"><input type="checkbox" value="기타"> 기타</label>
+          </div>
+          <div class="helper">선택한 직군은 본문 상단에 보기 좋게 정리되어 저장됩니다.</div>
+        </div>
+        <div>
+          <label for="desc">내용(브리프) <span class="helper">(선택)</span></label>
+          <textarea id="desc" placeholder="요구역량/브리프/참고링크 등을 자유롭게 입력"></textarea>
+        </div>
+      </div>
 
+      <!-- 5. 카테고리 / 6. 장소 -->
       <div class="grid grid-2">
         <div>
           <label for="category">카테고리 *</label>
@@ -47,28 +84,40 @@
         </div>
       </div>
 
+      <!-- 7. 촬영일(모달) / 8. 공고 마감일(모달) -->
       <div class="grid grid-2">
         <div>
-          <label for="shootDate">촬영일 *</label>
-          <input id="shootDate" class="input" type="date" required />
+          <label for="shootDateBtn">촬영일 *</label>
+          <button id="shootDateBtn" type="button" class="picker">
+            <i class="ri-calendar-line"></i> <span id="shootDateText">날짜 선택</span>
+          </button>
+          <input id="shootDate" type="hidden" required />
         </div>
         <div>
-          <label for="deadline">마감일 *</label>
-          <input id="deadline" class="input" type="date" required />
+          <label for="deadlineBtn">공고 마감일 *</label>
+          <button id="deadlineBtn" type="button" class="picker">
+            <i class="ri-calendar-event-line"></i> <span id="deadlineText">날짜 선택</span>
+          </button>
+          <input id="deadline" type="hidden" required />
         </div>
       </div>
 
+      <!-- 9. 시작 시간(모달) / 10. 촬영 시간(시간 단위) -->
       <div class="grid grid-2">
         <div>
-          <label for="startTime">시작 *</label>
-          <input id="startTime" class="input" type="time" required />
+          <label for="startTimeBtn">시작 시간 *</label>
+          <button id="startTimeBtn" type="button" class="picker">
+            <i class="ri-time-line"></i> <span id="startTimeText">시간 선택</span>
+          </button>
+          <input id="startTime" type="hidden" required />
         </div>
         <div>
-          <label for="endTime">종료 *</label>
-          <input id="endTime" class="input" type="time" required />
+          <label for="duration">촬영 시간(시간 기준) *</label>
+          <input id="duration" class="input" type="number" min="1" step="0.5" placeholder="예) 3" required />
         </div>
       </div>
 
+      <!-- 11. 출연료 -->
       <div class="grid grid-2">
         <div>
           <label for="pay">출연료(원)</label>
@@ -83,6 +132,7 @@
         </div>
       </div>
 
+      <!-- 대표 이미지 업로드 -->
       <label>대표 이미지</label>
       <div class="media">
         <img id="preview" class="preview" alt="미리보기" />
@@ -101,6 +151,23 @@
 
     <div class="page-bottom-space"></div>
   </main>
+
+  <!-- 날짜/시간 선택 모달 -->
+  <div id="pickerModal" class="modal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+      <header>
+        <strong id="pickerTitle">선택</strong>
+        <button type="button" class="x" id="pickerClose" aria-label="닫기">✕</button>
+      </header>
+      <div class="body" id="pickerBody">
+        <!-- JS가 내용 채움 -->
+      </div>
+      <footer>
+        <button type="button" class="btn" id="pickerCancel">취소</button>
+        <button type="button" class="btn pri" id="pickerOk">확인</button>
+      </footer>
+    </div>
+  </div>
 
   <script src="js/config.js"></script>
   <script src="js/recruit-new.js"></script>
