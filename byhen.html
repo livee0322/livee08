@@ -1,158 +1,357 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BYHEN — 스튜디오</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BYHEN — 브랜드 페이지</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+<style>
+:root{
+  --bg:#f7f8fb; --card:#fff; --ink:#0f172a; --sub:#6b7280; --line:#e6e9f0; --pri:#5449ff;
+  --r-lg:18px; --r-md:12px; --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box} html,body{height:100%} body{margin:0;background:var(--bg);color:var(--ink);font-family:SUIT,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font:inherit;cursor:pointer}
 
-  <!-- 폰트 & 아이콘 -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-  <link rel="stylesheet" href="css/byhen.css?v=2.0.0" />
+/* Appbar */
+.appbar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 12px}
+.appbar .icon{width:36px;height:36px;border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;background:#fff}
+.appbar .ttl{font-weight:900}
+
+/* Container */
+.container{max-width:980px;margin:0 auto;padding:12px 16px 120px}
+.sec{margin:16px 0}
+.sec-hd{display:flex;align-items:center;gap:8px;margin:6px 2px 10px}
+.sec-hd h2{margin:0;font-size:18px;font-weight:900}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 0 rgba(16,24,40,.03)}
+.muted{color:var(--sub)}
+.grid2{display:grid;gap:10px}
+@media(min-width:720px){.grid2{grid-template-columns:1.2fr 1fr}}
+
+.btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:800}
+.btn.ghost:hover{background:#f3f4f6}
+.btn.pri{background:var(--pri);color:#fff;border-color:transparent}
+
+/* Hero: 메인 썸네일(좌) + 서브 썸네일(하단 스크롤) */
+.hero{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px}
+.hero-main{border-radius:14px;overflow:hidden;background:#eef2f7;aspect-ratio:16/9}
+.hero-main img{width:100%;height:100%;object-fit:cover}
+.subs{display:flex;gap:8px;overflow:auto;padding:8px 2px 2px;margin-top:8px}
+.subs img{width:96px;height:64px;object-fit:cover;border-radius:10px;border:2px solid transparent;opacity:.85}
+.subs img.sel{border-color:#111827;opacity:1}
+
+/* Info chips */
+.infochips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#f6f7fb;border:1px solid #edf0f6;font-weight:800}
+
+/* Gallery */
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:720px){.gallery{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:980px){.gallery{grid-template-columns:repeat(4,1fr)}}
+.gallery img{width:100%;height:160px;object-fit:cover;border:1px solid var(--line);border-radius:12px;background:#f3f4f6}
+
+/* Schedule (calendar) */
+.cal{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.cal-hd{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:#f8fafc}
+.cal-hd strong{margin:0 auto;font-weight:900}
+.cal-hd .nav{width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);padding:8px;background:#fcfcfd;border-bottom:1px solid var(--line);color:#475569;font-weight:800;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.day{position:relative;min-height:48px;padding:6px;border-right:1px solid #f1f3f6;border-bottom:1px solid #f1f3f6;display:flex;align-items:flex-start;justify-content:flex-end}
+.day:nth-child(7n){border-right:0}
+.dn{font-weight:900}
+.dot{position:absolute;left:6px;bottom:6px;width:8px;height:8px;border-radius:50%}
+.ok{cursor:pointer}
+.ok:hover{background:#f9fafb}
+.sel{outline:2px solid var(--pri)}
+.dot.ok{background:#10b981}.dot.closed{background:#64748b}.dot.booked{background:#ef4444}
+
+/* Actions (bottom sticky) */
+.cta{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -12px 30px rgba(2,6,23,.06);padding:10px 14px calc(10px + var(--safe-b));z-index:40;display:flex;gap:8px}
+.cta .btn{flex:1}
+
+/* Modal */
+.modal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.45);z-index:100}
+.modal.show{display:flex}
+.sheet{width:min(520px,100%);max-height:85vh;overflow:auto;background:#fff;border-radius:16px 16px 0 0;padding:14px}
+.sheet header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sheet header strong{font-weight:900}
+.sheet header .x{margin-left:auto;border:1px solid var(--line);border-radius:10px;width:36px;height:36px;background:#fff}
+.field{margin:10px 0}
+.label{display:block;font-weight:800;margin:0 0 6px}
+.input, .select, textarea{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;font:inherit}
+textarea{height:auto;min-height:120px;resize:vertical}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;transition:.2s;z-index:200}
+#toast.show{opacity:1}
+</style>
 </head>
 <body>
-  <!-- 상단 앱바 -->
-  <header class="bh-appbar">
-    <button class="bh-icon" type="button" aria-label="뒤로" onclick="history.back()"><i class="ri-arrow-left-line"></i></button>
-    <strong class="bh-title" id="bhBrandTitle">BYHEN</strong>
-    <a class="bh-icon" href="index.html" aria-label="홈"><i class="ri-home-2-line"></i></a>
-  </header>
+  <div class="appbar">
+    <button class="icon" onclick="history.back()" aria-label="뒤로"><i class="ri-arrow-left-line"></i></button>
+    <div class="ttl">BYHEN</div>
+    <a class="icon" href="byhen-admin.html" aria-label="관리자"><i class="ri-settings-3-line"></i></a>
+  </div>
 
-  <main id="byhen" class="bh-container" aria-live="polite">
-    <!-- Hero: 가로 메인 썸네일 + 하단 서브 썸네일 -->
-    <section class="bh-hero" id="bh-hero">
-      <!-- JS가 채움 -->
+  <main class="container" id="app" aria-live="polite">
+    <!-- 헤더: 메인/서브 썸네일 -->
+    <section class="sec">
+      <div class="hero">
+        <div class="hero-main"><img id="mainThumb" alt=""></div>
+        <div class="subs" id="subThumbs"></div>
+      </div>
     </section>
 
-    <!-- 핵심 정보: 스튜디오명 / 이용 가능 시간 / 연락처 요약 -->
-    <section class="bh-section">
-      <div id="bhInfo" class="bh-card bh-info"></div>
+    <!-- 기본 정보 -->
+    <section class="sec grid2">
+      <div class="card">
+        <div class="sec-hd"><h2>스튜디오 정보</h2></div>
+        <div class="infochips" id="chips"></div>
+        <div class="field" style="margin-top:10px">
+          <div class="label">소개</div>
+          <div id="intro" class="muted"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-hd"><h2>연락처</h2></div>
+        <div class="field"><div class="label">전화</div><div id="phone" class="muted">-</div></div>
+        <div class="field"><div class="label">이메일</div><div id="email" class="muted">-</div></div>
+        <div class="field"><div class="label">카카오</div><div id="kakao" class="muted">-</div></div>
+      </div>
     </section>
 
-    <!-- 소개 -->
-    <section class="bh-section">
-      <div class="bh-sec-head"><h2>소개</h2></div>
-      <article id="bhDesc" class="bh-card text"></article>
+    <!-- 이용 안내 / 금액 안내 -->
+    <section class="sec grid2">
+      <div class="card">
+        <div class="sec-hd"><h2>이용 안내</h2></div>
+        <div id="guide" class="muted" style="white-space:pre-line"></div>
+      </div>
+      <div class="card">
+        <div class="sec-hd"><h2>금액 안내</h2></div>
+        <div id="pricing" class="muted" style="white-space:pre-line"></div>
+      </div>
+    </section>
+
+    <!-- 주소 -->
+    <section class="sec">
+      <div class="sec-hd"><h2>주소</h2></div>
+      <div class="card">
+        <div id="address" class="muted"></div>
+        <div id="mapLink" style="margin-top:8px"></div>
+      </div>
     </section>
 
     <!-- 갤러리 -->
-    <section class="bh-section">
-      <div class="bh-sec-head"><h2>갤러리</h2></div>
-      <div id="bhGallery" class="bh-grid"></div>
-    </section>
-
-    <!-- 이용 안내 -->
-    <section class="bh-section">
-      <div class="bh-sec-head"><h2>이용 안내</h2></div>
-      <article id="bhRules" class="bh-card text"></article>
-    </section>
-
-    <!-- 금액 안내 -->
-    <section class="bh-section">
-      <div class="bh-sec-head"><h2>금액 안내</h2></div>
-      <div id="bhPricing" class="bh-pricing"></div>
-      <p class="bh-hint">* 부가세/옵션에 따라 변동될 수 있습니다.</p>
-    </section>
-
-    <!-- 주소/지도 -->
-    <section class="bh-section">
-      <div class="bh-sec-head"><h2>주소</h2></div>
-      <div id="bhLocation" class="bh-card"></div>
+    <section class="sec">
+      <div class="sec-hd"><h2>갤러리</h2></div>
+      <div id="gallery" class="gallery card" style="padding:10px"></div>
     </section>
 
     <!-- 스케줄(달력) -->
-    <section class="bh-section">
-      <div class="bh-sec-head"><h2>스케줄</h2></div>
-      <div class="bh-card">
-        <p class="bh-sub">예약 가능 날짜를 달력에서 확인하고, 하단 버튼으로 진행하세요.</p>
-        <div class="mini-cal">
-          <div class="cal-top">
-            <button id="miniPrev" class="nav" type="button" aria-label="이전 달"><i class="ri-arrow-left-s-line"></i></button>
-            <strong id="miniTitle">0000-00</strong>
-            <button id="miniNext" class="nav" type="button" aria-label="다음 달"><i class="ri-arrow-right-s-line"></i></button>
-          </div>
-          <div class="cal-hdr"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
-          <div id="miniGrid" class="cal-grid"></div>
-          <div class="legend">
-            <span><i class="dot ok"></i>가능</span>
-            <span><i class="dot soon"></i>리드(대기)</span>
-            <span><i class="dot booked"></i>마감</span>
-            <span><i class="dot off"></i>휴무</span>
-          </div>
+    <section class="sec">
+      <div class="sec-hd"><h2>스케줄</h2></div>
+      <div class="cal card">
+        <div class="cal-hd">
+          <button class="nav" id="prevM" aria-label="이전 달"><i class="ri-arrow-left-s-line"></i></button>
+          <strong id="monTitle">0000-00</strong>
+          <button class="nav" id="nextM" aria-label="다음 달"><i class="ri-arrow-right-s-line"></i></button>
         </div>
+        <div class="cal-week"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+        <div class="cal-grid" id="calGrid"></div>
       </div>
+      <small class="muted">• 초록: 예약 가능, 회색: 휴무, 빨강: 마감</small>
     </section>
   </main>
 
-  <!-- 고정 CTA -->
-  <div class="bh-cta">
-    <button id="bhOpenInquiry" class="bh-btn ghost"><i class="ri-chat-3-line"></i> 문의하기</button>
-    <button id="bhOpenReserve" class="bh-btn pri"><i class="ri-calendar-check-line"></i> 예약하기</button>
+  <!-- 하단 CTA -->
+  <div class="cta">
+    <button class="btn ghost" id="btnInquiry"><i class="ri-chat-3-line"></i> 문의하기</button>
+    <button class="btn pri" id="btnReserve"><i class="ri-calendar-check-line"></i> 예약/결제</button>
   </div>
 
   <!-- 문의 모달 -->
-  <div id="bhInquiryModal" class="bh-modal" role="dialog" aria-modal="true" aria-labelledby="inqTitle">
+  <div class="modal" id="inqModal" role="dialog" aria-modal="true">
     <div class="sheet">
-      <header>
-        <strong id="inqTitle">문의하기</strong>
-        <button class="x" data-close type="button"><i class="ri-close-line"></i></button>
-      </header>
-      <label class="bh-label" for="inqMsg">내용</label>
-      <textarea id="inqMsg" class="bh-textarea" placeholder="문의 내용을 입력해주세요."></textarea>
-      <div class="bh-actions">
-        <button class="bh-btn ghost" data-close type="button">닫기</button>
-        <button id="inqSend" class="bh-btn pri" type="button"><i class="ri-send-plane-line"></i> 보내기</button>
-      </div>
+      <header><strong>문의하기</strong><button class="x" data-x>✕</button></header>
+      <div class="field"><label class="label">연락처</label><input id="inqFrom" class="input" placeholder="휴대폰 또는 이메일"></div>
+      <div class="field"><label class="label">내용</label><textarea id="inqMsg" placeholder="문의 내용을 입력해주세요."></textarea></div>
+      <div class="actions"><button class="btn ghost" data-x>닫기</button><button class="btn pri" id="sendInquiry">보내기</button></div>
     </div>
   </div>
 
-  <!-- 예약 모달(날짜 → 시간 → 결제) -->
-  <div id="bhReserveModal" class="bh-modal" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
+  <!-- 예약/결제 모달 -->
+  <div class="modal" id="payModal" role="dialog" aria-modal="true">
     <div class="sheet">
-      <header>
-        <strong id="rvTitle">예약하기</strong>
-        <button class="x" data-close type="button"><i class="ri-close-line"></i></button>
-      </header>
-
-      <!-- Step 1: 날짜 선택 -->
-      <section class="rv-step">
-        <h3>1) 날짜 선택</h3>
-        <div class="pick">
-          <div class="pick-cal">
-            <div class="pick-hd">
-              <button class="nav" id="rvPrev" type="button" aria-label="이전 달"><i class="ri-arrow-left-s-line"></i></button>
-              <strong id="rvMonTitle">0000-00</strong>
-              <button class="nav" id="rvNext" type="button" aria-label="다음 달"><i class="ri-arrow-right-s-line"></i></button>
-            </div>
-            <div class="cal-hd"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
-            <div id="rvGrid" class="cal-grid"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Step 2: 시간 선택 -->
-      <section class="rv-step">
-        <h3>2) 시간 선택</h3>
-        <div class="sel-date"><i class="ri-calendar-line"></i><b id="rvPickedDate">날짜를 먼저 선택하세요</b></div>
-        <div id="rvSlots" class="time-grid"></div>
-      </section>
-
-      <!-- Step 3: 결제 -->
-      <section class="rv-step">
-        <h3>3) 결제</h3>
-        <div id="rvSummary" class="rv-summary">날짜/시간을 선택하면 결제 버튼이 활성화됩니다.</div>
-      </section>
-
-      <div class="bh-actions">
-        <button class="bh-btn ghost" data-close type="button">취소</button>
-        <button id="rvPay" class="bh-btn pri" type="button" disabled><i class="ri-bank-card-line"></i> 결제하기</button>
+      <header><strong>예약/결제</strong><button class="x" data-x>✕</button></header>
+      <div class="field"><label class="label">날짜 선택</label><input id="rvDate" class="input" type="date"></div>
+      <div class="field"><label class="label">시간 선택</label>
+        <select id="rvTime" class="select"></select>
       </div>
+      <div class="field"><label class="label">결제 수단</label>
+        <select id="rvPay" class="select">
+          <option value="card">신용/체크카드</option>
+          <option value="vbank">무통장입금</option>
+          <option value="kakaopay">카카오페이</option>
+        </select>
+      </div>
+      <div class="actions"><button class="btn ghost" data-x>취소</button><button class="btn pri" id="doPay">결제하기</button></div>
     </div>
   </div>
 
-  <!-- 데모 데이터(없으면 폴백) -->
-  <script src="js/byhen.data.js?v=1.1.0"></script>
-  <!-- 페이지 스크립트 -->
-  <script src="js/byhen.page.js?v=2.0.0"></script>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ------- 작은 헬퍼/스토리지 ------- */
+const API_BASE = ''; // 서버 붙이면 '/api' 등으로 지정
+const SLUG = 'byhen';
+const $ = (s,el=document)=>el.querySelector(s);
+const $$= (s,el=document)=>[...el.querySelectorAll(s)];
+const toast=(m)=>{const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._);t._=setTimeout(()=>t.classList.remove("show"),1200)};
+
+async function apiGet(path){
+  if(!API_BASE){ // localStorage fallback
+    const raw=localStorage.getItem('brand:'+SLUG);
+    return raw? JSON.parse(raw) : null;
+  }
+  const r=await fetch(API_BASE+path); return r.ok? r.json():null;
+}
+
+function ym(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0')}
+
+/* ------- 렌더 ------- */
+let BRAND=null;
+let curMonth=new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let picked=null;
+
+function renderAll(){
+  if(!BRAND){ toast("데이터 없음"); return; }
+  // 썸네일
+  $("#mainThumb").src = BRAND.thumbnail || '';
+  const subs = (BRAND.subThumbnails||[]).map((s,i)=>`<img src="${s}" data-i="${i}">`).join('');
+  $("#subThumbs").innerHTML = subs;
+  $("#subThumbs").onclick = (e)=>{ const im=e.target.closest('img'); if(!im) return; $("#mainThumb").src=im.src; $$("#subThumbs img").forEach(x=>x.classList.toggle('sel',x===im)); };
+  const first = $("#subThumbs img"); first && first.classList.add('sel');
+
+  // chips (영업시간/이용가능)
+  $("#chips").innerHTML = [
+    BRAND.availableHours ? `<span class="chip"><i class="ri-time-line"></i>${BRAND.availableHours}</span>` : '',
+    BRAND.availableDates?.length ? `<span class="chip"><i class="ri-calendar-event-line"></i>예약 가능일 ${BRAND.availableDates.length}일</span>` : ''
+  ].join('');
+
+  // 텍스트
+  $("#intro").textContent   = BRAND.intro || '-';
+  $("#guide").textContent   = BRAND.usageGuide || '-';
+  $("#pricing").textContent = BRAND.priceInfo || '-';
+  $("#address").textContent = BRAND.address || '-';
+
+  // 연락
+  $("#phone").textContent = BRAND.contact?.phone || '-';
+  $("#email").textContent = BRAND.contact?.email || '-';
+  $("#kakao").innerHTML   = BRAND.contact?.kakao ? `<a href="${BRAND.contact.kakao}" target="_blank" rel="noopener">${BRAND.contact.kakao}</a>` : '-';
+  $("#mapLink").innerHTML = BRAND.map?.link ? `<a class="btn" href="${BRAND.map.link}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도 열기</a>` : '';
+
+  // 갤러리
+  $("#gallery").innerHTML = (BRAND.gallery||[]).map(s=>`<img src="${s}" alt="">`).join('');
+
+  // 캘린더
+  renderCalendar();
+  // 예약시간 옵션
+  const times = BRAND.timeslots?.length ? BRAND.timeslots : ['10:00','13:00','15:30','18:00'];
+  $("#rvTime").innerHTML = times.map(t=>`<option>${t}</option>`).join('');
+}
+
+function dayStatus(dateStr){
+  if(BRAND.closed?.includes(dateStr))  return 'closed';
+  if(BRAND.booked?.includes(dateStr))  return 'booked';
+  if(Array.isArray(BRAND.availableDates) && BRAND.availableDates.length){
+    return BRAND.availableDates.includes(dateStr) ? 'ok' : 'closed';
+  }
+  return 'ok';
+}
+
+function renderCalendar(){
+  $("#monTitle").textContent = ym(curMonth);
+  const first = new Date(curMonth.getFullYear(), curMonth.getMonth(), 1);
+  const start = new Date(first); start.setDate(first.getDay()===0? -5 : 1-first.getDay()+1); // 월요일 시작
+  const arr=[];
+  for(let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const s = dayStatus(ymd(d));
+    arr.push({d,s});
+  }
+  $("#calGrid").innerHTML = arr.map(({d,s})=>{
+    const selected = picked && picked===ymd(d);
+    return `<div class="day ${s} ${s==='ok'?'ok':''} ${selected?'sel':''}" data-ymd="${ymd(d)}">
+      <span class="dn">${d.getDate()}</span><i class="dot ${s}"></i>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('prevM').onclick=()=>{curMonth.setMonth(curMonth.getMonth()-1);renderCalendar();}
+document.getElementById('nextM').onclick=()=>{curMonth.setMonth(curMonth.getMonth()+1);renderCalendar();}
+document.getElementById('calGrid').onclick=(e)=>{
+  const cell=e.target.closest('.day.ok'); if(!cell) return;
+  picked=cell.dataset.ymd; renderCalendar();
+  $("#rvDate").value = picked;
+  toast("선택 날짜: "+picked);
+};
+
+/* ------- 모달 ------- */
+function open(id){ $(id).classList.add('show'); }
+function closeAny(e){ if(e.target.hasAttribute('data-x') || e.target.classList.contains('modal')) e.currentTarget.classList.remove('show'); }
+$("#inqModal").addEventListener('click', closeAny);
+$("#payModal").addEventListener('click', closeAny);
+$("#btnInquiry").onclick=()=>open("#inqModal");
+$("#btnReserve").onclick=()=>{
+  if(picked) $("#rvDate").value=picked;
+  open("#payModal");
+};
+$("#sendInquiry").onclick=()=>{ toast("문의가 전송되었습니다."); $("#inqModal").classList.remove('show'); };
+$("#doPay").onclick=()=>{ 
+  const d=$("#rvDate").value, t=$("#rvTime").value;
+  if(!d||!t){ toast("날짜/시간을 선택하세요"); return; }
+  alert(`[결제 시뮬레이션]\n날짜: ${d}\n시간: ${t}\n결제수단: ${$("#rvPay").value}`);
+  $("#payModal").classList.remove('show');
+};
+
+/* ------- 데이터 로드 ------- */
+(async function init(){
+  // 서버가 없으면 데모 데이터 자동 세팅(한번만)
+  if(!localStorage.getItem('brand:'+SLUG)){
+    localStorage.setItem('brand:'+SLUG, JSON.stringify({
+      slug:'byhen',
+      name:'BYHEN',
+      thumbnail:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200',
+      subThumbnails:[
+        'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=800',
+        'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800',
+        'https://images.unsplash.com/photo-1481277542470-605612bd2d61?q=80&w=800'
+      ],
+      availableHours:'10:00–19:00 (일·공휴일 휴무)',
+      availableDates:[], // 비워두면 모든 평일 ok(룰 없이 전부 ok로 처리)
+      timeslots:['10:00','14:00','19:00'],
+      contact:{phone:'02-000-0000',email:'hello@byhen.studio',kakao:'https://pf.kakao.com/_byhen'},
+      intro:'한 공간에서 다양한 컨셉 촬영이 가능한 성수동 스튜디오입니다.',
+      gallery:[
+        'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=800',
+        'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=800'
+      ],
+      usageGuide:'• 예약금 20% 선결제\n• 촬영 3일 전 50% 환불, 1일 전 20%, 당일 환불 불가',
+      priceInfo:'베이직 2h 350,000원\n프리미엄 4h 650,000원',
+      address:'서울 성수동 XX로 00-0',
+      map:{link:'https://map.naver.com'},
+      closed:['2025-09-22'],
+      booked:['2025-09-20']
+    }));
+  }
+  BRAND = await apiGet('/brands/'+SLUG) || JSON.parse(localStorage.getItem('brand:'+SLUG));
+  renderAll();
+})();
+</script>
 </body>
 </html>
