@@ -1,221 +1,263 @@
-/* byhen-admin.js — v1.0.0
-   - 같은 스키마(Brand)로 생성/수정
-   - Cloudinary 업로드(/uploads/signature) + 미리보기
-   - 폼 id는 byhen-admin.html 분리본과 동일 가정
+/* byhen-admin.js — v1.0.2
+   - Cloudinary 서명 호출 + 업로드
+   - 버튼(이미지 삽입) 즉시 동작
+   - /brand-test 스키마에 저장 (draft/published)
 */
-(() => {
+(function () {
   const CFG = window.LIVEE_CONFIG || {};
-  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP = (CFG.endpoints || {});
-  const BRANDS_BASE = (EP.byhen || '/brands-test').replace(/^\/*/, '/'); // '/brands-test'
+  // API_BASE 안전화
+  const API_BASE = (() => {
+    const raw = (CFG.API_BASE || '/api/v1').toString().trim() || '/api/v1';
+    let p = raw.replace(/\/+$/, '');
+    return /^https?:\/\//i.test(p) ? p : (location.origin + (p.startsWith('/') ? p : '/' + p));
+  })();
+  // 엔드포인트(단수 brand-test 기준, 구 config 대비 폴백 처리)
+  const BRAND_BASE = (CFG.endpoints?.byhen || '/brand-test')
+    .replace(/^\/+/, ''); // ex) brand-test or brands-test
+  const BRAND_URL_PRIMARY   = `${API_BASE}/${BRAND_BASE.replace(/^brands-test$/,'brand-test')}`;
+  const BRAND_URL_ALTERNATE = `${API_BASE}/brand-test`;
 
-  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
-
-  const $  = (s, el=document) => el.querySelector(s);
-  const $id= (s) => document.getElementById(s);
-  const say=(t,ok=false)=>{ const el=$id('admMsg'); if(!el) return; el.textContent=t; el.classList.add('show'); el.classList.toggle('ok',ok); };
-
-  // --- 이미지 업로드 헬퍼 ---
-  const THUMB = {
-    square:  'c_fill,g_auto,w_640,h_640,f_auto,q_auto',
-    cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto'
+  // Cloudinary 변환 preset
+  const THUMB = CFG.thumb || {
+    card169: 'c_fill,g_auto,w_640,h_360,f_auto,q_auto',
+    cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
+    square:  'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
   };
-  const withTr=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url;} };
+
+  // ------- DOM -------
+  const $  = (s, el=document) => el.querySelector(s);
+  const $id = (s) => document.getElementById(s);
+  const say = (t, ok=false) => { const el=$id('admMsg'); el.textContent=t; el.classList.add('show'); el.classList.toggle('ok', ok); };
+
+  const form = $id('brandForm');
+  const nameEl=$id('name'), slugEl=$id('slug');
+  const introEl=$id('intro'), descEl=$id('description');
+  const guideEl=$id('usageGuide'), priceEl=$id('priceInfo');
+
+  const phoneEl=$id('phone'), emailEl=$id('email'), kakaoEl=$id('kakao');
+  const addressEl=$id('address'), mapLinkEl=$id('mapLink');
+
+  const availableHoursEl=$id('availableHours'), timeslotsEl=$id('timeslots'), availableDatesEl=$id('availableDates');
+  const closedEl=$id('closed'), bookedEl=$id('booked');
+
+  // 이미지 요소
+  const thumbTrigger=$id('thumbTrigger'), thumbFile=$id('thumbFile'), thumbPrev=$id('thumbPrev');
+  const subsTrigger=$id('subsTrigger'),  subsFile=$id('subsFile'),   subsGrid=$id('subsGrid');
+  const galleryTrigger=$id('galleryTrigger'), galleryFile=$id('galleryFile'), galleryGrid=$id('galleryGrid');
+
+  // 상태
+  const state = {
+    id: new URLSearchParams(location.search).get('id') || '',
+    slugQuery: new URLSearchParams(location.search).get('slug') || '',
+    uploading: 0,
+    thumbnail: '',
+    subThumbnails: [],
+    gallery: []
+  };
+  const bump = (n)=>{ state.uploading=Math.max(0, state.uploading+n); };
+
+  // ------- helpers -------
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
   const headers = (json=true)=>{ const h={Accept:'application/json'}; if(json) h['Content-Type']='application/json'; if(TOKEN) h.Authorization=`Bearer ${TOKEN}`; return h; };
+  const withTr = (url, t) => { try{ if(!/\/upload\//.test(url)) return url; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8); }catch{return url;} };
+  const toArr = (v) => (String(v||'').trim()? String(v).split(',').map(s=>s.trim()).filter(Boolean):[]);
 
   async function getSignature(){
-    const r=await fetch(`${API_BASE}${(EP.uploadsSignature||'/uploads/signature')}`,{headers:headers(false)});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+    const r=await fetch(`${API_BASE}/uploads/signature`,{method:'POST',headers:headers(false)});
+    const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
     return j.data||j;
   }
-  async function uploadImage(file){
+  async function uploadImage(file, kind='cover169'){
+    if(!file) throw new Error('no file');
+    if(!/^image\//.test(file.type) || file.size>8*1024*1024) throw new Error('이미지(≤8MB)만 가능');
+
     const {cloudName,apiKey,timestamp,signature}=await getSignature();
     const fd=new FormData(); fd.append('file',file); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature);
     const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
     const j=await res.json().catch(()=>({})); if(!res.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${res.status}`);
-    return j.secure_url;
+    const t = (kind==='square')?THUMB.square:(kind==='card169')?THUMB.card169:THUMB.cover169;
+    return { cover:j.secure_url, thumb:withTr(j.secure_url,t) };
   }
 
-  // --- 요소 참조(샘플: 필요한 항목만) ---
-  const f = {
-    slug:           $id('slug'),
-    name:           $id('name'),
-    intro:          $id('intro'),
-    usageGuide:     $id('usageGuide'),
-    priceInfo:      $id('priceInfo'),
-    address:        $id('address'),
-    phone:          $id('phone'),
-    email:          $id('email'),
-    kakao:          $id('kakao'),
-    mapLink:        $id('mapLink'),
-    availableHours: $id('availableHours'),
-    timeslots:      $id('timeslots'),   // 콤마(,) 구분 입력
-    availableDates: $id('availableDates'), // YYYY-MM-DD 콤마 구분
-    closed:         $id('closedDates'),
-    booked:         $id('bookedDates'),
+  // ------- 이미지 트리거 -------
+  thumbTrigger?.addEventListener('click', ()=> thumbFile?.click());
+  subsTrigger?.addEventListener('click', ()=> subsFile?.click());
+  galleryTrigger?.addEventListener('click', ()=> galleryFile?.click());
 
-    // 이미지
-    mainFile: $id('mainFile'),
-    subsFile: $id('subsFile'),
-    mainPrev: $id('mainPrev'),
-    subsGrid: $id('subsGrid'),
-
-    // 버튼
-    saveDraft:  $id('saveDraftBtn'),
-    publishBtn: $id('publishBtn'),
-  };
-
-  const state = {
-    id: '',
-    thumbnail: '',
-    subThumbnails: []
-  };
-
-  // --- 프리뷰 그리기 ---
   function drawSubs(){
-    if(!f.subsGrid) return;
-    f.subsGrid.innerHTML = state.subThumbnails.map((u,i)=>`
-      <div class="sub"><img src="${u}" alt="sub-${i}"><button type="button" class="rm" data-i="${i}">×</button></div>
+    subsGrid.innerHTML = state.subThumbnails.map((u,i)=>`
+      <div class="sub"><img src="${u}" alt="sub-${i}" /><button class="rm" data-i="${i}" type="button" aria-label="삭제">×</button></div>
     `).join('');
   }
-  f.subsGrid?.addEventListener('click', e=>{
+  subsGrid?.addEventListener('click', (e)=>{
     const b=e.target.closest('.rm'); if(!b) return;
-    state.subThumbnails.splice(Number(b.dataset.i),1);
-    drawSubs();
+    state.subThumbnails.splice(Number(b.dataset.i),1); drawSubs();
   });
 
-  // --- 업로드 바인딩 ---
-  f.mainFile?.addEventListener('change', async e=>{
-    const file = e.target.files?.[0]; if(!file) return;
+  function drawGallery(){
+    galleryGrid.innerHTML = state.gallery.map((u,i)=>`
+      <div class="sub"><img src="${u}" alt="g-${i}" /><button class="rm" data-i="${i}" type="button" aria-label="삭제">×</button></div>
+    `).join('');
+  }
+  galleryGrid?.addEventListener('click', (e)=>{
+    const b=e.target.closest('.rm'); if(!b) return;
+    state.gallery.splice(Number(b.dataset.i),1); drawGallery();
+  });
+
+  thumbFile?.addEventListener('change', async (e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    const local=URL.createObjectURL(f); thumbPrev.src=local; thumbPrev.style.display='block'; bump(+1);
     try{
       say('메인 이미지 업로드 중…');
-      const url = await uploadImage(file);
-      state.thumbnail = withTr(url, THUMB.cover169);
-      if(f.mainPrev){ f.mainPrev.src = state.thumbnail; f.mainPrev.style.display='block'; }
-      say('메인 이미지 업로드 완료', true);
-    }catch(err){ console.error(err); say('업로드 실패: '+(err.message||'오류')); }
-    finally{ e.target.value=''; }
+      const u=await uploadImage(f,'cover169');
+      state.thumbnail = u.thumb;
+      thumbPrev.src = state.thumbnail;
+      say('업로드 완료',true);
+    }catch(err){ console.error(err); say('메인 업로드 실패: '+(err.message||'오류')); }
+    finally{ URL.revokeObjectURL(local); bump(-1); e.target.value=''; }
   });
 
-  f.subsFile?.addEventListener('change', async e=>{
-    const files = [...(e.target.files||[])].slice(0, Math.max(0, 8 - state.subThumbnails.length));
-    for(const file of files){
+  subsFile?.addEventListener('change', async (e)=>{
+    const files=[...(e.target.files||[])].slice(0, Math.max(0,5-state.subThumbnails.length));
+    for(const f of files){
+      bump(+1);
       try{
-        say('서브 이미지 업로드 중…');
-        const url = await uploadImage(file);
-        state.subThumbnails.push(withTr(url, THUMB.square));
+        const u=await uploadImage(f,'card169');
+        state.subThumbnails.push(u.thumb);
         drawSubs();
-        say('서브 이미지 업로드 완료', true);
-      }catch(err){ console.error(err); say('업로드 실패: '+(err.message||'오류')); }
+      }catch(err){ console.error(err); say('서브 업로드 실패: '+(err.message||'오류')); }
+      finally{ bump(-1); }
     }
     e.target.value='';
   });
 
-  // --- 페이로드 구성(공용 스키마) ---
-  const arr=(el)=> (el?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-  function payload(status='draft'){
-    return {
-      type:'brand',
-      status,
-      slug: (f.slug?.value || '').trim().toLowerCase(),
-      name: (f.name?.value || '').trim(),
-      thumbnail: state.thumbnail || undefined,
-      subThumbnails: state.subThumbnails,
+  galleryFile?.addEventListener('change', async (e)=>{
+    const files=[...(e.target.files||[])];
+    for(const f of files){
+      bump(+1);
+      try{
+        const u=await uploadImage(f,'card169');
+        state.gallery.push(u.thumb);
+        drawGallery();
+      }catch(err){ console.error(err); say('갤러리 업로드 실패: '+(err.message||'오류')); }
+      finally{ bump(-1); }
+    }
+    e.target.value='';
+  });
 
-      intro:      (f.intro?.value || '').trim(),
-      usageGuide: (f.usageGuide?.value || '').trim(),
-      priceInfo:  (f.priceInfo?.value || '').trim(),
-      address:    (f.address?.value || '').trim(),
+  // ------- 동기화 -------
+  nameEl?.addEventListener('input', ()=>{
+    if(!slugEl.value || slugEl.dataset.autofill==='1'){
+      slugEl.dataset.autofill='1';
+      slugEl.value = (nameEl.value||'').toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    }
+  });
+  slugEl?.addEventListener('input', ()=>{ slugEl.dataset.autofill='0'; slugEl.value=slugEl.value.toLowerCase().trim().replace(/\s+/g,'-'); });
 
-      contact: {
-        phone: (f.phone?.value || '').trim() || undefined,
-        email: (f.email?.value || '').trim() || undefined,
-        kakao: (f.kakao?.value || '').trim() || undefined
-      },
-      map: { link: (f.mapLink?.value || '').trim() || undefined },
+  // ------- payload & 저장 -------
+  const buildPayload = (status='draft') => ({
+    type:'brand',
+    status,
+    slug: (slugEl.value||'').toLowerCase().trim(),
+    name: (nameEl.value||'').trim(),
+    thumbnail: state.thumbnail || undefined,
+    subThumbnails: state.subThumbnails,
+    gallery: state.gallery,
+    intro: (introEl.value||'').trim(),
+    description: (descEl.value||'').trim(),
+    usageGuide: (guideEl.value||'').trim(),
+    priceInfo: (priceEl.value||'').trim(),
+    contact: {
+      phone:(phoneEl.value||'').trim(),
+      email:(emailEl.value||'').trim(),
+      kakao:(kakaoEl.value||'').trim()
+    },
+    address:(addressEl.value||'').trim(),
+    map:{ link:(mapLinkEl.value||'').trim() },
+    availableHours:(availableHoursEl.value||'').trim(),
+    timeslots: toArr(timeslotsEl.value),
+    availableDates: toArr(availableDatesEl.value),
+    closed: toArr(closedEl.value),
+    booked: toArr(bookedEl.value)
+  });
 
-      gallery: state.subThumbnails.slice(0, 12), // 필요 시 별도 입력도 가능
-      schedule: {
-        availableHours: (f.availableHours?.value || '').trim() || undefined,
-        timeslots:      arr(f.timeslots),
-        availableDates: arr(f.availableDates),
-        closed:         arr(f.closed),
-        booked:         arr(f.booked)
-      }
-    };
-  }
-
-  function validate(pub=false){
+  function validate(pub){
+    if(state.uploading>0){ say('이미지 업로드 중입니다. 잠시만요…'); return false; }
     if(pub){
-      if(!f.slug?.value.trim()) { say('슬러그를 입력하세요'); return false; }
-      if(!f.name?.value.trim()) { say('브랜드명을 입력하세요'); return false; }
+      if(!nameEl.value.trim()){ say('브랜드명을 입력하세요'); return false; }
+      if(!slugEl.value.trim()){ say('슬러그를 입력하세요'); return false; }
       if(!state.thumbnail){ say('메인 썸네일을 업로드하세요'); return false; }
     }
     return true;
   }
 
-  async function submit(status){
+  async function save(status='draft'){
     if(!validate(status==='published')) return;
     try{
-      say(status==='published'?'발행 중…':'임시저장 중…');
-      const body = JSON.stringify(payload(status));
-      const url  = state.id ? `${API_BASE}${BRANDS_BASE}/${state.id}` : `${API_BASE}${BRANDS_BASE}`;
+      say(status==='published'?'발행 중…':'저장 중…');
+      const url = state.id ? `${BRAND_URL_PRIMARY}/${state.id}` :
+                  state.slugQuery ? `${BRAND_URL_PRIMARY}` :
+                  `${BRAND_URL_PRIMARY}`;
       const method = state.id ? 'PUT' : 'POST';
-      const r = await fetch(url, { method, headers: headers(true), body });
-      const j = await r.json().catch(()=>({}));
-      if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-      say('저장 완료', true);
-    }catch(err){ console.error(err); say('저장 실패: '+(err.message||'오류')); }
+      const res = await fetch(url,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))});
+
+      // config가 brands-test로 되어 있고 서버가 brand-test만 있을 때 보정
+      const retry = (!res.ok && res.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE);
+      const r2 = retry ? await fetch(state.id?`${BRAND_URL_ALTERNATE}/${state.id}`:BRAND_URL_ALTERNATE,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))}) : res;
+
+      const j=await r2.json().catch(()=>({}));
+      if(!r2.ok || j.ok===false) throw new Error(j.message||`HTTP_${r2.status}`);
+
+      say(status==='published'?'발행되었습니다.':'저장되었습니다.', true);
+      setTimeout(()=>location.href='byhen.html?slug='+(slugEl.value||'byhen'), 600);
+    }catch(e){ console.error(e); say('저장 실패: '+(e.message||'오류')); }
   }
 
-  f.saveDraft?.addEventListener('click', (e)=>{ e.preventDefault(); submit('draft'); });
-  f.publishBtn?.addEventListener('click', (e)=>{ e.preventDefault(); submit('published'); });
+  $id('saveBtn')?.addEventListener('click', ()=> save('published'));
+  $id('publishBtn')?.addEventListener('click', ()=> save('published'));
+  $id('saveDraftBtn')?.addEventListener('click', ()=> save('draft'));
 
-  // --- edit 모드(쿼리 id 또는 slug) ---
-  (async function init(){
-    const qs = new URLSearchParams(location.search);
-    const id  = qs.get('id');
-    const slug= qs.get('slug');
-
-    if(!id && !slug) return; // create 모드
-
+  // ------- 로드(편집/슬러그) -------
+  (async function load(){
     try{
+      if(!state.id && !state.slugQuery) return;
       say('불러오는 중…');
-      const key = id || slug;
-      const url = id ? `${API_BASE}${BRANDS_BASE}/${id}` : `${API_BASE}${BRANDS_BASE}/${encodeURIComponent(slug)}`;
-      const r = await fetch(url, { headers: headers(false) });
-      const j = await r.json().catch(()=>({}));
-      if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-      const d = j.data || j;
 
-      state.id = d._id || d.id || '';
-      state.thumbnail = d.thumbnail || '';
-      state.subThumbnails = Array.isArray(d.subThumbnails) ? d.subThumbnails : [];
+      const path = state.id ? `/${state.id}` : `/${(state.slugQuery||'').toLowerCase()}`;
+      let r = await fetch(BRAND_URL_PRIMARY+path,{headers:headers(false)});
+      if(!r.ok && r.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE){
+        r = await fetch(BRAND_URL_ALTERNATE+path,{headers:headers(false)});
+      }
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+      const d=j.data||j;
 
       // fill
-      f.slug && (f.slug.value = d.slug || '');
-      f.name && (f.name.value = d.name || '');
-      if(f.mainPrev && state.thumbnail){ f.mainPrev.src = state.thumbnail; f.mainPrev.style.display='block'; }
-      drawSubs();
+      state.id = d._id || state.id;
+      nameEl.value = d.name||'';
+      slugEl.value = d.slug||'';
+      introEl.value = d.intro||'';
+      descEl.value  = d.description||'';
+      guideEl.value = d.usageGuide||'';
+      priceEl.value = d.priceInfo||'';
+      phoneEl.value = d.contact?.phone||'';
+      emailEl.value = d.contact?.email||'';
+      kakaoEl.value = d.contact?.kakao||'';
+      addressEl.value = d.address||'';
+      mapLinkEl.value = d.map?.link||'';
+      availableHoursEl.value = d.availableHours||'';
+      timeslotsEl.value = (d.timeslots||[]).join(',');
+      availableDatesEl.value = (d.availableDates||[]).join(',');
+      closedEl.value = (d.closed||[]).join(',');
+      bookedEl.value = (d.booked||[]).join(',');
 
-      f.intro && (f.intro.value = d.intro || '');
-      f.usageGuide && (f.usageGuide.value = d.usageGuide || '');
-      f.priceInfo && (f.priceInfo.value = d.priceInfo || '');
-      f.address && (f.address.value = d.address || '');
+      state.thumbnail = d.thumbnail||'';
+      state.subThumbnails = Array.isArray(d.subThumbnails)?d.subThumbnails:[];
+      state.gallery = Array.isArray(d.gallery)?d.gallery:[];
+      if(state.thumbnail){ thumbPrev.src=state.thumbnail; thumbPrev.style.display='block'; }
+      drawSubs(); drawGallery();
 
-      f.phone && (f.phone.value = d.contact?.phone || '');
-      f.email && (f.email.value = d.contact?.email || '');
-      f.kakao && (f.kakao.value = d.contact?.kakao || '');
-      f.mapLink && (f.mapLink.value = d.map?.link || '');
-
-      f.availableHours && (f.availableHours.value = d.schedule?.availableHours || '');
-      f.timeslots && (f.timeslots.value = (d.schedule?.timeslots||[]).join(', '));
-      f.availableDates && (f.availableDates.value = (d.schedule?.availableDates||[]).join(', '));
-      f.closed && (f.closed.value = (d.schedule?.closed||[]).join(', '));
-      f.booked && (f.booked.value = (d.schedule?.booked||[]).join(', '));
-
-      say('로드 완료', true);
-    }catch(err){ console.error(err); say('불러오기 실패: '+(err.message||'오류')); }
+      say('로드 완료',true);
+    }catch(e){ console.error(e); say('불러오기 실패: '+(e.message||'오류')); }
   })();
 })();
