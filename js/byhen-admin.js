@@ -1,23 +1,20 @@
-/* byhen-admin.js — v1.0.2
-   - Cloudinary 서명 호출 + 업로드
-   - 버튼(이미지 삽입) 즉시 동작
-   - /brand-test 스키마에 저장 (draft/published)
+/* byhen-admin.js — v1.0.3
+   - Cloudinary 서명 GET 호출 (+필드명 호환)
+   - 업로드 안정화 / 오류 메시지 개선
+   - /brand-test 스키마 저장(서버가 brands-test면 자동 폴백)
 */
 (function () {
   const CFG = window.LIVEE_CONFIG || {};
-  // API_BASE 안전화
   const API_BASE = (() => {
     const raw = (CFG.API_BASE || '/api/v1').toString().trim() || '/api/v1';
     let p = raw.replace(/\/+$/, '');
     return /^https?:\/\//i.test(p) ? p : (location.origin + (p.startsWith('/') ? p : '/' + p));
   })();
-  // 엔드포인트(단수 brand-test 기준, 구 config 대비 폴백 처리)
-  const BRAND_BASE = (CFG.endpoints?.byhen || '/brand-test')
-    .replace(/^\/+/, ''); // ex) brand-test or brands-test
+
+  const BRAND_BASE = (CFG.endpoints?.byhen || '/brand-test').replace(/^\/+/, '');
   const BRAND_URL_PRIMARY   = `${API_BASE}/${BRAND_BASE.replace(/^brands-test$/,'brand-test')}`;
   const BRAND_URL_ALTERNATE = `${API_BASE}/brand-test`;
 
-  // Cloudinary 변환 preset
   const THUMB = CFG.thumb || {
     card169: 'c_fill,g_auto,w_640,h_360,f_auto,q_auto',
     cover169:'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
@@ -40,7 +37,6 @@
   const availableHoursEl=$id('availableHours'), timeslotsEl=$id('timeslots'), availableDatesEl=$id('availableDates');
   const closedEl=$id('closed'), bookedEl=$id('booked');
 
-  // 이미지 요소
   const thumbTrigger=$id('thumbTrigger'), thumbFile=$id('thumbFile'), thumbPrev=$id('thumbPrev');
   const subsTrigger=$id('subsTrigger'),  subsFile=$id('subsFile'),   subsGrid=$id('subsGrid');
   const galleryTrigger=$id('galleryTrigger'), galleryFile=$id('galleryFile'), galleryGrid=$id('galleryGrid');
@@ -63,18 +59,40 @@
   const toArr = (v) => (String(v||'').trim()? String(v).split(',').map(s=>s.trim()).filter(Boolean):[]);
 
   async function getSignature(){
-    const r=await fetch(`${API_BASE}/uploads/signature`,{method:'POST',headers:headers(false)});
-    const j=await r.json().catch(()=>({})); if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
-    return j.data||j;
+    const sigPath = (CFG.endpoints?.uploadsSignature || '/uploads/signature').replace(/^\/+/, '');
+    const r = await fetch(`${API_BASE}/${sigPath}`, { headers: headers(false) }); // ✅ GET
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
+
+    const d = j.data || j;
+    const cloudName = d.cloudName || d.cloud_name;
+    const apiKey    = d.apiKey    || d.api_key;
+    const timestamp = d.timestamp;
+    const signature = d.signature;
+    if(!cloudName || !apiKey || !timestamp || !signature){
+      throw new Error('서명 응답 형식 오류(cloudName/apiKey/timestamp/signature)');
+    }
+    return { cloudName, apiKey, timestamp, signature };
   }
+
   async function uploadImage(file, kind='cover169'){
-    if(!file) throw new Error('no file');
+    if(!file) throw new Error('파일이 없습니다.');
     if(!/^image\//.test(file.type) || file.size>8*1024*1024) throw new Error('이미지(≤8MB)만 가능');
 
     const {cloudName,apiKey,timestamp,signature}=await getSignature();
-    const fd=new FormData(); fd.append('file',file); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature);
+    const fd=new FormData();
+    fd.append('file', file);
+    fd.append('api_key', apiKey);
+    fd.append('timestamp', timestamp);
+    fd.append('signature', signature);
+
     const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd});
-    const j=await res.json().catch(()=>({})); if(!res.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${res.status}`);
+    const j=await res.json().catch(()=>({}));
+
+    if(!res.ok || !j.secure_url){
+      // Cloudinary 표준 에러 메시지 노출
+      throw new Error(j?.error?.message || `Cloudinary_${res.status}`);
+    }
     const t = (kind==='square')?THUMB.square:(kind==='card169')?THUMB.card169:THUMB.cover169;
     return { cover:j.secure_url, thumb:withTr(j.secure_url,t) };
   }
@@ -155,6 +173,7 @@
   slugEl?.addEventListener('input', ()=>{ slugEl.dataset.autofill='0'; slugEl.value=slugEl.value.toLowerCase().trim().replace(/\s+/g,'-'); });
 
   // ------- payload & 저장 -------
+  const toArr = (v) => (String(v||'').trim()? String(v).split(',').map(s=>s.trim()).filter(Boolean):[]);
   const buildPayload = (status='draft') => ({
     type:'brand',
     status,
@@ -195,19 +214,14 @@
     if(!validate(status==='published')) return;
     try{
       say(status==='published'?'발행 중…':'저장 중…');
-      const url = state.id ? `${BRAND_URL_PRIMARY}/${state.id}` :
-                  state.slugQuery ? `${BRAND_URL_PRIMARY}` :
-                  `${BRAND_URL_PRIMARY}`;
+      const url = state.id ? `${BRAND_URL_PRIMARY}/${state.id}` : `${BRAND_URL_PRIMARY}`;
       const method = state.id ? 'PUT' : 'POST';
-      const res = await fetch(url,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))});
-
-      // config가 brands-test로 되어 있고 서버가 brand-test만 있을 때 보정
-      const retry = (!res.ok && res.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE);
-      const r2 = retry ? await fetch(state.id?`${BRAND_URL_ALTERNATE}/${state.id}`:BRAND_URL_ALTERNATE,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))}) : res;
-
-      const j=await r2.json().catch(()=>({}));
-      if(!r2.ok || j.ok===false) throw new Error(j.message||`HTTP_${r2.status}`);
-
+      let res = await fetch(url,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))});
+      if(!res.ok && res.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE){
+        res = await fetch(state.id?`${BRAND_URL_ALTERNATE}/${state.id}`:BRAND_URL_ALTERNATE,{method,headers:headers(true),body:JSON.stringify(buildPayload(status))});
+      }
+      const j=await res.json().catch(()=>({}));
+      if(!res.ok || j.ok===false) throw new Error(j.message||`HTTP_${res.status}`);
       say(status==='published'?'발행되었습니다.':'저장되었습니다.', true);
       setTimeout(()=>location.href='byhen.html?slug='+(slugEl.value||'byhen'), 600);
     }catch(e){ console.error(e); say('저장 실패: '+(e.message||'오류')); }
@@ -217,12 +231,11 @@
   $id('publishBtn')?.addEventListener('click', ()=> save('published'));
   $id('saveDraftBtn')?.addEventListener('click', ()=> save('draft'));
 
-  // ------- 로드(편집/슬러그) -------
+  // ------- 로드 -------
   (async function load(){
     try{
       if(!state.id && !state.slugQuery) return;
       say('불러오는 중…');
-
       const path = state.id ? `/${state.id}` : `/${(state.slugQuery||'').toLowerCase()}`;
       let r = await fetch(BRAND_URL_PRIMARY+path,{headers:headers(false)});
       if(!r.ok && r.status===404 && BRAND_URL_PRIMARY!==BRAND_URL_ALTERNATE){
@@ -232,7 +245,6 @@
       if(!r.ok || j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
       const d=j.data||j;
 
-      // fill
       state.id = d._id || state.id;
       nameEl.value = d.name||'';
       slugEl.value = d.slug||'';
