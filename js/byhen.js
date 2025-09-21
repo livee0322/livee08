@@ -1,7 +1,5 @@
-/* byhen.js — v1.3
-   - /brand-test/:idOrSlug 우선 조회
-   - 404 시 /brand-test 리스트에서 slug 매칭 폴백
-   - ?id= or ?slug= 지원 (기본 slug: 'byhen')
+/* byhen.js — v1.4 (강화된 로더)
+   조회 우선순위: ?id → /:slug → ?q → 리스트 매칭 → localStorage(lastId)
 */
 (function () {
   'use strict';
@@ -19,7 +17,7 @@
   // ----- Utils -----
   const $  = (s, el=document)=>el.querySelector(s);
   const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
-  const toast=(m)=>{const t=$("#toast"); if(!t) return; t.textContent=m; t.classList.add("show"); clearTimeout(t._); t._=setTimeout(()=>t.classList.remove("show"),1600);};
+  const alertFail=(msg, url, slug)=>alert(`브랜드 로드 실패: ${msg}\n\n시도한 경로: ${url||'-'}\nslug: ${slug||'-'}`);
 
   async function getJSON(url, opt={}) {
     const r = await fetch(url, { headers:{Accept:'application/json'}, ...opt });
@@ -35,38 +33,46 @@
   // ----- Data Load (robust) -----
   async function loadBrand() {
     const qs   = new URLSearchParams(location.search);
-    const id   = qs.get('id');
+    const id   = (qs.get('id')||'').trim();
     const slug = (qs.get('slug') || 'byhen').trim().toLowerCase();
+    const lastId = localStorage.getItem('byhen:lastId') || '';
 
-    // 1) id가 있으면 id로
-    if (id) {
-      try { return await getJSON(`${API_BASE}${BRAND_BASE}/${encodeURIComponent(id)}`); }
-      catch (e) {
-        alert(`브랜드 로드 실패: ${e.message}\n\nURL: ${e.url||'-'}`);
-        throw e;
-      }
-    }
+    // 1) id 우선
+    if (id) return await getJSON(`${API_BASE}${BRAND_BASE}/${encodeURIComponent(id)}`);
 
-    // 2) slug로 단건
+    // 2) slug 단건
     try {
       return await getJSON(`${API_BASE}${BRAND_BASE}/${encodeURIComponent(slug)}`);
-    } catch (e) {
-      // 404면 리스트에서 한 번 더 (상태/정렬 무관)
-      if (e.status === 404) {
+    } catch (e1) {
+      // 3) q 검색(텍스트 인덱스 지원 라우터)
+      try {
+        const s = await getJSON(`${API_BASE}${BRAND_BASE}?q=${encodeURIComponent(slug)}&limit=1`);
+        const hit = (s.items || s || [])[0];
+        if (hit) return hit;
+      } catch(_) {}
+
+      // 4) 리스트에서 slug 매칭
+      try {
+        const list = await getJSON(`${API_BASE}${BRAND_BASE}`);
+        const found = (list.items || list || []).find(x => (x.slug||'').toLowerCase() === slug);
+        if (found) return found;
+      } catch(_) {}
+
+      // 5) 마지막 저장 ID 폴백
+      if (lastId) {
         try {
-          const list = await getJSON(`${API_BASE}${BRAND_BASE}`);
-          const found = (list.items || list || []).find(x => (x.slug||'').toLowerCase() === slug);
-          if (found) return found;
-        } catch(_) { /* 리스트 실패는 아래 공통 오류 처리 */ }
+          return await getJSON(`${API_BASE}${BRAND_BASE}/${encodeURIComponent(lastId)}`);
+        } catch(_) {}
       }
-      alert(`브랜드 로드 실패: ${e.message}\n\n시도한 경로: ${e.url||'-'}\nslug: ${slug}`);
-      throw e;
+
+      alertFail(e1.message, e1.url, slug);
+      throw e1;
     }
   }
 
   // ----- Render -----
   function render(doc){
-    // 필드 호환(예전 스키마 대비)
+    // 호환 필드
     const D = {
       name: doc.name || 'BYHEN',
       thumbnail: doc.thumbnail || doc.mainThumbnailUrl || '',
@@ -77,11 +83,7 @@
       description: doc.description || '',
       usageGuide: doc.usageGuide || doc.rules || '',
       priceInfo: doc.priceInfo || '',
-      contact: {
-        phone: doc.contact?.phone || '',
-        email: doc.contact?.email || '',
-        kakao: doc.contact?.kakao || ''
-      },
+      contact: { phone: doc.contact?.phone || '', email: doc.contact?.email || '', kakao: doc.contact?.kakao || '' },
       address: doc.address || '',
       mapLink: doc.map?.link || '',
       availableHours: doc.availableHours || '',
@@ -91,9 +93,8 @@
       booked: Array.isArray(doc.booked) ? doc.booked : (doc.availability?.booked||[])
     };
 
-    // 헤더 썸네일
-    const main = $('#mainThumb');
-    const subs = $('#subThumbs');
+    // 썸네일
+    const main = $('#mainThumb'); const subs = $('#subThumbs');
     if (main) main.src = D.thumbnail || '';
     if (subs) {
       subs.innerHTML = (D.subThumbnails||[]).map((u,i)=>`<img src="${u}" data-i="${i}" alt="sub-${i}">`).join('');
@@ -104,42 +105,30 @@
       });
     }
 
-    // chips/텍스트/연락처/주소
+    // 텍스트/연락
     $('#chips').innerHTML = [
       D.availableHours ? `<span class="chip"><i class="ri-time-line"></i>${D.availableHours}</span>` : '',
       (D.availableDates && D.availableDates.length) ? `<span class="chip"><i class="ri-calendar-event-line"></i>예약 가능 ${D.availableDates.length}일</span>` : ''
     ].join('');
-    $('#intro')    && ($('#intro').textContent = D.intro || D.description || '-');
-    $('#guide')    && ($('#guide').textContent = D.usageGuide || '-');
-    $('#pricing')  && ($('#pricing').textContent = D.priceInfo || '-');
-    $('#address')  && ($('#address').textContent = D.address || '-');
-    $('#mapLink')  && ($('#mapLink').innerHTML = D.mapLink ? `<a class="btn" href="${D.mapLink}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도 열기</a>` : '');
-
+    $('#intro')   && ($('#intro').textContent = D.intro || D.description || '-');
+    $('#guide')   && ($('#guide').textContent = D.usageGuide || '-');
+    $('#pricing') && ($('#pricing').textContent = D.priceInfo || '-');
+    $('#address') && ($('#address').textContent = D.address || '-');
+    $('#mapLink') && ($('#mapLink').innerHTML = D.mapLink ? `<a class="btn" href="${D.mapLink}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> 지도 열기</a>` : '');
     $('#phone') && ($('#phone').textContent = D.contact.phone || '-');
     $('#email') && ($('#email').textContent = D.contact.email || '-');
-    $('#kakao') && ($('#kakao').innerHTML   = D.contact.kakao ? `<a href="${D.contact.kakao}" target="_blank" rel="noopener">${D.contact.kakao}</a>` : '-');
-
-    // 갤러리
+    $('#kakao') && ($('#kakao').innerHTML   = D.contact.kakao ? `<a href="${D.contact.kakao}" target="_blank" rel="noopener">${D.contact.kakao}</a>` : '');
     $('#gallery') && ($('#gallery').innerHTML = (D.gallery||[]).map(u=>`<img src="${u}" alt="">`).join(''));
 
-    // 캘린더
-    window.__BRAND_CAL__ = {
-      availableDates: D.availableDates,
-      closed: D.closed,
-      booked: D.booked,
-      timeslots: D.timeslots
-    };
-    if (typeof renderCalendar === 'function') renderCalendar(); // 기존 함수 있으면 호출
+    // 캘린더 데이터 주입(이미 있는 렌더러 사용)
+    window.__BRAND_CAL__ = { availableDates:D.availableDates, closed:D.closed, booked:D.booked, timeslots:D.timeslots };
+    if (typeof renderCalendar === 'function') renderCalendar();
   }
 
-  // ----- Init -----
   document.addEventListener('DOMContentLoaded', async ()=>{
     try{
       const doc = await loadBrand();
       render(doc);
-    }catch(_e){
-      // 화면이 비어있지 않도록 최소 토스트
-      toast('브랜드 로드 실패');
-    }
+    }catch(_e){}
   });
 })();
