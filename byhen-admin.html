@@ -1,160 +1,117 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BYHEN 관리자</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
-<style>
-:root{--bg:#ffffff;--ink:#0f172a;--sub:#64748b;--line:#e6e9f0;--pri:#5449ff;--r:12px}
-*{box-sizing:border-box} body{margin:0;background:#f7f8fb;color:var(--ink);font-family:SUIT,system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:16px}
-.hd{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;font-weight:900;z-index:10}
-.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
-.grid2{display:grid;gap:10px}
-@media(min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
-.label{display:block;font-weight:800;margin:10px 2px 6px}
-.input,.select,textarea{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;font:inherit}
-textarea{min-height:120px;height:auto;resize:vertical}
-.small{color:var(--sub);font-size:12.5px}
-.btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:900}
-.btn.pri{background:var(--pri);color:#fff;border-color:transparent}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:12px;font-weight:800;opacity:0;transition:.2s}
-#toast.show{opacity:1}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BYHEN 관리자</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+  <link rel="stylesheet" href="css/byhen-admin.css?v=1.2.0">
+  <script src="js/config.js?v=2.13"></script>
 </head>
 <body>
   <div class="hd">BYHEN 관리자</div>
+
   <main class="wrap">
-    <form id="f">
-      <div class="card grid2">
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <form id="f" novalidate>
+      <!-- 기본/히어로 -->
+      <section class="card grid2">
         <div>
           <label class="label">브랜드 슬러그</label>
-          <input class="input" id="slug" value="byhen">
+          <input class="input" id="slug" value="byhen" />
+
           <label class="label">브랜드명</label>
-          <input class="input" id="name" placeholder="BYHEN">
-          <label class="label">메인 썸네일 URL</label>
-          <input class="input" id="thumb" placeholder="https://...">
-          <label class="label">서브 썸네일(줄바꿈 구분)</label>
-          <textarea id="subThumbs" class="input" placeholder="https://...\nhttps://..."></textarea>
+          <input class="input" id="name" placeholder="BYHEN" />
+
           <label class="label">영업/이용가능 시간</label>
-          <input class="input" id="hours" placeholder="10:00–19:00 (일·공휴일 휴무)">
+          <input class="input" id="hours" placeholder="10:00–19:00 (일·공휴일 휴무)" />
+
+          <div class="row">
+            <div class="upl">
+              <div class="upl__head">
+                <span>메인 썸네일</span>
+                <button type="button" id="pickHero" class="btn sm"><i class="ri-image-add-line"></i> 업로드</button>
+                <input id="fileHero" type="file" accept="image/*" hidden />
+              </div>
+              <img id="prevHero" class="preview" alt="">
+              <input id="thumb" class="input" placeholder="https://..." />
+            </div>
+          </div>
+
+          <div class="upl">
+            <div class="upl__head">
+              <span>서브 썸네일(여러 장)</span>
+              <button type="button" id="pickSubs" class="btn sm"><i class="ri-image-add-line"></i> 업로드</button>
+              <input id="fileSubs" type="file" accept="image/*" hidden multiple />
+            </div>
+            <div id="subsPrev" class="gridThumbs"></div>
+            <textarea id="subThumbs" class="input" placeholder="https://...\nhttps://..."></textarea>
+          </div>
         </div>
+
         <div>
           <label class="label">연락처 - 전화</label>
-          <input id="phone" class="input" placeholder="02-000-0000">
-          <label class="label">연락처 - 이메일</label>
-          <input id="email" class="input" placeholder="hello@byhen.studio">
-          <label class="label">연락처 - 카카오 URL</label>
-          <input id="kakao" class="input" placeholder="https://pf.kakao.com/...">
-          <label class="label">예약 가능 시간대(쉼표 구분)</label>
-          <input id="timeslots" class="input" placeholder="10:00,14:00,19:00">
-          <label class="label">예약 가능 날짜(YYYY-MM-DD, 쉼표)</label>
-          <input id="availableDates" class="input" placeholder="2025-10-01,2025-10-03">
-        </div>
-      </div>
+          <input id="phone" class="input" placeholder="02-000-0000" />
 
-      <div class="card">
+          <label class="label">연락처 - 이메일</label>
+          <input id="email" class="input" placeholder="hello@byhen.studio" />
+
+          <label class="label">연락처 - 카카오 URL</label>
+          <input id="kakao" class="input" placeholder="https://pf.kakao.com/..." />
+
+          <label class="label">예약 가능 시간대(쉼표)</label>
+          <input id="timeslots" class="input" placeholder="10:00,14:00,19:00" />
+
+          <label class="label">예약 가능 날짜(YYYY-MM-DD, 쉼표)</label>
+          <input id="availableDates" class="input" placeholder="2025-10-01,2025-10-03" />
+        </div>
+      </section>
+
+      <!-- 소개/안내/가격 -->
+      <section class="card">
         <label class="label">소개</label>
         <textarea id="intro" class="input" placeholder="간단 소개"></textarea>
+
         <label class="label">이용 안내</label>
         <textarea id="guide" class="input" placeholder="환불/유의사항 등"></textarea>
+
         <label class="label">금액 안내</label>
         <textarea id="pricing" class="input" placeholder="상품/옵션 등"></textarea>
-      </div>
+      </section>
 
-      <div class="card grid2">
+      <!-- 주소/지도 -->
+      <section class="card grid2">
         <div>
           <label class="label">주소</label>
-          <input id="address" class="input" placeholder="서울 성수동 ...">
+          <input id="address" class="input" placeholder="서울 성수동 ..." />
         </div>
         <div>
           <label class="label">지도 링크(URL)</label>
-          <input id="mapLink" class="input" placeholder="https://map.naver.com/...">
+          <input id="mapLink" class="input" placeholder="https://map.naver.com/..." />
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <label class="label">갤러리 이미지들(줄바꿈 구분)</label>
+      <!-- 갤러리 -->
+      <section class="card">
+        <div class="upl__head">
+          <span>갤러리 이미지(여러 장)</span>
+          <button type="button" id="pickGallery" class="btn sm"><i class="ri-image-add-line"></i> 업로드</button>
+          <input id="fileGallery" type="file" accept="image/*" hidden multiple />
+        </div>
+        <div id="galleryPrev" class="gridThumbs"></div>
         <textarea id="gallery" class="input" placeholder="https://...\nhttps://..."></textarea>
-      </div>
+      </section>
 
-      <div class="card row">
+      <!-- 액션 -->
+      <section class="card row">
         <button type="button" class="btn pri" id="save"><i class="ri-save-3-line"></i> 저장</button>
-        <span class="small">※ 서버가 없으면 localStorage에 저장됩니다.</span>
+        <span class="small">※ 서버 응답이 없으면 LocalStorage에 저장됩니다.</span>
         <a class="btn" href="byhen.html" target="_blank"><i class="ri-external-link-line"></i> 공개페이지 보기</a>
-      </div>
+      </section>
     </form>
   </main>
-  <div id="toast">saved</div>
 
-<script>
-const API_BASE = ''; // 서버 붙이면 '/api' 등으로 지정
-const $=s=>document.querySelector(s); const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._);t._=setTimeout(()=>t.classList.remove("show"),1200)};
-
-function readForm(){
-  const toArrLines = v => (v||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  const toArrCSV   = v => (v||'').split(',').map(s=>s.trim()).filter(Boolean);
-  const slug = $("#slug").value.trim() || 'byhen';
-  return {
-    slug,
-    name: $("#name").value.trim() || 'BYHEN',
-    thumbnail: $("#thumb").value.trim(),
-    subThumbnails: toArrLines($("#subThumbs").value),
-    availableHours: $("#hours").value.trim(),
-    timeslots: toArrCSV($("#timeslots").value),
-    availableDates: toArrCSV($("#availableDates").value),
-    contact: { phone: $("#phone").value.trim(), email: $("#email").value.trim(), kakao: $("#kakao").value.trim() },
-    intro: $("#intro").value,
-    usageGuide: $("#guide").value,
-    priceInfo: $("#pricing").value,
-    address: $("#address").value.trim(),
-    map: { link: $("#mapLink").value.trim() },
-    gallery: toArrLines($("#gallery").value),
-    closed: [], booked: []
-  };
-}
-
-async function save(){
-  const data = readForm();
-  if(!API_BASE){
-    localStorage.setItem('brand:'+data.slug, JSON.stringify(data));
-    toast('로컬에 저장됨');
-    return;
-  }
-  const r = await fetch(API_BASE+'/brands/'+encodeURIComponent(data.slug),{
-    method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
-  });
-  if(!r.ok){ toast('저장 실패'); return; }
-  toast('저장됨');
-}
-
-$("#save").onclick=save;
-
-// 초기값: 로컬에서 불러오기
-(function init(){
-  const raw = localStorage.getItem('brand:byhen'); if(!raw) return;
-  try{
-    const d=JSON.parse(raw);
-    $("#slug").value = d.slug||'byhen';
-    $("#name").value = d.name||'';
-    $("#thumb").value = d.thumbnail||'';
-    $("#subThumbs").value = (d.subThumbnails||[]).join("\n");
-    $("#hours").value = d.availableHours||'';
-    $("#phone").value = d.contact?.phone||'';
-    $("#email").value = d.contact?.email||'';
-    $("#kakao").value = d.contact?.kakao||'';
-    $("#timeslots").value = (d.timeslots||[]).join(", ");
-    $("#availableDates").value = (d.availableDates||[]).join(", ");
-    $("#intro").value = d.intro||'';
-    $("#guide").value = d.usageGuide||'';
-    $("#pricing").value = d.priceInfo||'';
-    $("#address").value = d.address||'';
-    $("#mapLink").value = d.map?.link||'';
-    $("#gallery").value = (d.gallery||[]).join("\n");
-  }catch{}
-})();
-</script>
+  <script src="js/byhen-admin.js?v=1.2.0"></script>
 </body>
 </html>
