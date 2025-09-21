@@ -1,4 +1,7 @@
-/* byhen-admin.js — v3.3 (Unsigned 우선, Signed 폴백 + 저장 시 lastId 저장) */
+/* byhen-admin.js — v3.4 (토큰 보유 시에만 등록/발행 허용)
+   - HTML ids: thumbTrigger/thumbFile/thumbPrev, subsTrigger/subsFile/subsGrid,
+               galleryTrigger/galleryFile/galleryGrid, publishBtn/saveDraftBtn/saveBtn
+*/
 (function () {
   'use strict';
 
@@ -13,6 +16,17 @@
   const BRAND_BASE = (EP.brandBase || '/brand-test').replace(/^\/*/, '/');
   const SIGN_EP    = (EP.uploadsSignature || '/uploads/signature').replace(/^\/*/, '/');
 
+  // 로그인 토큰
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+
+  // 공통 헤더
+  const headers = (json=true) => {
+    const h = { Accept:'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    if (TOKEN) h.Authorization = `Bearer ${TOKEN}`;
+    return h;
+  };
+
   const THUMB = {
     main:   CFG.thumb?.cover169 || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
     square: CFG.thumb?.square   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto',
@@ -23,32 +37,30 @@
   const say=(m,ok=false)=>{ const n=$('#admMsg'); if(!n) return; n.textContent=m; n.classList.add('show'); n.classList.toggle('ok',!!ok); };
   const withTr=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url||'';} };
 
-  // ----- Uploads (Unsigned first) -----
+  // ----- Uploads (Unsigned 우선, Signed 폴백 / 서명 요청엔 토큰 포함) -----
   function getUnsignedCfg(){
     const c = CFG.cloudinaryUnsigned || CFG.cloudinary || {};
-    return {
-      cloudName: c.cloudName || c.name,
-      uploadPreset: c.uploadPreset || c.unsignedPreset || c.preset
-    };
+    return { cloudName: c.cloudName || c.name, uploadPreset: c.uploadPreset || c.unsignedPreset || c.preset };
   }
   async function uploadUnsigned(file){
     const u = getUnsignedCfg();
     if(!u.cloudName || !u.uploadPreset){ const e=new Error('UNSIGNED_NOT_CONFIGURED'); e.code='UNSIGNED_NOT_CONFIGURED'; throw e; }
-    const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', u.uploadPreset);
-    const url = `https://api.cloudinary.com/v1_1/${u.cloudName}/image/upload`;
-    const r = await fetch(url, { method:'POST', body: fd }); const j = await r.json().catch(()=>({}));
-    if(!r.ok || !j.secure_url) throw new Error(j.error?.message || `Cloudinary_${r.status}`);
+    const fd=new FormData(); fd.append('file',file); fd.append('upload_preset',u.uploadPreset);
+    const url=`https://api.cloudinary.com/v1_1/${u.cloudName}/image/upload`;
+    const r=await fetch(url,{method:'POST',body:fd}); const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${r.status}`);
     return j.secure_url;
   }
   async function getSignature(){
-    const r=await fetch(API_BASE+SIGN_EP,{headers:{Accept:'application/json'}}); const j=await r.json().catch(()=>({}));
+    const r=await fetch(API_BASE+SIGN_EP,{headers:headers(false)}); // <-- 토큰 포함
+    const j=await r.json().catch(()=>({}));
     if(!r.ok||j.ok===false){ const e=new Error(j.message||`HTTP_${r.status}`); e.status=r.status; throw e; }
     const d=j.data||j; ['cloudName','apiKey','timestamp','signature'].forEach(k=>{ if(!d[k]) throw new Error('Invalid signature payload'); });
     return d;
   }
   async function uploadSigned(file){
-    const s=await getSignature(); const fd=new FormData();
-    fd.append('file',file); fd.append('api_key',s.apiKey); fd.append('timestamp',s.timestamp); fd.append('signature',s.signature);
+    const s=await getSignature();
+    const fd=new FormData(); fd.append('file',file); fd.append('api_key',s.apiKey); fd.append('timestamp',s.timestamp); fd.append('signature',s.signature);
     const url=`https://api.cloudinary.com/v1_1/${s.cloudName}/image/upload`;
     const r=await fetch(url,{method:'POST',body:fd}); const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.secure_url) throw new Error(j.error?.message||`Cloudinary_${r.status}`);
@@ -56,11 +68,16 @@
   }
   async function uploadImage(file){
     if(!file) throw new Error('no file'); if(!/^image\//.test(file.type)) throw new Error('이미지 파일만'); if(file.size>10*1024*1024) throw new Error('최대 10MB');
-    const hasUnsigned = !!(getUnsignedCfg().cloudName && getUnsignedCfg().uploadPreset);
-    if(hasUnsigned){
-      try{ return await uploadUnsigned(file); }catch(eu){ try{ return await uploadSigned(file); }catch(es){ throw new Error(eu.message || es.message || '업로드 실패'); } }
+
+    // 토큰이 있으면 signed 먼저 시도, 없으면 unsigned 먼저
+    const trySignedFirst = !!TOKEN;
+    if (trySignedFirst) {
+      try { return await uploadSigned(file); }
+      catch(e1){ try { return await uploadUnsigned(file); } catch(e2){ throw new Error(e1.message || e2.message || '업로드 실패'); } }
+    } else {
+      try { return await uploadUnsigned(file); }
+      catch(eu){ try { return await uploadSigned(file); } catch(es){ throw new Error(eu.message || es.message || '업로드 실패'); } }
     }
-    try{ return await uploadSigned(file); }catch(e1){ try{ return await uploadUnsigned(file); }catch(e2){ if(e2.code==='UNSIGNED_NOT_CONFIGURED') throw new Error('업로드 실패: 서버 서명 오류/공개 업로드 미설정'); throw e2; } }
   }
 
   // ----- State -----
@@ -103,6 +120,14 @@
     el.galleryGrid.innerHTML = state.doc.gallery.map((u,i)=>`
       <div class="thumb"><img src="${u}" alt="gal-${i}"><button type="button" class="rm" data-i="${i}">×</button></div>
     `).join('');
+  }
+
+  // ----- 로그인 요구 -----
+  function requireLogin(){
+    const base = (CFG.BASE_PATH || '').replace(/\/+$/,'');
+    const ret  = location.pathname + location.search;
+    const loginUrl = `${base ? base : ''}/login.html?returnTo=${encodeURIComponent(ret)}`;
+    location.href = loginUrl;
   }
 
   // ----- Bind -----
@@ -161,9 +186,11 @@
       state.doc.gallery.splice(Number(b.dataset.i),1); drawGallery();
     });
 
-    el.saveDraftBtn?.addEventListener('click', e=>{e.preventDefault(); submit('draft');});
-    el.saveBtn?.addEventListener('click',      e=>{e.preventDefault(); submit('published');});
-    el.publishBtn?.addEventListener('click',   e=>{e.preventDefault(); submit('published');});
+    // 저장/발행은 토큰 필수
+    const guard = (fn) => (e)=>{ e.preventDefault(); if(!TOKEN){ say('로그인이 필요합니다.'); return requireLogin(); } fn(); };
+    el.saveDraftBtn?.addEventListener('click', guard(()=>submit('draft')));
+    el.saveBtn?.addEventListener('click',      guard(()=>submit('published')));
+    el.publishBtn?.addEventListener('click',   guard(()=>submit('published')));
   }
 
   // ----- Load (edit) -----
@@ -171,7 +198,7 @@
     if(!state.id) return;
     try{
       say('불러오는 중…');
-      const r=await fetch(`${API_BASE}${BRAND_BASE}/${state.id}`,{headers:{Accept:'application/json'}});
+      const r=await fetch(`${API_BASE}${BRAND_BASE}/${state.id}`,{headers:headers(false)});
       const j=await r.json().catch(()=>({}));
       if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
       const d=j.data||j;
@@ -207,7 +234,7 @@
     }catch(e){ say('불러오기 실패: '+(e.message||'오류')); }
   }
 
-  // ----- Save -----
+  // ----- Save (토큰 필수, Authorization 헤더 첨부) -----
   function collect(status){
     const csv = (v='') => v.split(',').map(s=>s.trim()).filter(Boolean);
     const d=state.doc;
@@ -230,6 +257,7 @@
   }
 
   async function submit(status){
+    if(!TOKEN){ say('로그인이 필요합니다.'); return requireLogin(); }
     if(state.uploads>0){ say('이미지 업로드 중입니다. 잠시 후 시도'); return; }
     const doc=collect(status);
     if(!doc.name) return say('브랜드명을 입력하세요');
@@ -239,19 +267,14 @@
       say(status==='published'?'발행 중…':'저장 중…');
       const url = state.id ? `${API_BASE}${BRAND_BASE}/${state.id}` : `${API_BASE}${BRAND_BASE}`;
       const method = state.id ? 'PUT' : 'POST';
-      const r=await fetch(url,{method,headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(doc)});
+      const r=await fetch(url,{method,headers:headers(true),body:JSON.stringify(doc)});
       const j=await r.json().catch(()=>({}));
       if(!r.ok||j.ok===false) throw new Error(j.message||`HTTP_${r.status}`);
       say('완료되었습니다',true);
 
-      // 뷰 페이지 폴백용으로 마지막 저장 ID 기록
-      const saved = j.data || j;
-      const newId = saved._id;
+      const saved=j.data||j; const newId=saved._id;
       if(newId){ localStorage.setItem('byhen:lastId', newId); localStorage.setItem('byhen:lastSlug', saved.slug || doc.slug); }
-
-      if(!state.id && newId){
-        location.replace(location.pathname+'?id='+encodeURIComponent(newId));
-      }
+      if(!state.id && newId){ location.replace(location.pathname+'?id='+encodeURIComponent(newId)); }
     }catch(e){ say('저장 실패: '+(e.message||'오류')); }
   }
 
