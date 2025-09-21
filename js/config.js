@@ -56,3 +56,11 @@
 
   window.LIVEE_CONFIG = Object.assign({}, prev, cfg);
 })();
+
+// 누구나 업로드 허용(서버 사인 없이)
+window.LIVEE_CONFIG = Object.assign({}, window.LIVEE_CONFIG, {
+  cloudinaryUnsigned: {
+    cloudName: "YOUR_CLOUD_NAME",
+    uploadPreset: "YOUR_UNSIGNED_PRESET" // unsigned preset
+  }
+});
