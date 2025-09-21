@@ -1,4 +1,6 @@
-/* byhen-admin.js — v3.2 (Unsigned 우선, Signed 폴백)
+/* byhen-admin.js — v3.3
+   - 쇼호스트/브랜드 권한(로그인) 있으면 Signed 업로드 우선
+   - 없으면(또는 실패 시) unsigned 설정이 있을 때만 폴백
    - HTML ids: thumbTrigger/thumbFile/thumbPrev, subsTrigger/subsFile/subsGrid,
                galleryTrigger/galleryFile/galleryGrid, publishBtn/saveDraftBtn/saveBtn
 */
@@ -15,8 +17,8 @@
   })();
   const BRAND_BASE = (EP.brandBase || '/brand-test').replace(/^\/*/, '/');
   const SIGN_EP    = (EP.uploadsSignature || '/uploads/signature').replace(/^\/*/, '/');
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
-  // Cloudinary transform presets
   const THUMB = {
     main:   (CFG.thumb && CFG.thumb.cover169) || 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',
     square: (CFG.thumb && CFG.thumb.square)   || 'c_fill,g_auto,w_600,h_600,f_auto,q_auto'
@@ -28,7 +30,7 @@
   const say=(m,ok=false)=>{const n=$('#admMsg'); if(!n) return; n.textContent=m; n.classList.add('show'); n.classList.toggle('ok',!!ok); };
   const withTr=(url,t)=>{ try{ if(!url||!/\/upload\//.test(url)) return url||''; const i=url.indexOf('/upload/'); return url.slice(0,i+8)+t+'/'+url.slice(i+8);}catch{return url||'';} };
 
-  // ----- Upload: Unsigned 우선, 실패 시 Signed 폴백 -----
+  // ----- Upload: role-aware (Signed first if token), else Unsigned fallback -----
   function getUnsignedCfg(){
     const c = CFG.cloudinaryUnsigned || CFG.cloudinary || {};
     const cloudName    = c.cloudName || c.name;
@@ -54,7 +56,9 @@
   }
 
   async function getSignature() {
-    const r = await fetch(API_BASE + SIGN_EP, { headers:{Accept:'application/json'} });
+    const headers = { Accept:'application/json' };
+    if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`; // ← 쇼호스트/브랜드 권한 토큰
+    const r = await fetch(API_BASE + SIGN_EP, { headers });
     const j = await r.json().catch(()=>({}));
     if(!r.ok || j.ok===false) {
       const err = new Error(j.message || `HTTP_${r.status}`);
@@ -87,32 +91,26 @@
     if(!/^image\//.test(file.type)) throw new Error('이미지 파일만 업로드');
     if(file.size>10*1024*1024) throw new Error('최대 10MB');
 
-    const useUnsignedFirst = !!(getUnsignedCfg().cloudName && getUnsignedCfg().uploadPreset);
-
-    // 1) Unsigned 우선
-    if(useUnsignedFirst){
-      try { return await uploadUnsigned(file); }
-      catch (eUnsigned) {
-        // Unsigned 설정은 있는데 실패 → 마지막 시도로 signed
-        try { return await uploadSigned(file); }
-        catch (eSigned) {
-          // 가장 유의미한 메시지 선택
-          throw new Error(eUnsigned.message || eSigned.message || '업로드 실패');
+    // 토큰이 있으면 권한 있는 사용자 → signed 먼저
+    if (TOKEN) {
+      try { return await uploadSigned(file); }
+      catch (e1) {
+        // fallback to unsigned only if configured
+        try { return await uploadUnsigned(file); }
+        catch (e2) {
+          if (e2.code === 'UNSIGNED_NOT_CONFIGURED') throw e1; // 더 의미있는 에러 반환
+          throw e2;
         }
       }
     }
 
-    // 2) Unsigned 설정이 없으면 Signed 먼저
-    try { return await uploadSigned(file); }
-    catch (e1) {
-      // Signed 실패 시 Unsigned 시도(공개 preset이 나중에 들어올 수도 있으니)
-      try { return await uploadUnsigned(file); }
-      catch (e2){
-        if(e2.code==='UNSIGNED_NOT_CONFIGURED'){
-          throw new Error('업로드 실패: 서버 서명 오류 또는 공개 업로드 미설정');
-        }
-        throw e2;
+    // 비로그인/권한 없음 → unsigned 먼저(설정 있을 때만)
+    try { return await uploadUnsigned(file); }
+    catch (e) {
+      if (e.code === 'UNSIGNED_NOT_CONFIGURED') {
+        throw new Error('로그인 후 다시 시도하거나, 공개 업로드 preset을 설정해주세요.');
       }
+      throw e;
     }
   }
 
@@ -133,7 +131,7 @@
   };
   const bump=(n)=>{ state.uploads=Math.max(0,state.uploads+n); };
 
-  // ---------- DOM Cache ----------
+  // ---------- DOM ----------
   const el={};
   function cacheDom(){
     el.name=$('#name'); el.slug=$('#slug');
@@ -155,7 +153,6 @@
     el.publishBtn=$('#publishBtn'); el.saveDraftBtn=$('#saveDraftBtn'); el.saveBtn=$('#saveBtn');
   }
 
-  // ---------- Draw ----------
   function drawSubs(){
     el.subsGrid.innerHTML = state.doc.subThumbnails.map((u,i)=>`
       <div class="thumb"><img src="${u}" alt="sub-${i}"><button type="button" class="rm" data-i="${i}">×</button></div>
