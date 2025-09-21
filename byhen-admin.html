@@ -99,33 +99,62 @@
       </section>
 
       <!-- 스케줄 -->
-      <section class="card">
-        <div class="sec-hd"><h2>스케줄</h2></div>
-        <div class="grid3">
-          <div>
-            <label class="lb">영업/이용 가능 시간</label>
-            <input id="availableHours" class="input" placeholder="예) 10:00–19:00 (일/공휴일 휴무)" />
-          </div>
-          <div>
-            <label class="lb">타임슬롯(,로 구분)</label>
-            <input id="timeslots" class="input" placeholder="예) 10:00,14:00,19:00" />
-          </div>
-          <div>
-            <label class="lb">예약 가능일(선택, ,로 구분)</label>
-            <input id="availableDates" class="input" placeholder="YYYY-MM-DD,YYYY-MM-DD" />
-          </div>
-        </div>
-        <div class="grid2">
-          <div>
-            <label class="lb">휴무일(,로 구분)</label>
-            <input id="closed" class="input" placeholder="YYYY-MM-DD,YYYY-MM-DD" />
-          </div>
-          <div>
-            <label class="lb">마감일(,로 구분)</label>
-            <input id="booked" class="input" placeholder="YYYY-MM-DD,YYYY-MM-DD" />
-          </div>
-        </div>
-      </section>
+<section class="card">
+  <div class="sec-hd">
+    <h2>스케줄</h2>
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button id="setStartBtn" class="btn sm"><i class="ri-time-line"></i> 시작시간</button>
+      <button id="setEndBtn"   class="btn sm"><i class="ri-timer-line"></i> 마감시간</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <!-- 달력 -->
+    <div class="card" style="padding:0">
+      <div class="cal-hd" style="display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:#f8fafc">
+        <button class="nav" id="admPrevM" aria-label="이전 달" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:#fff"><i class="ri-arrow-left-s-line"></i></button>
+        <strong id="admMonTitle" style="margin:0 auto;font-weight:900">0000-00</strong>
+        <button class="nav" id="admNextM" aria-label="다음 달" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:#fff"><i class="ri-arrow-right-s-line"></i></button>
+      </div>
+      <div class="cal-week" style="display:grid;grid-template-columns:repeat(7,1fr);padding:8px;background:#fcfcfd;border-bottom:1px solid var(--line);color:#475569;font-weight:800;text-align:center">
+        <span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span>
+      </div>
+      <div id="admCalGrid" class="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
+
+      <div style="display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)">
+        <button id="toggleClosedBtn" class="btn sm"><i class="ri-forbid-2-line"></i> 휴무 토글</button>
+        <button id="resetDayBtn"   class="btn sm"><i class="ri-refresh-line"></i> 초기화</button>
+        <div id="selDateLabel" class="muted" style="margin-left:auto"></div>
+      </div>
+    </div>
+
+    <!-- 시간버튼 -->
+    <div class="card">
+      <div class="sec-hd"><h3 style="margin:0;font-size:16px;font-weight:900">시간 설정</h3></div>
+      <div id="timesInfo" class="muted">달력에서 날짜를 선택하면 1시간 단위 버튼이 생성됩니다.</div>
+      <div id="slotGrid" class="slot-grid" style="margin-top:8px"></div>
+      <small class="muted">• 검은색: 예약 가능 / 회색: <b>마감</b> / 휴무일은 전체 비활성화</small>
+    </div>
+  </div>
+</section>
+
+<!-- 시작시간 모달 -->
+<div class="modal" id="startModal" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <header><strong>시작 시간 설정</strong><button class="x" data-x>✕</button></header>
+    <div class="field"><label class="label">시작 시간</label><input id="startTimeInput" class="input" type="time" step="1800"></div>
+    <div class="actions"><button class="btn ghost" data-x>취소</button><button id="saveStartTime" class="btn pri">저장</button></div>
+  </div>
+</div>
+
+<!-- 마감시간 모달 -->
+<div class="modal" id="endModal" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <header><strong>마감 시간 설정</strong><button class="x" data-x>✕</button></header>
+    <div class="field"><label class="label">마감 시간</label><input id="endTimeInput" class="input" type="time" step="1800"></div>
+    <div class="actions"><button class="btn ghost" data-x>취소</button><button id="saveEndTime" class="btn pri">저장</button></div>
+  </div>
+</div>
 
       <div class="actions">
         <button id="saveDraftBtn" class="btn" type="button"><i class="ri-save-3-line"></i> 임시저장</button>
