@@ -1,156 +1,211 @@
-/* inbox-proposals.js — v1.1
-   - CONFIG.endpoints.offersBase 사용
-   - 토큰 자동 부착
-   - 다양한 쿼리 키(inbox=1 | to=me | toUser=me | mine=received) 순차 시도
-   - 응답 형태(items | data | 배열) 모두 호환
+/* inbox-proposals.js — v1.2 (robust inbox for Offer-test)
+   - 컨테이너: #list, 메시지: #ipMsg, 필터: #filters, 더보기: #loadMore
+   - /offers-test 에 대해 다양한 쿼리키 시도(inbox=1 | to=me | toUser=me | mine=received | toUser=<me.id> …)
+   - 토큰 자동 부착, 응답 포맷(items|data|배열) 모두 호환
 */
 (function () {
   'use strict';
+  const $ = (s, el=document) => el.querySelector(s);
   const CFG = window.LIVEE_CONFIG || {};
   const EP  = CFG.endpoints || {};
-  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/+$/, '');
-  const BASE = (EP.offersBase || '/offers-test').replace(/^\/*/, '/');
+  const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/+$/,'');
+  const BASE     = (EP.offersBase || '/offers-test').replace(/^\/*/,'/');
 
   const TOKEN =
     localStorage.getItem('livee_token') ||
     localStorage.getItem('liveeToken') || '';
 
-  const $ = (s, el=document)=> el.querySelector(s);
-  const root = $('#offersRoot') || $('#inboxRoot') || $('#proposalsRoot') || $('#content') || document.body;
+  // mount common UI(있으면)
+  try {
+    window.LIVEE_UI?.mountHeader?.({ title:'받은 제안' });
+    window.LIVEE_UI?.mountTopTabs?.({ active:null });
+    window.LIVEE_UI?.mountTabbar?.({ active:'mypage' });
+  } catch(_) {}
 
-  function say(msg, ok){
-    const id='offersMsg';
-    let n = document.getElementById(id);
-    if(!n){ n = document.createElement('div'); n.id=id; n.style.margin='12px 0'; root.prepend(n); }
-    n.textContent = msg;
-    n.style.color = ok ? '#0a7' : '#d33';
-  }
+  // DOM refs
+  const elMsg   = $('#ipMsg');
+  const elList  = $('#list') || document.body;
+  const elTabs  = $('#filters');
+  const btnMore = $('#loadMore');
 
-  function money(n){ return (n||0).toLocaleString(); }
-  function fmtDate(d){ try{ return new Date(d).toLocaleString(); }catch{ return String(d||'').slice(0,16); } }
+  const state = {
+    me: null,
+    items: [],
+    page: 1,
+    limit: 20,
+    lastUsedUrl: '',
+    status: '' // '', 'pending', 'on_hold', 'accepted', 'rejected'
+  };
 
-  // 다양한 응답 포맷을 items 배열로 정규화
-  function pickItems(j){
-    if (!j) return [];
-    if (Array.isArray(j)) return j;
-    if (Array.isArray(j.items)) return j.items;
-    if (Array.isArray(j.data))  return j.data;
-    if (j.data && Array.isArray(j.data.items)) return j.data.items;
-    return [];
-  }
+  const money  = (n)=> (n||0).toLocaleString();
+  const fmtDT  = (d)=> { try{ return new Date(d).toLocaleString(); }catch{ return String(d||'').slice(0,16); } };
+  const say    = (m, ok)=> { if(!elMsg) return; elMsg.textContent=m; elMsg.classList.toggle('ok', !!ok); };
 
-  async function getJSON(url){
-    const h = { 'Accept':'application/json' };
-    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+  async function fetchJSON(url){
+    const h={ Accept:'application/json' };
+    if (TOKEN) h.Authorization = 'Bearer ' + TOKEN;
     const r = await fetch(url, { headers:h, credentials:'include' });
     const ct = r.headers.get('content-type') || '';
     if (!r.ok) throw new Error(`HTTP_${r.status}`);
     if (!ct.includes('application/json')) throw new Error('NOT_JSON');
-    return await r.json().catch(()=>{ throw new Error('BAD_JSON'); });
+    return r.json();
   }
-
-  // 서버 구현이 어떤 쿼리를 쓰든 순차적으로 시도
-  async function loadInbox(limit=50){
-    const tries = [
-      `${API_BASE}${BASE}?inbox=1&limit=${limit}`,
-      `${API_BASE}${BASE}?to=me&limit=${limit}`,
-      `${API_BASE}${BASE}?toUser=me&limit=${limit}`,
-      `${API_BASE}${BASE}?mine=received&limit=${limit}`,
-      `${API_BASE}${BASE}?limit=${limit}` // 최후의 수단(서버가 자동 필터링하는 경우)
-    ];
-    let lastErr = null;
-    for (const u of tries){
-      try{
-        const j = await getJSON(u);
-        const items = pickItems(j);
-        if (items.length || u.includes('inbox=') || u.includes('to=') || u.includes('mine=')) {
-          return { items, used:u };
-        }
-      }catch(e){ lastErr = e; /* 다음 시도 */ }
+  async function fetchMe(){
+    if(!TOKEN) return null;
+    for (const p of ['/users/me','/auth/me','/me']) {
+      try {
+        const j = await fetchJSON(API_BASE+p);
+        const me = j.data || j.user || j;
+        if (me && (me.id || me._id)) return me;
+      } catch(_) {}
     }
-    throw lastErr || new Error('NO_RESULT');
+    return null;
+  }
+  function getItems(j){
+    if (!j) return [];
+    if (Array.isArray(j)) return j;
+    if (Array.isArray(j.items)) return j.items;
+    if (Array.isArray(j.data)) return j.data;
+    if (j.data && Array.isArray(j.data.items)) return j.data.items;
+    return [];
   }
 
-  function card(o){
-    // 서버 필드 다양성 호환
-    const id      = o.id || o._id || '';
-    const msg     = o.message || o.memo || o.note || '(메시지 없음)';
-    const created = o.createdAt || o.created_at || o.date || null;
-    const status  = (o.status || 'pending');
-    const brand   = o.fromBrandName || o.brandName || o.brand?.name || o.createdByName || '브랜드';
-    const fee     = (o.fee != null) ? `${money(o.fee)}원` : (o.feeNegotiable ? '협의' : '');
-    const pid     = o.toPortfolioId || o.portfolioId || o.toPortfolio?._id || '';
-    const rid     = o.recruitId || o.toRecruitId || '';
+  // 서버가 어떤 쿼리를 쓰든 성공할 때까지 시도
+  async function loadPage(page=1, limit=state.limit){
+    const me = state.me || await fetchMe(); state.me = me;
+    const meId = me?.id || me?._id || '';
 
-    const actions = [
-      pid ? `<a class="btn sm" href="portfolio-detail.html?id=${encodeURIComponent(pid)}"><i class="ri-user-line"></i> 포트폴리오</a>` : '',
-      rid ? `<a class="btn sm" href="recruit-detail.html?id=${encodeURIComponent(rid)}"><i class="ri-file-list-2-line"></i> 공고</a>` : ''
-    ].filter(Boolean).join(' ');
+    // 시도 순서(가장 보편적인 것부터)
+    const qs = (q)=> `${API_BASE}${BASE}?${q}&page=${page}&limit=${limit}`;
+    const tries = [
+      qs('inbox=1'),
+      qs('to=me'),
+      qs('toUser=me'),
+      qs('mine=received'),
+      meId ? qs('toUser='+encodeURIComponent(meId)) : null,
+      meId ? qs('to='+encodeURIComponent(meId))     : null,
+      qs('') // 최후의 수단(서버가 토큰 기준으로 자동 필터)
+    ].filter(Boolean);
+
+    let lastErr = null;
+    for (const u of tries) {
+      try{
+        const j = await fetchJSON(u);
+        const items = getItems(j);
+        // 한 번이라도 배열을 받으면 성공 처리
+        state.lastUsedUrl = u;
+        return items;
+      }catch(e){ lastErr = e; }
+    }
+    throw lastErr || new Error('LOAD_FAILED');
+  }
+
+  // 카드 템플릿(서버 필드 다양성 호환)
+  function card(o){
+    const id   = o.id || o._id || '';
+    const msg  = o.message || o.memo || '(메시지 없음)';
+    const st   = (o.status || 'pending');
+    const at   = o.createdAt || o.created_at || o.date;
+    const brand= o.fromBrandName || o.brandName || o.createdByName || '브랜드';
+    const fee  = (o.fee!=null) ? `${money(o.fee)}원` : (o.feeNegotiable ? '협의' : '');
+    const pid  = o.toPortfolioId || o.portfolioId || o.toPortfolio?._id || '';
+    const rid  = o.recruitId || '';
 
     return `
-      <article class="offer-card" data-id="${id}">
-        <div class="offer-hd">
+      <article class="ip-card" data-id="${id}" data-status="${st}">
+        <div class="ip-card__hd">
           <strong class="brand">${brand}</strong>
-          <span class="status ${status}">${status}</span>
+          <span class="st ${st}">${st}</span>
         </div>
-        <div class="offer-msg">${msg.replace(/\n/g,'<br>')}</div>
-        <div class="offer-meta">
-          <span>${created ? fmtDate(created) : ''}</span>
+        <div class="ip-card__msg">${String(msg).replace(/\n/g,'<br>')}</div>
+        <div class="ip-card__meta">
+          <span>${at ? fmtDT(at) : ''}</span>
           ${fee ? `<span class="dot"></span><span>${fee}</span>` : ''}
         </div>
-        <div class="offer-actions">${actions}</div>
+        <div class="ip-card__ft">
+          ${rid ? `<a class="btn sm" href="recruit-detail.html?id=${encodeURIComponent(rid)}"><i class="ri-file-list-2-line"></i> 공고</a>` : ''}
+          ${pid ? `<a class="btn sm" href="portfolio-detail.html?id=${encodeURIComponent(pid)}"><i class="ri-user-line"></i> 프로필</a>` : ''}
+        </div>
       </article>
     `;
   }
 
-  function render(items){
-    if (!items.length){
-      root.innerHTML = `
-        <div class="empty" style="padding:24px 12px;color:#666">
-          받은 제안이 없습니다.
-        </div>`;
+  function applyFilter(){
+    const s = state.status;
+    const items = s ? state.items.filter(it => (it.status||'pending')===s) : state.items;
+    if (!items.length) {
+      elList.innerHTML = `<div class="ip-empty">받은 제안이 없습니다.</div>`;
       return;
     }
-    const css = `
-      .offer-card{border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0;background:#fff}
-      .offer-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-      .offer-hd .brand{font-weight:600}
-      .offer-hd .status{margin-left:auto;font-size:12px;padding:2px 8px;border-radius:999px;background:#eef}
-      .offer-hd .status.pending{background:#eef;color:#335}
-      .offer-hd .status.accepted{background:#e6ffec;color:#155724}
-      .offer-hd .status.rejected{background:#ffeaea;color:#9b1c1c}
-      .offer-msg{margin:6px 0 10px;line-height:1.5;white-space:pre-wrap}
-      .offer-meta{font-size:12px;color:#666;display:flex;align-items:center;gap:8px}
-      .offer-meta .dot{width:4px;height:4px;border-radius:50%;background:#bbb;display:inline-block}
-      .offer-actions{margin-top:10px;display:flex;gap:8px}
-      .btn.sm{font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
-    `;
-    const styleId='offers-inline-style';
-    if(!document.getElementById(styleId)){
-      const st=document.createElement('style'); st.id=styleId; st.textContent=css; document.head.appendChild(st);
-    }
-    root.innerHTML = items.map(card).join('');
+    elList.innerHTML = items.map(card).join('');
   }
 
-  async function boot(){
+  async function firstLoad(){
     try{
       say('불러오는 중…');
-      const { items, used } = await loadInbox(50);
+      state.page = 1;
+      const items = await loadPage(1);
+      state.items = items;
       say('로드 완료', true);
-      render(items);
-      // 디버그 확인 원하면 콘솔에서 확인
-      console.debug('[offers] used endpoint:', used, items);
+      applyFilter();
+      // 다음 페이지가 있는지 애매하므로 길이로 추정
+      if (btnMore) btnMore.style.display = (items.length >= state.limit ? '' : 'none');
     }catch(e){
-      console.error('[offers] load failed:', e);
-      if (!TOKEN) {
-        say('로그인이 필요합니다. 마이페이지에서 로그인해 주세요.');
-      } else {
-        say('제안 목록을 불러오지 못했습니다.');
-      }
+      console.error('[offers inbox] load failed:', e);
+      say(TOKEN ? '제안 목록을 불러오지 못했습니다.' : '로그인이 필요합니다.');
+      if (btnMore) btnMore.style.display = 'none';
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once:true });
-  } else { boot(); }
+  async function more(){
+    try{
+      const next = state.page + 1;
+      const items = await loadPage(next);
+      if (!items.length){ if(btnMore) btnMore.style.display='none'; return; }
+      state.page = next;
+      state.items = state.items.concat(items);
+      applyFilter();
+      if (items.length < state.limit && btnMore) btnMore.style.display='none';
+    }catch(_){
+      if (btnMore) btnMore.style.display = 'none';
+    }
+  }
+
+  // 탭 필터
+  elTabs?.addEventListener('click', (e)=>{
+    const b = e.target.closest('[data-status]');
+    if (!b) return;
+    elTabs.querySelectorAll('.ip-tab').forEach(t=>t.classList.toggle('is-on', t===b));
+    state.status = b.dataset.status || '';
+    applyFilter();
+  });
+
+  btnMore?.addEventListener('click', more);
+
+  // 스타일(간단)
+  (function injectCss(){
+    const css = `
+    .ip-card{border:1px solid #eee;border-radius:12px;padding:14px;margin:10px 0;background:#fff}
+    .ip-card__hd{display:flex;gap:8px;align-items:center}
+    .ip-card__hd .brand{font-weight:600}
+    .ip-card__hd .st{margin-left:auto;font-size:12px;padding:2px 8px;border-radius:999px;background:#eef}
+    .ip-card__hd .st.accepted{background:#e6ffec;color:#155724}
+    .ip-card__hd .st.rejected{background:#ffeaea;color:#9b1c1c}
+    .ip-card__msg{margin:8px 0 10px;line-height:1.5}
+    .ip-card__meta{font-size:12px;color:#666;display:flex;align-items:center;gap:8px}
+    .ip-card__meta .dot{width:4px;height:4px;border-radius:50%;background:#bbb;display:inline-block}
+    .ip-card__ft{margin-top:10px;display:flex;gap:8px}
+    .btn.sm{font-size:12px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
+    .ip-empty{padding:24px 8px;color:#666}
+    .ip-msg.ok{color:#0a7}
+    `;
+    if (!document.getElementById('ip-inline-style')) {
+      const s=document.createElement('style'); s.id='ip-inline-style'; s.textContent=css; document.head.appendChild(s);
+    }
+  })();
+
+  // 부팅
+  if (document.readyState==='loading') {
+    document.addEventListener('DOMContentLoaded', firstLoad, { once:true });
+  } else { firstLoad(); }
 })();
