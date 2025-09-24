@@ -1,6 +1,7 @@
-/* js/outbox-proposals.js — v1.1.0
+/* js/outbox-proposals.js — v1.1.1
    - box=sent 목록
-   - 상태별 액션: accepted→confirmed, rejected→다시 제안, pending/on_hold→withdrawn
+   - 카드 타이틀: 쇼호스트 이름만
+   - 액션 버튼: 본문 아래 노출 (상세/재제안/취소/확정)
 */
 (function () {
   'use strict';
@@ -14,7 +15,8 @@
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
   try{
-    window.LIVEE_UI?.mountHeader?.({ title:'보낸 제안' });
+    // 타이틀 한 줄 유지(디자인 가이드: “보낸제안”)
+    window.LIVEE_UI?.mountHeader?.({ title:'보낸제안' });
     window.LIVEE_UI?.mountTabbar?.({ active:'mypage' });
   }catch(_){}
 
@@ -83,7 +85,7 @@
     return `<span class="ip-chip ${cls}">${label}</span>`;
   }
 
-  // 상태별 액션영역 HTML
+  // 상태별 액션영역 HTML (본문 아래)
   function actionsHTML(o){
     if (o.status === 'accepted') {
       return `<button class="btn pri" data-act="confirmed"><i class="ri-check-double-line"></i> 계약 확정</button>`;
@@ -105,7 +107,8 @@
     return `
       <article class="ip-card" data-id="${o.id}">
         <div class="ip-body">
-          <div class="ip-title">수신자 · ${host} ${chip(o.status)}</div>
+          <!-- 타이틀: 수신자 라벨 제거, 이름만 -->
+          <div class="ip-title">${host} ${chip(o.status)}</div>
           ${o.message ? `<div class="ip-msgtext">${o.message}</div>` : ''}
           <div class="ip-meta">보낸 시각 · ${fmtDT(o.createdAt)}</div>
           <div class="ip-meta">출연료 · ${feeText(o.fee)}</div>
@@ -113,7 +116,7 @@
           ${due ? `<div class="ip-meta">${due}</div>` : ''}
         </div>
         <div class="ip-acts">
-          <button class="btn icon" data-open title="상세"><i class="ri-arrow-right-s-line"></i></button>
+          <button class="btn icon" data-open title="상세"><i class="ri-information-line"></i> 상세</button>
           ${actionsHTML(o)}
         </div>
       </article>`;
@@ -154,7 +157,6 @@
 
   // 카드/상세 버튼 핸들
   elList?.addEventListener('click', (e)=>{
-    // open detail
     const openBtn = e.target.closest('[data-open]');
     if (openBtn) {
       const id = openBtn.closest('.ip-card')?.dataset.id; if(!id) return;
@@ -169,12 +171,7 @@
       doAct(id, actBtn.dataset.act);
       return;
     }
-    // 다시 제안하기 (inline)
-    const reBtn = e.target.closest('[data-offer]');
-    if (reBtn) {
-      // offer-modal.js 가 data-offer를 전역으로 핸들하므로 여기서는 패스
-      return;
-    }
+    // 다시 제안하기 (offer-modal.js가 처리)
   });
 
   mClose?.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
@@ -187,6 +184,7 @@
   async function doAct(id, act, btn){
     try{
       btn && (btn.disabled = true);
+      // NOTE: 서버가 confirmed 미지원이면 여기서 early-return 하세요.
       const r = await fetch(`${API}${OFFERS}/${encodeURIComponent(id)}/status`, {
         method:'PATCH',
         headers:{ 'Content-Type':'application/json', Accept:'application/json', ...(TOKEN?{Authorization:`Bearer ${TOKEN}`}:{}) },
@@ -194,10 +192,8 @@
       });
       const j = await r.json().catch(()=>({}));
       if (!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
-      // 갱신
       const i = cache.findIndex(x=>x.id===id);
       if (i>=0) cache[i] = j.data || cache[i];
-      // 리렌더
       elList.innerHTML=''; render();
       modal.classList.remove('show');
       alert('처리되었습니다.');
@@ -208,7 +204,6 @@
     }
   }
 
-  // 최초 로드
   if (document.readyState==='loading') {
     document.addEventListener('DOMContentLoaded', fetchPage, { once:true });
   } else { fetchPage(); }
