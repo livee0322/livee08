@@ -1,8 +1,9 @@
-/* js/outbox-proposals.js — v1.1.1
-   - box=sent 목록
-   - 카드 타이틀: 쇼호스트 이름만
-   - 액션 버튼: 본문 아래 노출 (상세/재제안/취소/확정)
-*/
+<!-- js/outbox-proposals.js — v1.2.0
+     - host 이름: DTO.portfolio.nickname 사용
+     - 타이틀 좌측 이름 / 우측 칩
+     - accepted → payment.html?offer=...&amount=...
+     - 상세 모달도 portfolio 사용 -->
+
 (function () {
   'use strict';
   const $  = (s, el=document)=>el.querySelector(s);
@@ -15,8 +16,7 @@
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
   try{
-    // 타이틀 한 줄 유지(디자인 가이드: “보낸제안”)
-    window.LIVEE_UI?.mountHeader?.({ title:'보낸제안' });
+    window.LIVEE_UI?.mountHeader?.({ title:'보낸제안' }); // 한 줄 타이틀
     window.LIVEE_UI?.mountTabbar?.({ active:'mypage' });
   }catch(_){}
 
@@ -85,30 +85,39 @@
     return `<span class="ip-chip ${cls}">${label}</span>`;
   }
 
-  // 상태별 액션영역 HTML (본문 아래)
+  // 상태별 액션영역 HTML (본문 아래 배치)
   function actionsHTML(o){
     if (o.status === 'accepted') {
-      return `<button class="btn pri" data-act="confirmed"><i class="ri-check-double-line"></i> 계약 확정</button>`;
+      const amt = o.fee?.negotiable ? '' : (o.fee?.value || 0);
+      return `<a class="btn pri" href="payment.html?offer=${encodeURIComponent(o.id)}&amount=${encodeURIComponent(amt)}">
+                <i class="ri-check-double-line"></i> 계약 확정
+              </a>`;
     }
     if (o.status === 'rejected') {
-      const pid = o.toPortfolioId? (o.toPortfolioId._id||o.toPortfolioId.id||o.toPortfolioId) : '';
-      return `<button class="btn" data-offer data-portfolio-id="${pid}"><i class="ri-send-plane-line"></i> 다시 제안하기</button>`;
+      const pid = o.portfolio?.id || '';
+      return `<button class="btn" data-offer data-portfolio-id="${pid}">
+                <i class="ri-send-plane-line"></i> 다시 제안하기
+              </button>`;
     }
     if (o.status === 'pending' || o.status === 'on_hold') {
-      return `<button class="btn bad" data-act="withdrawn"><i class="ri-forbid-line"></i> 제안 취소</button>`;
+      return `<button class="btn bad" data-act="withdrawn">
+                <i class="ri-forbid-line"></i> 제안 취소
+              </button>`;
     }
     return ''; // confirmed/withdrawn → 액션 없음
   }
 
   function card(o){
-    const host = o.toPortfolioId?.nickname || '쇼호스트';
+    const host = o.portfolio?.nickname || '쇼호스트';
     const sched = [o.shootDate?fmtDate(o.shootDate):'', o.shootTime||''].filter(Boolean).join(' ');
     const due   = o.replyDeadline ? `답장 기한: ${fmtDate(o.replyDeadline)}` : '';
     return `
       <article class="ip-card" data-id="${o.id}">
         <div class="ip-body">
-          <!-- 타이틀: 수신자 라벨 제거, 이름만 -->
-          <div class="ip-title">${host} ${chip(o.status)}</div>
+          <div class="ip-title">
+            <span class="ttl">${host}</span>
+            ${chip(o.status)}
+          </div>
           ${o.message ? `<div class="ip-msgtext">${o.message}</div>` : ''}
           <div class="ip-meta">보낸 시각 · ${fmtDT(o.createdAt)}</div>
           <div class="ip-meta">출연료 · ${feeText(o.fee)}</div>
@@ -135,7 +144,7 @@
   const mClose = $('#opClose');
 
   function openDetail(o){
-    const host = o.toPortfolioId?.nickname || '-';
+    const host = o.portfolio?.nickname || '-';
     const sched = [o.shootDate?fmtDate(o.shootDate):'', o.shootTime||''].filter(Boolean).join(' ');
     const due   = o.replyDeadline ? fmtDate(o.replyDeadline) : '-';
     mBody.innerHTML = `
@@ -184,7 +193,6 @@
   async function doAct(id, act, btn){
     try{
       btn && (btn.disabled = true);
-      // NOTE: 서버가 confirmed 미지원이면 여기서 early-return 하세요.
       const r = await fetch(`${API}${OFFERS}/${encodeURIComponent(id)}/status`, {
         method:'PATCH',
         headers:{ 'Content-Type':'application/json', Accept:'application/json', ...(TOKEN?{Authorization:`Bearer ${TOKEN}`}:{}) },
