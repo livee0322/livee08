@@ -49,28 +49,30 @@
     return h;
   }
 
-  async function fetchPage(){
-    if (loading || done) return;
-    loading = true;
-    elMsg.textContent = '';
-    try{
-      const url = `${API}${OFFERS_BASE}?box=received&page=${page}&limit=${limit}`;
-      const r = await fetch(url, { method:'GET', headers:authHeaders() }); // NOTE: no credentials!
-      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-      const j = await r.json();
-      const items = Array.isArray(j.items) ? j.items : [];
-      cache = cache.concat(items);
-      if (items.length < limit) done = true;
-      page += 1;
-      render();
-    }catch(err){
-      console.error('[offers:inbox] load failed:', err);
-      elMsg.textContent = '제안 목록을 불러오지 못했습니다.';
-    }finally{
-      loading = false;
-      elMore.disabled = done;
-    }
+  // ... (기존 v1.1.0에서 fetchPage만 교체)
+async function fetchPage(){
+  if (loading || done) return;
+  loading = true;
+  elMsg.textContent = '';
+  try{
+    const url = `${API}${OFFERS_BASE}?box=received&page=${page}&limit=${limit}`;
+    const r = await fetch(url, { method:'GET', headers:authHeaders() }); // no credentials
+    if (r.status === 401) { elMsg.textContent = '로그인 세션이 만료되었습니다. 다시 로그인해주세요.'; loading=false; return; }
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    const j = await r.json();
+    const items = Array.isArray(j.items) ? j.items : [];
+    cache = cache.concat(items);
+    if (items.length < limit) done = true;
+    page += 1;
+    render();
+  }catch(err){
+    console.error('[offers:inbox] load failed:', err);
+    elMsg.textContent = '제안 목록을 불러오지 못했습니다.';
+  }finally{
+    loading = false;
+    elMore.disabled = done;
   }
+}
 
   function card(o){
     const pf   = o.toPortfolioId || {};
