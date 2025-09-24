@@ -1,4 +1,6 @@
-/* js/inbox-proposals.js — v1.1.0 (카드형 제안서 + 모달 응답) */
+/* js/inbox-proposals.js — v1.1.1 (카드형 제안서 + 모달 응답)
+   - 메타 문구 수정: ‘수신 시각’
+*/
 (function () {
   'use strict';
   const $  = (s, el=document)=>el.querySelector(s);
@@ -10,8 +12,10 @@
   const OFFERS = (EP.offersBase || '/offers-test').replace(/^\/*/,'/');
   const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
-  // header/tabbar
-  try{ window.LIVEE_UI?.mountHeader?.({ title:'받은 제안' }); window.LIVEE_UI?.mountTabbar?.({ active:'mypage' }); }catch(_){}
+  try{
+    window.LIVEE_UI?.mountHeader?.({ title:'받은 제안' });
+    window.LIVEE_UI?.mountTabbar?.({ active:'mypage' });
+  }catch(_){}
 
   const elList = $('#list');
   const elMsg  = $('#ipMsg');
@@ -21,10 +25,9 @@
   const fmtDT   = (v)=> v ? new Date(v).toLocaleString() : '-';
   const money   = (n)=> (n||0).toLocaleString();
 
-  // state
   let page=1, limit=20, loading=false, done=false, filterStatus='';
+  const cache = [];
 
-  // tabs
   $('#filters')?.addEventListener('click', (e)=>{
     const b = e.target.closest('.ip-tab'); if(!b) return;
     $$('.ip-tab').forEach(x=>x.classList.toggle('is-on',x===b));
@@ -32,9 +35,7 @@
     page=1; done=false; cache.length=0; elList.innerHTML=''; fetchPage();
   });
 
-  // fetch
   const authHeaders = ()=> TOKEN ? { Authorization:`Bearer ${TOKEN}` } : {};
-  const cache = [];
 
   async function fetchPage(){
     if (loading || done) return;
@@ -73,7 +74,8 @@
                 : status==='accepted' ? '수락'
                 : status==='rejected' ? '거절'
                 : status==='withdrawn' ? '철회' : status;
-    const cls = status==='accepted' ? 'ok' : status==='rejected' || status==='withdrawn' ? 'bad'
+    const cls = status==='accepted' ? 'ok'
+              : status==='rejected' || status==='withdrawn' ? 'bad'
               : status==='on_hold' ? 'hold' : '';
     return `<span class="ip-chip ${cls}">${label}</span>`;
   }
@@ -87,13 +89,13 @@
         <div class="ip-body">
           <div class="ip-title">${title} ${chip(o.status)}</div>
           ${o.message ? `<div class="ip-msgtext">${o.message}</div>` : ''}
-          <div class="ip-meta">대기 · ${fmtDT(o.createdAt)}</div>
+          <div class="ip-meta">수신 시각 · ${fmtDT(o.createdAt)}</div>
           <div class="ip-meta">출연료 · ${feeText(o.fee)}</div>
           ${sched || o.location ? `<div class="ip-meta">일정/장소 · ${[sched, o.location||''].filter(Boolean).join(' · ')}</div>` : ''}
           ${due ? `<div class="ip-meta">${due}</div>` : ''}
         </div>
         <div class="ip-acts">
-          <button class="btn icon" data-open><i class="ri-arrow-right-s-line"></i></button>
+          <button class="btn icon" data-open><i class="ri-information-line"></i> 상세</button>
         </div>
       </article>`;
   }
@@ -134,14 +136,6 @@
     $$('button', actBox).forEach(b=>b.disabled = (o.status==='withdrawn' || o.status==='accepted'));
   }
 
-  // 카드 클릭/자세히 버튼 → 상세
-  elList?.addEventListener('click', (e)=>{
-    const wrap = e.target.closest('.ip-card'); if(!wrap) return;
-    if (!e.target.closest('[data-open]') && e.target.closest('.ip-acts')) return;
-    const id = wrap.dataset.id;
-    const o = cache.find(x=>x.id===id); if(!o) return;
-    openDetail(o);
-  });
   elList?.addEventListener('click', (e)=>{
     const btn = e.target.closest('[data-open]'); if(!btn) return;
     const id = btn.closest('.ip-card')?.dataset.id; if(!id) return;
@@ -177,7 +171,6 @@
     }finally{ b.disabled=false; }
   });
 
-  // 최초 로드
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', fetchPage, { once:true });
   } else { fetchPage(); }
