@@ -1,7 +1,6 @@
-/* mypage.js — v1.3 (robust me + optimistic render)
-   - API 미응답/HTML 응답이어도 토큰 있으면 로그인으로 간주하여 메뉴 렌더
-   - roles/role/admin 대소문자 무시
-   - 경로는 LIVEE_CONFIG.PATH 한 곳에서 관리
+/* mypage.js — v1.3.1 (브랜드: 보낸 제안 outbox 링크 수정)
+   - 토큰만 있어도 낙관 렌더
+   - 경로는 LIVEE_CONFIG.PATH와 병합
 */
 (() => {
   const $ = (s, el=document) => el.querySelector(s);
@@ -13,7 +12,8 @@
     myRecruit: 'myrecruit.html',
     recruitNew: 'recruit-new.html',
     applicationsBrand: 'applications-brand.html',
-    inboxProposals: 'inbox-proposals.html',
+    inboxProposals: 'inbox-proposals.html',   // 받은 제안(쇼호스트)
+    outboxProposals: 'outbox-proposals.html', // 보낸 제안(브랜드) ← 추가
     bookmarksPortfolios: 'bookmarks-portfolios.html',
     portfolioMine: 'myportfolio.html',
     appliesMine: 'applications.html',
@@ -106,13 +106,13 @@
     { icon:'ri-file-list-2-line', label:'내 모집공고', href: PATH.myRecruit },
     { icon:'ri-add-box-line',     label:'공고 등록',   href: PATH.recruitNew },
     { icon:'ri-team-line',        label:'지원자 현황', href: PATH.applicationsBrand },
-    { icon:'ri-mail-send-line',   label:'보낸 제안',   href: PATH.inboxProposals },
+    { icon:'ri-mail-send-line',   label:'보낸 제안',   href: PATH.outboxProposals }, // ← 수정
     { icon:'ri-star-line',        label:'찜한 포트폴리오', href: PATH.bookmarksPortfolios },
   ];
   const MENU_HOST = [
     { icon:'ri-id-card-line',     label:'내 포트폴리오', href: PATH.portfolioMine },
     { icon:'ri-inbox-archive-line',label:'내 지원 내역', href: PATH.appliesMine },
-    { icon:'ri-mail-star-line',   label:'받은 제안',     href: PATH.inOffers },
+    { icon:'ri-mail-star-line',   label:'받은 제안',     href: PATH.inboxProposals }, // 받은 제안
     { icon:'ri-heart-2-line',     label:'찜한 공고',     href: PATH.savedRecruits },
     { icon:'ri-wallet-3-line',    label:'정산 내역',     href: PATH.settlement },
   ];
@@ -134,7 +134,6 @@
     const loggedIn = !!TOKEN;
     root.innerHTML = [
       profileCard(me, loggedIn),
-      // 로그인 X면 최소 설정/로그인만 보여주자
       !loggedIn ? '' : [
         isBrandLike(me) ? section('브랜드 메뉴', grid(MENU_BRAND)) : '',
         isHostLike(me)  ? section('쇼호스트 메뉴', grid(MENU_HOST)) : ''
