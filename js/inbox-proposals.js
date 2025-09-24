@@ -1,179 +1,167 @@
-/* js/inbox-proposals.js — v1.1.0
-   - GET /offers-test?box=received&page=&limit=
-   - PATCH /offers-test/:id/status { status }
-   - CORS: credentials 사용 금지(Authorization 헤더만)
-*/
-(() => {
-  const $  = (s, el=document) => el.querySelector(s);
-  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+/* js/inbox-proposals.js — v1.2.0 (상세·액션 확장) */
+(function () {
+  'use strict';
+  const $  = (s, el=document)=>el.querySelector(s);
+  const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
+
   const CFG = window.LIVEE_CONFIG || {};
-  const API = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
-  const EP  = (CFG.endpoints || {});
-  const OFFERS_BASE = (EP.offersBase || '/offers-test');
+  const EP  = CFG.endpoints || {};
+  const API = (CFG.API_BASE || '/api/v1').replace(/\/+$/,'');
+  const OFFERS = (EP.offersBase || '/offers-test').replace(/^\/*/,'/');
+  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
 
-  const TOKEN =
-    localStorage.getItem('livee_token') ||
-    localStorage.getItem('liveeToken') || '';
-
-  // 헤더/탭바
-  try {
-    window.LIVEE_UI?.mountHeader?.({ title:'받은 제안' });
-    window.LIVEE_UI?.mountTopTabs?.({ active:null });
-    window.LIVEE_UI?.mountTabbar?.({ active:'mypage' });
-  } catch(_) {}
-
-  // -------- state --------
-  let page = 1, limit = 20, loading = false, done = false;
-  let filter = ''; // '', 'pending','on_hold','accepted','rejected'
-  let cache = [];  // 누적 items
+  // header/tabbar
+  try{ window.LIVEE_UI?.mountHeader?.({ title:'받은 제안' }); window.LIVEE_UI?.mountTabbar?.({ active:'mypage' }); }catch(_){}
 
   const elList = $('#list');
   const elMsg  = $('#ipMsg');
   const elMore = $('#loadMore');
-  const elModal= $('#ipModal');
-  const elDetail = $('#ipDetail');
 
-  const prettyDate = (s) => {
-    try {
-      const d = new Date(s);
-      return isNaN(d) ? '-' : d.toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-    } catch(_){ return '-'; }
-  };
-  const statusName = (st) => ({
-    pending:'대기', on_hold:'보류', accepted:'수락', rejected:'거절', withdrawn:'철회'
-  }[st] || st);
+  const fmtDate = (v)=> v ? new Date(v).toLocaleDateString() : '-';
+  const fmtDT   = (v)=> v ? new Date(v).toLocaleString() : '-';
+  const money   = (n)=> (n||0).toLocaleString();
 
-  function authHeaders(){
-    const h = { 'Accept':'application/json', 'Content-Type':'application/json' };
-    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
-    return h;
+  // state
+  let page=1, limit=20, loading=false, done=false, filterStatus='';
+
+  // tabs
+  $('#filters')?.addEventListener('click', (e)=>{
+    const b = e.target.closest('.ip-tab'); if(!b) return;
+    $$('.ip-tab').forEach(x=>x.classList.toggle('is-on',x===b));
+    filterStatus = b.dataset.status || '';
+    page=1; done=false; cache.length=0; elList.innerHTML=''; fetchPage();
+  });
+
+  // fetch
+  const authHeaders = ()=> TOKEN ? { Authorization:`Bearer ${TOKEN}` } : {};
+  const cache = [];
+
+  async function fetchPage(){
+    if (loading || done) return;
+    loading = true; elMsg.textContent='';
+    try{
+      const qs = new URLSearchParams({ box:'received', page:String(page), limit:String(limit) });
+      if (filterStatus) qs.set('status', filterStatus);
+      const url = `${API}${OFFERS}?`+qs.toString();
+      const r = await fetch(url, { headers: { Accept:'application/json', ...authHeaders() } });
+      if (r.status===401){ elMsg.textContent='로그인 세션이 만료되었습니다. 다시 로그인 해주세요.'; loading=false; return; }
+      if (!r.ok) throw new Error(await r.text());
+      const j = await r.json();
+      const items = Array.isArray(j.items) ? j.items : [];
+      cache.push(...items);
+      if (items.length < limit) done = true;
+      page += 1;
+      render();
+    }catch(e){
+      console.error('[offers:inbox] load failed', e);
+      elMsg.textContent='제안 목록을 불러오지 못했습니다.';
+    }finally{
+      loading=false; elMore.disabled=done;
+    }
   }
 
-  // ... (기존 v1.1.0에서 fetchPage만 교체)
-async function fetchPage(){
-  if (loading || done) return;
-  loading = true;
-  elMsg.textContent = '';
-  try{
-    const url = `${API}${OFFERS_BASE}?box=received&page=${page}&limit=${limit}`;
-    const r = await fetch(url, { method:'GET', headers:authHeaders() }); // no credentials
-    if (r.status === 401) { elMsg.textContent = '로그인 세션이 만료되었습니다. 다시 로그인해주세요.'; loading=false; return; }
-    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-    const j = await r.json();
-    const items = Array.isArray(j.items) ? j.items : [];
-    cache = cache.concat(items);
-    if (items.length < limit) done = true;
-    page += 1;
-    render();
-  }catch(err){
-    console.error('[offers:inbox] load failed:', err);
-    elMsg.textContent = '제안 목록을 불러오지 못했습니다.';
-  }finally{
-    loading = false;
-    elMore.disabled = done;
+  function feeText(f){
+    if (!f) return '출연료 미정';
+    if (f.negotiable) return '협의';
+    if (f.value == null) return '출연료 미정';
+    return money(f.value)+'원';
   }
-}
 
   function card(o){
-    const pf   = o.toPortfolioId || {};
-    const name = pf.nickname || '쇼호스트';
-    const thumb= pf.mainThumbnailUrl || (CFG.placeholderThumb || 'default.jpg');
-    const meta = `${statusName(o.status)} · ${prettyDate(o.createdAt)}`;
-    const msg  = String(o.message||'').replace(/\n/g,' ').slice(0,90);
+    const thumb = o.portfolio?.thumb || '';
+    const title = o.brandName || '브랜드';
+    const sub   = o.message || '';
+    const meta  = `${o.status==='pending'?'대기':o.status==='on_hold'?'보류':o.status==='accepted'?'수락':o.status==='rejected'?'거절':'철회'} · ${fmtDT(o.createdAt)}`;
+    const sched = [o.shootDate?fmtDate(o.shootDate):'', o.shootTime||''].filter(Boolean).join(' ');
+    const loc   = o.location || '';
+    const due   = o.replyDeadline ? `답장 기한: ${fmtDate(o.replyDeadline)}` : '';
     return `
       <article class="ip-item" data-id="${o.id}">
-        <img class="ip-avatar" src="${thumb}" alt="">
+        ${thumb ? `<img class="ip-thumb" src="${thumb}" alt="">` : ''}
         <div class="ip-body">
-          <div class="ip-name">${name}</div>
-          <div class="ip-msgline">${msg || '메시지 없음'}</div>
+          <div class="ip-title">${title}</div>
+          <div class="ip-sub">${sub}</div>
           <div class="ip-meta">${meta}</div>
+          <div class="ip-meta">출연료 · ${feeText(o.fee)}</div>
+          ${sched || loc ? `<div class="ip-meta">일정/장소 · ${[sched, loc].filter(Boolean).join(' · ')}</div>` : ''}
+          ${due ? `<div class="ip-meta">${due}</div>` : ''}
         </div>
-        <button class="ip-open" aria-label="상세 보기"><i class="ri-arrow-right-s-line"></i></button>
-      </article>
-    `;
+        <button class="ip-more" aria-label="자세히">›</button>
+      </article>`;
   }
 
   function render(){
-    const list = cache.filter(it => !filter || it.status === filter);
-    elList.innerHTML = list.length
-      ? list.map(card).join('')
-      : `<div class="ip-empty">표시할 제안이 없습니다</div>`;
+    elList.insertAdjacentHTML('beforeend', cache.slice(elList.children.length).map(card).join(''));
   }
 
-  // 상세 모달 열기
-  function openModal(id){
-    const o = cache.find(x=>x.id===id); if(!o) return;
-    const pf = o.toPortfolioId || {};
-    elDetail.innerHTML = `
-      <div class="ip-dl">
-        <div><b>대상 포트폴리오</b><div>${pf.nickname || '-'}</div></div>
-        <div><b>상태</b><div>${statusName(o.status)}</div></div>
-        <div><b>받은 시각</b><div>${prettyDate(o.createdAt)}</div></div>
-        ${o.recruitId ? `<div><b>관련 공고</b><div>${o.recruitId.title || ''}</div></div>` : ''}
-        <div class="ip-memo"><b>메시지</b><p>${(o.message||'').replace(/\n/g,'<br>') || '메시지 없음'}</p></div>
-      </div>
-    `;
-    elModal.setAttribute('aria-hidden','false');
-    elModal.classList.add('is-on');
-
-    // 버튼 상태
-    $$('.ip-modal__ft .btn', elModal).forEach(b=>{
-      const act = b.getAttribute('data-act');
-      // 수신자만 변경 가능하므로 모두 표시. 필요시 상태별 비활성화
-      b.disabled = (o.status === 'accepted' && act !== 'accepted');
-    });
-
-    // 액션 핸들러
-    $$('.ip-modal__ft .btn', elModal).forEach(b=>{
-      b.onclick = async () => {
-        const want = b.getAttribute('data-act'); // on_hold | rejected | accepted
-        try{
-          const r = await fetch(`${API}${OFFERS_BASE}/${encodeURIComponent(id)}/status`, {
-            method:'PATCH',
-            headers: authHeaders(),
-            body: JSON.stringify({ status: want })
-          });
-          if (!r.ok) throw new Error(`${r.status}`);
-          const j = await r.json();
-          // 캐시 갱신 후 다시 렌더
-          const idx = cache.findIndex(x=>x.id===id);
-          if (idx >= 0) cache[idx] = j.data;
-          render();
-          closeModal();
-        }catch(err){
-          console.error('[offers] status change failed', err);
-          alert('상태 변경에 실패했습니다.');
-        }
-      };
-    });
-  }
-
-  function closeModal(){
-    elModal.classList.remove('is-on');
-    elModal.setAttribute('aria-hidden','true');
-  }
-
-  // ----- events -----
-  $('#ipClose')?.addEventListener('click', closeModal);
-  elModal?.addEventListener('click', (e)=>{ if(e.target===elModal) closeModal(); });
   elMore?.addEventListener('click', fetchPage);
 
-  $('#filters')?.addEventListener('click', (e)=>{
-    const b = e.target.closest('.ip-tab'); if(!b) return;
-    $$('.ip-tab', $('#filters')).forEach(x=>x.classList.toggle('is-on', x===b));
-    filter = b.getAttribute('data-status') || '';
-    render();
-  });
+  // 상세 모달
+  const modal   = $('#ipModal');
+  const mBody   = $('#ipDetail');
+  const mClose  = $('#ipClose');
+  const actBox  = modal?.querySelector('.ip-modal__ft');
+
+  function openDetail(o){
+    const sched = [o.shootDate?fmtDate(o.shootDate):'', o.shootTime||''].filter(Boolean).join(' ');
+    const due   = o.replyDeadline ? fmtDate(o.replyDeadline) : '-';
+    mBody.innerHTML = `
+      <div class="ipd">
+        <div><b>브랜드</b><div>${o.brandName || '-'}</div></div>
+        <div><b>출연료</b><div>${feeText(o.fee)}</div></div>
+        <div><b>메시지</b><div>${(o.message||'-').replace(/\n/g,'<br>')}</div></div>
+        <div><b>촬영</b><div>${sched || '-'}</div></div>
+        <div><b>장소</b><div>${o.location || '-'}</div></div>
+        <div><b>답장 기한</b><div>${due}</div></div>
+        ${o.responseMessage ? `<div><b>내 응답</b><div>${o.responseMessage}</div></div>` : ''}
+        <div class="ipd-reply">
+          <label>응답 메시지 (선택)</label>
+          <textarea id="ipReplyMsg" rows="3" placeholder="수락/거절/보류 사유를 적어주세요 (선택)"></textarea>
+        </div>
+      </div>`;
+    modal.setAttribute('aria-hidden','false');
+    modal.classList.add('show');
+    modal.dataset.id = o.id;
+    // 버튼 상태
+    $$('button', actBox).forEach(b=>b.disabled = (o.status==='withdrawn' || o.status==='accepted'));
+  }
 
   elList?.addEventListener('click', (e)=>{
     const it = e.target.closest('.ip-item'); if(!it) return;
-    openModal(it.getAttribute('data-id'));
+    const id = it.dataset.id;
+    const o = cache.find(x=>x.id===id); if(!o) return;
+    openDetail(o);
   });
 
-  // ----- init -----
-  if (!TOKEN) {
-    elMsg.textContent = '로그인이 필요합니다.';
-  } else {
-    fetchPage();
-  }
+  mClose?.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+
+  actBox?.addEventListener('click', async (e)=>{
+    const b = e.target.closest('button[data-act]'); if(!b) return;
+    const id = modal.dataset.id; if(!id) return;
+    const status = b.dataset.act;
+    const msg = $('#ipReplyMsg')?.value?.trim() || '';
+    b.disabled = true;
+    try{
+      const r = await fetch(`${API}${OFFERS}/${encodeURIComponent(id)}/status`,{
+        method:'PATCH',
+        headers:{ 'Content-Type':'application/json', Accept:'application/json', ...(TOKEN?{Authorization:`Bearer ${TOKEN}`}:{}) },
+        body: JSON.stringify({ status, responseMessage: msg })
+      });
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
+      // 캐시 업데이트 후 리렌더
+      const i = cache.findIndex(x=>x.id===id);
+      if (i>=0) cache[i] = j.data || cache[i];
+      elList.innerHTML=''; render();
+      alert('처리되었습니다.');
+      modal.classList.remove('show');
+    }catch(err){
+      alert('처리 실패: ' + (err.message || '오류'));
+    }finally{ b.disabled=false; }
+  });
+
+  // 최초 로드
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fetchPage, { once:true });
+  } else { fetchPage(); }
 })();
