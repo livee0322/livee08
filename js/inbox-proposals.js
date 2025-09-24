@@ -1,4 +1,4 @@
-/* js/inbox-proposals.js — v1.2.0 (상세·액션 확장) */
+/* js/inbox-proposals.js — v1.1.0 (카드형 제안서 + 모달 응답) */
 (function () {
   'use strict';
   const $  = (s, el=document)=>el.querySelector(s);
@@ -55,6 +55,7 @@
     }catch(e){
       console.error('[offers:inbox] load failed', e);
       elMsg.textContent='제안 목록을 불러오지 못했습니다.';
+      elMsg.classList.add('show');
     }finally{
       loading=false; elMore.disabled=done;
     }
@@ -66,27 +67,34 @@
     if (f.value == null) return '출연료 미정';
     return money(f.value)+'원';
   }
+  function chip(status){
+    const label = status==='pending' ? '대기'
+                : status==='on_hold' ? '보류'
+                : status==='accepted' ? '수락'
+                : status==='rejected' ? '거절'
+                : status==='withdrawn' ? '철회' : status;
+    const cls = status==='accepted' ? 'ok' : status==='rejected' || status==='withdrawn' ? 'bad'
+              : status==='on_hold' ? 'hold' : '';
+    return `<span class="ip-chip ${cls}">${label}</span>`;
+  }
 
   function card(o){
-    const thumb = o.portfolio?.thumb || '';
     const title = o.brandName || '브랜드';
-    const sub   = o.message || '';
-    const meta  = `${o.status==='pending'?'대기':o.status==='on_hold'?'보류':o.status==='accepted'?'수락':o.status==='rejected'?'거절':'철회'} · ${fmtDT(o.createdAt)}`;
     const sched = [o.shootDate?fmtDate(o.shootDate):'', o.shootTime||''].filter(Boolean).join(' ');
-    const loc   = o.location || '';
     const due   = o.replyDeadline ? `답장 기한: ${fmtDate(o.replyDeadline)}` : '';
     return `
-      <article class="ip-item" data-id="${o.id}">
-        ${thumb ? `<img class="ip-thumb" src="${thumb}" alt="">` : ''}
+      <article class="ip-card" data-id="${o.id}">
         <div class="ip-body">
-          <div class="ip-title">${title}</div>
-          <div class="ip-sub">${sub}</div>
-          <div class="ip-meta">${meta}</div>
+          <div class="ip-title">${title} ${chip(o.status)}</div>
+          ${o.message ? `<div class="ip-msgtext">${o.message}</div>` : ''}
+          <div class="ip-meta">대기 · ${fmtDT(o.createdAt)}</div>
           <div class="ip-meta">출연료 · ${feeText(o.fee)}</div>
-          ${sched || loc ? `<div class="ip-meta">일정/장소 · ${[sched, loc].filter(Boolean).join(' · ')}</div>` : ''}
+          ${sched || o.location ? `<div class="ip-meta">일정/장소 · ${[sched, o.location||''].filter(Boolean).join(' · ')}</div>` : ''}
           ${due ? `<div class="ip-meta">${due}</div>` : ''}
         </div>
-        <button class="ip-more" aria-label="자세히">›</button>
+        <div class="ip-acts">
+          <button class="btn icon" data-open><i class="ri-arrow-right-s-line"></i></button>
+        </div>
       </article>`;
   }
 
@@ -122,19 +130,28 @@
     modal.setAttribute('aria-hidden','false');
     modal.classList.add('show');
     modal.dataset.id = o.id;
-    // 버튼 상태
+    // 버튼 상태(수락 완료/철회 후 비활성)
     $$('button', actBox).forEach(b=>b.disabled = (o.status==='withdrawn' || o.status==='accepted'));
   }
 
+  // 카드 클릭/자세히 버튼 → 상세
   elList?.addEventListener('click', (e)=>{
-    const it = e.target.closest('.ip-item'); if(!it) return;
-    const id = it.dataset.id;
+    const wrap = e.target.closest('.ip-card'); if(!wrap) return;
+    if (!e.target.closest('[data-open]') && e.target.closest('.ip-acts')) return;
+    const id = wrap.dataset.id;
+    const o = cache.find(x=>x.id===id); if(!o) return;
+    openDetail(o);
+  });
+  elList?.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-open]'); if(!btn) return;
+    const id = btn.closest('.ip-card')?.dataset.id; if(!id) return;
     const o = cache.find(x=>x.id===id); if(!o) return;
     openDetail(o);
   });
 
   mClose?.addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
 
+  // 수락/거절/보류 PATCH
   actBox?.addEventListener('click', async (e)=>{
     const b = e.target.closest('button[data-act]'); if(!b) return;
     const id = modal.dataset.id; if(!id) return;
@@ -144,12 +161,12 @@
     try{
       const r = await fetch(`${API}${OFFERS}/${encodeURIComponent(id)}/status`,{
         method:'PATCH',
-        headers:{ 'Content-Type':'application/json', Accept:'application/json', ...(TOKEN?{Authorization:`Bearer ${TOKEN}`}:{}) },
+        headers:{ 'Content-Type':'application/json', Accept:'application/json',
+          ...(TOKEN?{Authorization:`Bearer ${TOKEN}`}:{}) },
         body: JSON.stringify({ status, responseMessage: msg })
       });
       const j = await r.json().catch(()=>({}));
       if (!r.ok || j.ok===false) throw new Error(j.message || `HTTP_${r.status}`);
-      // 캐시 업데이트 후 리렌더
       const i = cache.findIndex(x=>x.id===id);
       if (i>=0) cache[i] = j.data || cache[i];
       elList.innerHTML=''; render();
