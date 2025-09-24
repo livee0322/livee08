@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>보낸 제안</title>
+
+  <!-- fonts & icon -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+
+  <!-- site base styles -->
+  <link rel="stylesheet" href="css/reset-frame.css">
+  <link rel="stylesheet" href="css/main.css">
+
+  <!-- page styles (inbox와 동일 CSS 재사용) -->
+  <link rel="stylesheet" href="css/inbox-proposals.css?v=1.1.0">
+</head>
+<body>
+  <header id="appbar"></header>
+
+  <main class="ip-wrap">
+    <div class="ip-head">
+      <h1>보낸 제안</h1>
+      <div class="ip-filters" id="filters" role="tablist" aria-label="상태 필터">
+        <button class="ip-tab is-on" data-status="">전체</button>
+        <button class="ip-tab" data-status="pending">대기</button>
+        <button class="ip-tab" data-status="on_hold">보류</button>
+        <button class="ip-tab" data-status="accepted">수락</button>
+        <button class="ip-tab" data-status="rejected">거절</button>
+        <button class="ip-tab" data-status="confirmed">확정</button>
+        <button class="ip-tab" data-status="withdrawn">철회</button>
+      </div>
+    </div>
+
+    <div id="ipMsg" class="ip-msg" role="status" aria-live="polite"></div>
+
+    <section id="list" class="ip-list" aria-label="보낸 제안 목록"></section>
+
+    <div class="ip-more">
+      <button id="loadMore" class="btn">더 불러오기</button>
+    </div>
+  </main>
+
+  <!-- 상세 모달 -->
+  <div id="opModal" class="ip-modal" aria-hidden="true">
+    <div class="ip-modal__dlg" role="dialog" aria-modal="true" aria-labelledby="opModalTitle">
+      <header class="ip-modal__hd">
+        <h2 id="opModalTitle">제안 상세</h2>
+        <button class="ip-x" id="opClose" aria-label="닫기"><i class="ri-close-line"></i></button>
+      </header>
+      <div class="ip-modal__bd" id="opDetail"></div>
+      <footer class="ip-modal__ft" id="opActs">
+        <!-- 상태에 따라 동적으로 버튼 렌더 -->
+      </footer>
+    </div>
+  </div>
+
+  <footer id="bottom-tabs"></footer>
+
+  <!-- scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <!-- 제안 모달(다시 제안하기에서 사용) -->
+  <script src="js/common/offer-modal.js?v=1.1.0"></script>
+  <script src="js/outbox-proposals.js?v=1.1.0"></script>
+</body>
+</html>
