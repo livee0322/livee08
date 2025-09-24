@@ -1,0 +1,42 @@
+:root{
+  --fg:#0f172a; --mut:#6b7280; --bd:#e5e7eb; --bg:#fff;
+  --chip:#f3f4f6; --ok:#2563eb; --bad:#ef4444; --hold:#f59e0b;
+}
+.ip-wrap{max-width:960px;margin:0 auto;padding:16px 16px 80px;font-family:'SUIT',system-ui,-apple-system,sans-serif}
+.ip-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:10px}
+.ip-head h1{font-size:22px;letter-spacing:-.2px}
+.ip-filters{display:flex;gap:8px;flex-wrap:wrap}
+.ip-tab{padding:8px 12px;border:1px solid var(--bd);background:#fff;border-radius:999px;font-size:14px}
+.ip-tab.is-on{background:#111827;color:#fff;border-color:#111827}
+
+.ip-msg{display:none;margin:10px 0;padding:10px 12px;border-radius:10px;background:#f9fafb;border:1px solid var(--bd);font-size:14px}
+.ip-msg.show{display:block}
+
+.ip-list{display:flex;flex-direction:column;gap:10px}
+.ip-card{display:flex;gap:12px;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg)}
+.ip-logo{width:56px;height:56px;border-radius:10px;object-fit:cover;background:#f3f4f6}
+.ip-body{flex:1;min-width:0}
+.ip-title{font-weight:700;color:var(--fg);margin-bottom:2px}
+.ip-meta{font-size:13px;color:var(--mut)}
+.ip-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;background:var(--chip);font-size:12px;margin-left:6px}
+.ip-chip.ok{background:#dbeafe;color:#1d4ed8}
+.ip-chip.bad{background:#fee2e2;color:#b91c1c}
+.ip-chip.hold{background:#fef3c7;color:#92400e}
+.ip-msgtext{margin-top:8px;color:#374151;font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.ip-acts{display:flex;gap:8px;margin-left:auto}
+.ip-acts .btn{padding:8px 10px;font-size:13px}
+
+.ip-more{display:flex;justify-content:center;margin-top:14px}
+.btn{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:10px 14px}
+.btn.pri{background:#111827;color:#fff;border-color:#111827}
+.btn.bad{background:#fff;color:var(--bad);border-color:#fecaca}
+
+/* modal */
+.ip-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.ip-modal.show{display:flex}
+.ip-modal__dlg{max-width:560px;width:100%;background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--bd)}
+.ip-modal__hd{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bd)}
+.ip-modal__bd{padding:14px;max-height:60vh;overflow:auto}
+.ip-modal__ft{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--bd)}
+.ip-x{border:none;background:transparent;font-size:22px;line-height:1}
