@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>결제 · 계약 확정</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+  <link rel="stylesheet" href="css/reset-frame.css">
+  <style>
+    :root{--bd:#e5e7eb;--fg:#111827;--mut:#6b7280;--pri:#5449ff;}
+    body{font-family:'SUIT',system-ui,-apple-system,sans-serif;background:#fff}
+    .pay-wrap{max-width:720px;margin:0 auto;padding:16px 16px 80px}
+    h1{font-size:22px;margin:6px 0 14px}
+    .card{border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+    .row{display:flex;justify-content:space-between;margin:6px 0}
+    .mut{color:var(--mut)}
+    .amt{font-weight:900;font-size:22px}
+    .ipt{width:100%;height:44px;border:1px solid var(--bd);border-radius:10px;padding:0 12px}
+    .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .btn{height:48px;border-radius:12px;border:1px solid var(--bd);padding:0 16px;background:#fff;font-weight:800}
+    .btn.pri{background:var(--pri);color:#fff;border-color:transparent}
+    .bank{background:#f9fafb;border:1px dashed var(--bd);padding:12px;border-radius:12px;margin-top:10px}
+    .ok{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50}
+    .ok.show{display:flex}
+    .ok .sheet{background:#fff;border-radius:16px;padding:18px;border:1px solid var(--bd);width:min(420px,92%)}
+  </style>
+</head>
+<body>
+  <main class="pay-wrap">
+    <h1>결제 · 계약 확정</h1>
+
+    <section class="card">
+      <div class="row"><div class="mut">오퍼 ID</div><div id="offerId" class="mut"></div></div>
+      <div class="row"><div>결제 금액</div><div id="amt" class="amt">-</div></div>
+      <div id="negoWrap" style="display:none;margin-top:8px">
+        <label class="mut" for="amtIn">협의 금액 입력</label>
+        <input id="amtIn" class="ipt" type="number" min="0" step="1000" placeholder="예: 50000" />
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="mut">결제 방법 선택</div>
+      <div class="btns">
+        <button id="bankBtn" class="btn"><i class="ri-bank-card-line"></i> 무통장입금</button>
+        <button id="cardBtn" class="btn pri"><i class="ri-credit-card-2-line"></i> 카드결제</button>
+      </div>
+      <div id="bankInfo" class="bank" style="display:none">
+        <div><b>입금 계좌</b></div>
+        <div class="mut">국민은행 123-456-789012 · 예금주: 라이비</div>
+        <div class="mut">입금자명에 오퍼ID의 뒤 4자리 포함 부탁드려요.</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="mut">안내</div>
+      <p style="margin-top:6px;color:#374151">본 페이지는 데모 결제 화면입니다. 결제 완료 후 “보낸제안” 화면으로 돌아갑니다.</p>
+      <div class="btns">
+        <a class="btn" href="outbox-proposals.html"><i class="ri-arrow-go-back-line"></i> 보낸제안으로 돌아가기</a>
+      </div>
+    </section>
+  </main>
+
+  <div id="ok" class="ok" aria-hidden="true">
+    <div class="sheet">
+      <h3 style="margin:0 0 6px">결제가 완료되었습니다 🎉</h3>
+      <div class="mut" id="okAmt"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+        <a class="btn pri" href="outbox-proposals.html">보낸제안으로 이동</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const qs = new URLSearchParams(location.search);
+      const offerId = qs.get('offer') || '-';
+      const amountQ = qs.get('amount');
+      const nego = !amountQ || amountQ === '0' || amountQ === '';
+      const offerIdEl = document.getElementById('offerId');
+      const amtEl = document.getElementById('amt');
+      const ok = document.getElementById('ok');
+      const okAmt = document.getElementById('okAmt');
+
+      offerIdEl.textContent = offerId;
+      if (nego){
+        document.getElementById('negoWrap').style.display='block';
+        amtEl.textContent = '협의';
+      } else {
+        const n = Number(amountQ||0);
+        amtEl.textContent = n.toLocaleString() + '원';
+      }
+
+      function getAmount(){
+        if (!nego) return Number(amountQ||0);
+        const v = Number(document.getElementById('amtIn').value||0);
+        return Math.max(0, Math.floor(v));
+      }
+
+      document.getElementById('bankBtn').onclick = ()=>{
+        document.getElementById('bankInfo').style.display='block';
+      };
+
+      document.getElementById('cardBtn').onclick = ()=>{
+        const amt = getAmount();
+        if (nego && !amt){ alert('협의 금액을 입력하세요.'); return; }
+        okAmt.textContent = (amt||0).toLocaleString() + '원 결제됨(가상)';
+        ok.classList.add('show');
+        ok.setAttribute('aria-hidden','false');
+      };
+    })();
+  </script>
+</body>
+</html>
