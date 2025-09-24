@@ -1,4 +1,4 @@
-/* home/templates.js — v2.14.0 (hero slider + sections + models hscroll) */
+/* home/templates.js — v2.14.1 (hero slider + sections + models hscroll + offer trigger) */
 (function (w) {
   'use strict';
   const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
@@ -75,7 +75,8 @@
   /* ---------- Portfolios (쇼호스트) ---------- */
   const tplPortfolios = (items) => items && items.length
     ? '<div class="pf-hlist">' + items.slice(0, 6).map(p => {
-        const pid   = encodeURIComponent(p.id);
+        const pidRaw = p.id;                      // API용 (그대로)
+        const pidQ   = encodeURIComponent(pidRaw); // URL용 (인코딩)
         const name  = (p.nickname || '쇼호스트');
         const intro = (p.headline || '소개 준비 중');
         return `
@@ -85,16 +86,17 @@
             <div class="pf-name">${name}</div>
             <div class="pf-intro">${intro}</div>
             <div class="pf-actions">
-              <a class="btn pri" href="outbox-proposals.html?to=${pid}">
+              <!-- 제안 모달 트리거 -->
+              <button class="btn pri" type="button" data-offer data-portfolio-id="${pidRaw}">
                 <i class="ri-send-plane-line"></i> 제안
-              </a>
-              <a class="btn" href="portfolio-detail.html?id=${pid}">
+              </button>
+              <a class="btn" href="portfolio-detail.html?id=${pidQ}">
                 <i class="ri-user-line"></i> 프로필 보기
               </a>
             </div>
             <div class="pf-moreRow">
               <span></span>
-              <a href="portfolio-detail.html?id=${pid}" aria-label="프로필 상세보기">
+              <a href="portfolio-detail.html?id=${pidQ}" aria-label="프로필 상세보기">
                 프로필 상세보기 <span class="arrow">›</span>
               </a>
             </div>
@@ -122,7 +124,6 @@
   }
 
   /* ---------- NEW: Models H-Scroll (2.5-up) ---------- */
-  // Schema 참고: mainThumbnailUrl, coverImageUrl, nickname, headline, demographics, agePublic, genderPublic 등
   const tplModelsHScroll = (items) => {
     if (!items || !items.length) {
       return `<div class="hscroll models">
@@ -140,7 +141,6 @@
       const thumb  = m.mainThumbnailUrl || m.coverImageUrl || FALLBACK_IMG;
       const name   = m.nickname || '모델';
       const intro  = m.headline || '';
-      // 공개된 값만 간단 배지로 노출
       const chips = [];
       const d = (m.demographics || {});
       if (d.genderPublic && d.gender) chips.push(d.gender === 'female' ? '여성' : d.gender === 'male' ? '남성' : '기타');
