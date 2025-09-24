@@ -2,34 +2,49 @@
   --fg:#0f172a; --mut:#6b7280; --bd:#e5e7eb; --bg:#fff;
   --chip:#f3f4f6; --ok:#2563eb; --bad:#ef4444; --hold:#f59e0b;
 }
-.ip-wrap{max-width:960px;margin:0 auto;padding:16px 16px 80px;font-family:'SUIT',system-ui,-apple-system,sans-serif}
-.ip-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:10px}
-.ip-head h1{font-size:22px;letter-spacing:-.2px}
-.ip-filters{display:flex;gap:8px;flex-wrap:wrap}
-.ip-tab{padding:8px 12px;border:1px solid var(--bd);background:#fff;border-radius:999px;font-size:14px}
+
+/* wrap */
+.ip-wrap{max-width:960px;margin:0 auto;padding:16px 16px 88px;
+  font-family:'SUIT',system-ui,-apple-system,sans-serif}
+
+/* head */
+.ip-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.ip-head h1{font-size:20px;font-weight:900;letter-spacing:-.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* filters: 한 줄 가로 스크롤 */
+.ip-filters{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding:2px 0;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.ip-filters::-webkit-scrollbar{display:none}
+.ip-tab{flex:0 0 auto;padding:8px 12px;border:1px solid var(--bd);background:#fff;border-radius:999px;font-size:14px}
 .ip-tab.is-on{background:#111827;color:#fff;border-color:#111827}
 
+/* message */
 .ip-msg{display:none;margin:10px 0;padding:10px 12px;border-radius:10px;background:#f9fafb;border:1px solid var(--bd);font-size:14px}
 .ip-msg.show{display:block}
 
-.ip-list{display:flex;flex-direction:column;gap:10px}
-.ip-card{display:flex;gap:12px;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg)}
-.ip-body{flex:1;min-width:0}
-.ip-title{font-weight:800;color:var(--fg);margin-bottom:2px;display:flex;align-items:center;gap:6px}
-.ip-meta{font-size:13px;color:var(--mut);margin-top:2px}
-.ip-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;background:var(--chip);font-size:12px;margin-left:6px;line-height:1}
-.ip-chip.ok{background:#dbeafe;color:#1d4ed8}
-.ip-chip.bad{background:#fee2e2;color:#b91c1c}
-.ip-chip.hold{background:#fef3c7;color:#92400e}
-.ip-msgtext{margin-top:8px;color:#374151;font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* list/cards */
+.ip-list{display:flex;flex-direction:column;gap:12px}
+.ip-card{display:block;padding:14px;border:1px solid var(--bd);border-radius:12px;background:var(--bg)}
+.ip-row{display:flex;align-items:center;gap:10px}
+.ip-title{font-weight:900;color:var(--fg);font-size:16px;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip-badge{margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--chip);font-size:12px;color:#374151}
+.ip-badge.ok{background:#dbeafe;color:#1d4ed8}
+.ip-badge.bad{background:#fee2e2;color:#b91c1c}
+.ip-badge.hold{background:#fef3c7;color:#92400e}
 
-.ip-acts{display:flex;gap:8px;margin-left:auto;align-items:flex-start}
-.btn{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:8px 12px;font-weight:700}
+.ip-meta{font-size:13px;color:var(--mut);margin-top:4px}
+.ip-msgtext{margin-top:8px;color:#374151;font-size:14px;line-height:1.55}
+
+/* actions: 본문 아래 정렬 */
+.ip-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.btn{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:10px 14px;font-weight:800}
 .btn.pri{background:#111827;color:#fff;border-color:#111827}
 .btn.bad{background:#fff;color:var(--bad);border-color:#fecaca}
-.btn.icon{padding:8px 10px}
+.btn.icon{display:inline-flex;align-items:center;gap:6px}
 
-/* modal */
+/* modal (동일) */
 .ip-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
 .ip-modal.show{display:flex}
 .ip-modal__dlg{max-width:560px;width:100%;background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--bd)}
@@ -37,9 +52,3 @@
 .ip-modal__bd{padding:14px;max-height:60vh;overflow:auto}
 .ip-modal__ft{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--bd)}
 .ip-x{border:none;background:transparent;font-size:22px;line-height:1}
-
-/* 상세 본문 작은 테이블 느낌 */
-.ipd{display:grid;grid-template-columns:120px 1fr;gap:10px 12px;font-size:14px}
-.ipd>div>b{color:#374151}
-.ipd-reply{grid-column:1/-1;margin-top:6px}
-.ipd-reply textarea{width:100%;min-height:90px;border:1px solid var(--bd);border-radius:10px;padding:8px}
