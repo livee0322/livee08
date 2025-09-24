@@ -1,4 +1,4 @@
-<!-- js/config.js -->
+// js/config.js
 (function () {
   const prev = window.LIVEE_CONFIG || {};
   const trim = s => (s || '').replace(/\/+$/, '');
@@ -30,7 +30,15 @@
       shortsBase: '/shorts-test',
 
       // Upload signature (서명 업로드 엔드포인트)
-      uploadsSignature: '/uploads/signature'
+      uploadsSignature: '/uploads/signature',
+
+      // ===== OFFERS (proposals) =====
+      // inbox-proposals.js 는 offersBase 만 사용합니다.
+      offersBase: '/offers-test',
+      // 편의용(원하면 리스트 불러올 때 사용 가능)
+      offers: '/offers-test?limit=20',
+      offersInbox: '/offers-test?inbox=1&limit=20',
+      offersOutbox: '/offers-test?outbox=1&limit=20'
     },
 
     thumb: {
@@ -45,10 +53,4 @@
   cfg.BASE_PATH = trim(cfg.BASE_PATH);
 
   window.LIVEE_CONFIG = Object.assign({}, prev, cfg);
-
-  // ▼ 누구나 업로드를 허용하고 싶을 때만 “주석 해제 후” 값 채우기
-  // window.LIVEE_CONFIG.cloudinaryUnsigned = {
-  //   cloudName: 'YOUR_CLOUD_NAME',
-  //   uploadPreset: 'YOUR_UNSIGNED_PRESET'
-  // };
 })();
