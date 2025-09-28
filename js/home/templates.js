@@ -37,24 +37,74 @@
       '</article>').join('') + '</div>'
     : '<div class="ed-grid"><article class="card-ed"><div class="card-ed__title">등록된 라이브가 없습니다</div><div class="card-ed__meta">브랜드 공고를 등록해보세요</div></article></div>';
 
-  /* ---------- Brand pick (세로 카드) ---------- */
-  const tplRecruitHScroll = (items) => items && items.length
-    ? '<div class="hscroll" id="brandPickH">' + items.map(r => `
-        <article class="card-vert">
-          <div class="thumb-wrap">
-            <img class="thumb" src="${r.thumb || FALLBACK_IMG}" alt="" loading="lazy" decoding="async">
-            <button class="bm" type="button" aria-label="북마크"><i class="ri-bookmark-line"></i></button>
+  
+  /* ---------- Brand pick (가로 스크롤 · 대카드) ---------- */
+const tplRecruitHScroll = (items) => {
+  const pickThumb = (r) => r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
+
+  const dday = (closeAt) => {
+    if (!closeAt) return '';
+    const t = new Date(closeAt); t.setHours(0,0,0,0);
+    const n = new Date();        n.setHours(0,0,0,0);
+    const d = Math.ceil((t - n) / 86400000);
+    return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
+  };
+
+  const statusInfo = (r) => {
+    const dd = dday(r.closeAt);
+    if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
+    if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
+    return { text:'모집중', cls:'open' };
+  };
+
+  const feeText = (fee, nego) =>
+    nego ? '협의' : (fee != null ? ((fee||0).toLocaleString() + '원') : '출연료 미정');
+
+  if (!items || !items.length) {
+    return `<div class="hscroll">
+      <article class="card-vert bp" aria-disabled="true">
+        <div class="thumb-wrap"><div class="thumb" style="background:#f3f4f6"></div></div>
+        <div class="body">
+          <div class="bp-row bp-row--title"><div class="bp-title">공고가 없습니다</div></div>
+          <div class="bp-row bp-row--cta"><a class="btn wfull" href="recruit-new.html">공고 등록</a></div>
+        </div>
+      </article>
+    </div>`;
+  }
+
+  return '<div class="hscroll" id="brandPickH">' + items.map(r => {
+    const stat = statusInfo(r);
+    const dd   = dday(r.closeAt);
+    const idQ  = encodeURIComponent(r.id);
+    return `
+      <article class="card-vert bp" onclick="location.href='recruit-detail.html?id=${idQ}'">
+        <div class="thumb-wrap">
+          <img class="thumb" src="${pickThumb(r)}" alt="" loading="lazy" decoding="async">
+          <button class="bm" type="button" aria-label="북마크"><i class="ri-bookmark-line"></i></button>
+        </div>
+        <div class="body">
+          <div class="bp-row bp-row--top">
+            <div class="bp-brand">${r.brandName || '브랜드'}</div>
+            <span class="bp-stat ${stat.cls}">${stat.text}</span>
           </div>
-          <div class="body">
-            <div class="brand">${r.brandName || '브랜드'}</div>
-            <div class="title">${r.title}</div>
-            <div class="meta">마감 ${fmtDate(r.closeAt)} · ${feeText(r.fee, r.feeNegotiable)}</div>
+
+          <div class="bp-row bp-row--title">
+            <div class="bp-title">${r.title}</div>
+            <div class="bp-dday">${dd || ''}</div>
           </div>
-        </article>`).join('') + '</div>'
-    : `<div class="hscroll"><article class="card-vert" aria-disabled="true">
-         <div class="thumb-wrap"><div class="thumb" style="background:#f3f4f6"></div></div>
-         <div class="body"><div class="title">공고가 없습니다</div><div class="meta">새 공고를 등록해보세요</div></div>
-       </article></div>`;
+
+          <div class="bp-row bp-row--fee">
+            <div></div>
+            <div class="bp-fee">${feeText(r.fee, r.feeNegotiable)}</div>
+          </div>
+
+          <div class="bp-row bp-row--cta" onclick="event.stopPropagation()">
+            <a class="btn pri wfull" href="recruit-detail.html?id=${idQ}">지원하기</a>
+          </div>
+        </div>
+      </article>`;
+  }).join('') + '</div>';
+};
 
   /* ---------- News ---------- */
   const tplNewsList = (items) => items && items.length
