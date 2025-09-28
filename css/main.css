@@ -250,3 +250,18 @@ html,body{
   .lv-footer__copy{ grid-area:copy; }
 }
 
+/* === Brand pick(recruit) 대카드 보강 === */
+.card-vert.bp .body{ padding:12px 14px 14px; }
+.bp-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.bp-brand{ font-size:13px; font-weight:800; color:#1f2937; }
+.bp-stat{ font-size:12px; padding:3px 8px; border-radius:999px; background:#eef2ff; color:#1e3a8a; }
+.bp-stat.open{ background:#e0e7ff; color:#1e3a8a; }
+.bp-stat.scheduled{ background:#fff7ed; color:#92400e; }
+.bp-stat.closed{ background:#fee2e2; color:#b91c1c; }
+
+.bp-title{ font-weight:900; font-size:16px; line-height:1.35; flex:1; }
+.bp-dday{ font-weight:900; color:#111827; white-space:nowrap; margin-left:8px; }
+.bp-fee{ font-size:13px; color:#374151; }
+.bp-row--cta{ margin-top:10px; }
+
+.wfull{ display:flex; justify-content:center; width:100%; }
