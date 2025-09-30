@@ -1,113 +1,111 @@
-/* js/sponsorship.js — v1.0.0 (list + filters + brand-only FAB) */
-(() => {
+/* js/sponsorship.js — v1.2.0 (board-row layout + filters + pager) */
+(function(){
   'use strict';
-  const $ = (s,el=document)=>el.querySelector(s);
-  const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+  const $  = (s, el=document)=>el.querySelector(s);
+  const $$ = (s, el=document)=>[...el.querySelectorAll(s)];
 
   const CFG = window.LIVEE_CONFIG || {};
+  const EP  = CFG.endpoints || {};
   const API = (CFG.API_BASE || '/api/v1').replace(/\/+$/,'');
-  const EP  = (CFG.endpoints||{});
-  const BASE = (EP.sponsorshipBase || '/sponsorship-test').replace(/^\/*/,'/');
-  const TOKEN = localStorage.getItem('livee_token') || localStorage.getItem('liveeToken') || '';
+  const LIST_EP = EP.sponsorships || '/sponsorship-test?status=published&limit=20';
 
-  // 공용 UI
+  // header/tabbar
   try{
     window.LIVEE_UI?.mountHeader?.({ title:'협찬·홍보' });
-    window.LIVEE_UI?.mountTopTabs?.({ active:null });
-    window.LIVEE_UI?.mountTabbar?.({ active:'home' });
+    window.LIVEE_UI?.mountTopTabs?.({ active:'shorts' });
+    window.LIVEE_UI?.mountTabbar?.({ active:'campaigns' });
   }catch(_){}
 
-  const list = $('#spList');
-  const more = $('#spMore');
-  const fab  = $('#spFab');
-
-  // role 체크 → 브랜드만 FAB 표시
-  (async ()=>{
-    if(!fab) return;
-    fab.hidden = true;
-    if(!TOKEN) return;
-    try{
-      const r = await fetch(`${API}/me`, { headers:{Authorization:`Bearer ${TOKEN}` } });
-      const j = await r.json().catch(()=>({}));
-      const roles = (j?.data?.roles || j?.roles || []).map(v=>String(v).toLowerCase());
-      if (roles.includes('brand') || roles.includes('admin')) fab.hidden = false;
-    }catch(_){}
-  })();
+  const elList = $('#spList');
+  const elMsg  = $('#spMsg');
+  const elMore = $('#spLoadMore');
 
   // state
-  let page=1, limit=20, done=false, loading=false, fType='', fStatus='';
-  const cache = [];
+  let page=1, limit=20, loading=false, done=false;
+  let filterType='', filterStatus='';
+  const cache=[];
 
-  $('#spFilters')?.addEventListener('click', e=>{
-    const b=e.target.closest('.chip'); if(!b) return;
-    if (b.dataset.type !== undefined){
+  // helpers
+  const money = (n)=> (n==null ? '' : (Number(n)||0).toLocaleString()+'원');
+  const typeLabel = (t)=> t==='shipping'?'배송형' : t==='return'?'반납형' : t==='review'?'체험후기형' : '기타';
+  const statusLabel = (s)=> s==='published'?'모집중' : s==='progress'?'진행중' : s==='closed'?'마감' : s==='done'?'완료' : (s||'');
+
+  // filters
+  $('#spFilters')?.addEventListener('click', (e)=>{
+    const b = e.target.closest('.chip'); if(!b) return;
+    if (b.dataset.type !== undefined) {
       $$('.chip[data-type]').forEach(x=>x.classList.toggle('is-on', x===b));
-      fType=b.dataset.type||'';
+      filterType = b.dataset.type || '';
     }
-    if (b.dataset.status !== undefined){
+    if (b.dataset.status !== undefined) {
       $$('.chip[data-status]').forEach(x=>x.classList.toggle('is-on', x===b));
-      fStatus=b.dataset.status||'';
+      filterStatus = b.dataset.status || '';
     }
-    page=1; done=false; cache.length=0; list.innerHTML=''; fetchPage();
+    // reset
+    page=1; done=false; cache.length=0; elList.innerHTML='';
+    fetchPage();
   });
 
-  const money = n => (n||0).toLocaleString();
-  const dday  = iso => {
-    if(!iso) return '';
-    const D = new Date(iso), today = new Date();
-    const diff = Math.ceil((D - new Date(today.toDateString()))/86400000);
-    return (isFinite(diff) ? `D-${diff}` : '');
-  };
-  const feeText = (fee, nego, prodOnly) =>
-    prodOnly ? '제품만 제공' : (nego ? '협의' : (fee!=null ? `${money(fee)}원` : '원고료 미정'));
-  const statusBadge = s => {
-    const m = { open:['모집중','ok'], in_progress:['진행중','hold'], closed:['마감','gray'], completed:['완료','ok'] };
-    const [t,c] = m[s] || [s,'gray'];
-    return `<span class="badge ${c}">${t}</span>`;
-  };
-  const typeText = t => t==='delivery_keep'?'배송형':t==='delivery_return'?'반납형':t==='experience_review'?'체험후기형':'-';
+  function buildUrl(){
+    const url = new URL(API + (EP.sponsorships || '/sponsorship-test'));
+    url.searchParams.set('limit', String(limit));
+    url.searchParams.set('page', String(page));
+    if (filterStatus) url.searchParams.set('status', filterStatus);
+    // 타입 필터는 서버에서 없을 수 있으니 클라이언트에서 post-filter
+    return url.toString();
+  }
 
-  function card(it){
-    const img = it.product?.thumb || it.thumbnailUrl || it.coverImageUrl || CFG.placeholderThumb || '';
+  async function fetchPage(){
+    if (loading || done) return;
+    loading=true; elMsg.textContent=''; elMsg.classList.remove('show');
+    try{
+      const r = await fetch(buildUrl(), { headers:{ Accept:'application/json' } });
+      if (!r.ok) throw new Error(await r.text());
+      const j = await r.json();
+      let items = Array.isArray(j.items) ? j.items : (Array.isArray(j.data)?j.data:[]);
+      // client-side type filter
+      if (filterType) items = items.filter(it => (it.sponsorType||'')===filterType);
+      cache.push(...items);
+      if (items.length < limit) done = true;
+      page += 1;
+      render();
+    }catch(e){
+      console.error('[sponsorship:list] load failed', e);
+      elMsg.textContent='목록을 불러오지 못했습니다.'; elMsg.classList.add('show');
+    }finally{
+      loading=false; elMore.disabled=done;
+    }
+  }
+
+  function row(r){
+    const thumb = r.thumbnailUrl || r.coverImageUrl || 'default.jpg';
+    const type  = r.sponsorType || 'shipping';
+    const status= r.status || 'published';
     return `
-      <article class="sp-card" onclick="location.href='sponsorship-new.html?id=${encodeURIComponent(it.id)}'" role="link">
-        <img class="sp-thumb" src="${img}" alt="">
+      <article class="sp-item" data-id="${r.id}">
+        <a class="sp-thumb" href="sponsorship-detail.html?id=${encodeURIComponent(r.id)}" aria-label="${r.title}">
+          <img src="${thumb}" alt="">
+        </a>
         <div class="sp-body">
-          <div class="sp-meta">
-            ${statusBadge(it.status)}
-            <span class="badge gray">${typeText(it.type)}</span>
-            <span style="margin-left:auto">${dday(it.closeAt)}</span>
-          </div>
-          <div class="sp-brand">${it.brandName||'브랜드'}</div>
-          <div class="sp-title">${it.title||'-'}</div>
-          <div class="sp-fee">원고료 ${feeText(it.fee, it.feeNegotiable, it.productOnly)}</div>
+          <div class="sp-brand">${r.brandName || ''}</div>
+          <div class="sp-title">${r.title || ''}</div>
+          <div class="sp-meta">${statusLabel(status)} · ${typeLabel(type)} · 원고료 ${money(r.fee) || (r.feeNegotiable?'협의':'미정')}</div>
+        </div>
+        <div class="sp-right">
+          <span class="badge ${type}">${typeLabel(type)}</span>
+          <a class="btn more" href="sponsorship-detail.html?id=${encodeURIComponent(r.id)}">상세</a>
         </div>
       </article>`;
   }
 
-  async function fetchPage(){
-    if(loading||done) return; loading=true; more.disabled=true;
-    try{
-      const qs = new URLSearchParams({ page:String(page), limit:String(limit) });
-      if(fType) qs.set('type', fType);
-      if(fStatus) qs.set('status', fStatus);
-      const r = await fetch(`${API}${BASE}?${qs}`);
-      if(!r.ok) throw new Error('LIST_FAILED');
-      const j = await r.json();
-      const items = j.items||[];
-      cache.push(...items);
-      list.insertAdjacentHTML('beforeend', items.map(card).join(''));
-      done = items.length < limit;
-      page += 1;
-    }catch(e){
-      list.insertAdjacentHTML('beforeend','<div class="notice">목록을 불러오지 못했습니다.</div>');
-    }finally{
-      loading=false; more.disabled=done;
-    }
+  function render(){
+    const start = elList.children.length;
+    elList.insertAdjacentHTML('beforeend', cache.slice(start).map(row).join(''));
   }
-  more?.addEventListener('click', fetchPage);
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', fetchPage, {once:true});
+  elMore?.addEventListener('click', fetchPage);
+
+  if (document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', fetchPage, { once:true });
   }else{ fetchPage(); }
 })();
