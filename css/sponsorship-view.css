@@ -1,0 +1,90 @@
+/* sponsorship-view.css — v1.0.0 (board row layout + FAB) */
+:root{
+  --line:#eef1f4;
+  --ink:#0f172a;
+  --sub:#6b7280;
+  --primary:#0f172a;
+  --tabbar-h:64px;
+}
+
+/* 헤더 */
+#sp-board .sp-head h1{
+  margin:16px 2px 10px;
+  font-size:28px;
+  line-height:1.2;
+  font-weight:900;
+}
+
+/* 필터칩 */
+#sp-board .sp-filters{ display:flex; flex-direction:column; gap:8px; margin:0 0 12px; }
+#sp-board .sp-filters .row{ display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; }
+#sp-board .chip{
+  height:34px; padding:0 12px; border-radius:999px;
+  border:1px solid var(--line); background:#fff; color:#111827;
+  font-weight:800; white-space:nowrap;
+}
+#sp-board .chip.is-on{ background:#111827; color:#fff; border-color:#111827; }
+
+/* 목록 (게시판형) */
+#sp-board .sp-list{ display:block; }
+#sp-board .sp-item{
+  position:relative;
+  display:grid;
+  grid-template-columns:96px 1fr auto;
+  gap:14px;
+  padding:14px 0;
+}
+#sp-board .sp-item:not(:last-child){ border-bottom:1px dashed var(--line); }
+
+#sp-board .sp-thumb{
+  width:96px; height:96px; border-radius:14px; overflow:hidden; background:#f3f4f6;
+}
+#sp-board .sp-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+#sp-board .sp-body{ min-width:0; }
+#sp-board .sp-title{
+  font-size:18px; line-height:1.35; font-weight:900;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+}
+#sp-board .sp-brand{ margin-top:2px; color:#4f46e5; font-weight:900; }
+#sp-board .sp-meta{ margin-top:6px; color:var(--sub); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+#sp-board .sp-right{
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:72px;
+}
+#sp-board .badge{
+  align-self:flex-start;
+  font-size:12px; font-weight:800; padding:4px 8px; border-radius:999px; border:1px solid var(--line); color:#334155; background:#fff;
+}
+#sp-board .badge.shipping{ color:#0ea5e9; border-color:#bae6fd; background:#f0f9ff; }
+#sp-board .badge.return { color:#16a34a; border-color:#bbf7d0; background:#f0fdf4; }
+#sp-board .badge.review { color:#9333ea; border-color:#e9d5ff; background:#faf5ff; }
+
+#sp-board .dday{ font-weight:900; }
+#sp-board .btn.more{
+  border:1px solid var(--line); background:#fff; padding:6px 10px; border-radius:10px; font-weight:800;
+}
+
+/* 비어있음/메시지 */
+#sp-board .sp-msg{ margin:8px 2px 0; color:#ef4444; font-weight:800; display:none; }
+#sp-board .sp-msg.show{ display:block; }
+#sp-board .sp-more{ padding:12px 0 0; display:flex; justify-content:center; }
+#sp-board .btn{ padding:10px 14px; border:1px solid var(--line); border-radius:12px; background:#fff; font-weight:800; }
+#sp-board .btn:disabled{ opacity:.5 }
+
+/* FAB */
+#sp-board .sp-fab{
+  position:fixed; right:16px; bottom:calc(var(--tabbar-h) + 16px);
+  width:56px; height:56px; border-radius:999px;
+  display:grid; place-items:center;
+  background:var(--primary); color:#fff; box-shadow:0 12px 28px rgba(0,0,0,.12);
+  z-index:50; text-decoration:none;
+}
+#sp-board .sp-fab i{ font-size:22px; }
+
+/* Desktop 보완 */
+@media (min-width:992px){
+  #sp-board .sp-item{ grid-template-columns:132px 1fr auto; gap:18px; padding:18px 0; }
+  #sp-board .sp-thumb{ width:132px; height:132px; border-radius:16px; }
+  #sp-board .sp-title{ font-size:20px; }
+}
