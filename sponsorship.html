@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>협찬·홍보 게시판</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Livee — 협찬·홍보</title>
 
   <!-- fonts & icon -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -14,48 +14,55 @@
   <link rel="stylesheet" href="css/reset-frame.css?v=1">
   <link rel="stylesheet" href="css/main.css?v=2.13.2">
 
-  <!-- page styles -->
-  <link rel="stylesheet" href="css/sponsorship.css?v=1.0.0">
+  <!-- page-only styles -->
+  <link rel="stylesheet" href="css/sponsorship-view.css?v=1.0.0">
+  <meta name="theme-color" content="#ffffff">
 </head>
-<body id="page-sponsorship">
-  <!-- 공용 헤더/탭 -->
+<body id="sp-board">
+  <!-- 상단바 / 상단탭 -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
-  <main class="sp-wrap container" aria-label="협찬·홍보 게시판">
-    <div class="sp-head">
+  <main class="container">
+    <section class="sp-head">
       <h1>협찬·홍보</h1>
-      <div class="sp-filters" id="spFilters" role="tablist" aria-label="유형 필터">
-        <button class="chip is-on" data-type="">전체</button>
-        <button class="chip" data-type="delivery_keep">배송형</button>
-        <button class="chip" data-type="delivery_return">반납형</button>
-        <button class="chip" data-type="experience_review">체험후기형</button>
-        <span class="vline"></span>
-        <button class="chip is-on" data-status="">상태 전체</button>
-        <button class="chip" data-status="open">모집중</button>
-        <button class="chip" data-status="in_progress">진행중</button>
-        <button class="chip" data-status="closed">마감</button>
-        <button class="chip" data-status="completed">완료</button>
+      <div class="sp-filters" id="spFilters">
+        <div class="row">
+          <button class="chip is-on" data-type="">전체</button>
+          <button class="chip" data-type="shipping">배송형</button>
+          <button class="chip" data-type="return">반납형</button>
+          <button class="chip" data-type="review">체험후기형</button>
+        </div>
+        <div class="row">
+          <button class="chip is-on" data-status="">상태 전체</button>
+          <button class="chip" data-status="published">모집중</button>
+          <button class="chip" data-status="progress">진행중</button>
+          <button class="chip" data-status="closed">마감</button>
+          <button class="chip" data-status="done">완료</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <section id="spList" class="sp-list" aria-label="협찬 목록"></section>
+    <section id="spMsg" class="sp-msg" aria-live="polite"></section>
+
+    <section id="spList" class="sp-list" aria-label="협찬·홍보 게시글 목록"></section>
 
     <div class="sp-more">
-      <button id="spMore" class="btn">더 보기</button>
+      <button id="spLoadMore" class="btn">더 보기</button>
     </div>
-
-    <!-- FAB: 등록 (브랜드만 노출) -->
-    <a id="spFab" class="sp-fab" href="sponsorship-new.html" aria-label="협찬 공고 등록">
-      <i class="ri-add-line"></i>
-    </a>
   </main>
+
+  <!-- FAB: 등록 -->
+  <a href="sponsorship-new.html" class="sp-fab" aria-label="협찬 공고 등록">
+    <i class="ri-add-line"></i>
+  </a>
 
   <!-- 하단 탭 -->
   <footer id="bottom-tabs"></footer>
 
+  <!-- scripts -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/sponsorship.js?v=1.0.0"></script>
+  <script src="js/sponsorship.js?v=1.2.0"></script>
 </body>
 </html>
