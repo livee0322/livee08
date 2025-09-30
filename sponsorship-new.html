@@ -5,20 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>협찬 공고 등록</title>
 
-  <!-- fonts & icon -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
 
-  <!-- base styles -->
   <link rel="stylesheet" href="css/reset-frame.css">
   <link rel="stylesheet" href="css/main.css">
-
-  <!-- page styles -->
-  <link rel="stylesheet" href="css/sponsorship.css?v=1.1.0">
+  <link rel="stylesheet" href="css/sponsorship.css?v=1.2.0">
 </head>
 <body>
-  <!-- 공용 헤더/탭 -->
   <header id="appbar"></header>
   <nav id="top-tabs"></nav>
 
@@ -26,22 +21,21 @@
     <h1 class="sn-title">협찬 공고 등록</h1>
 
     <form id="spForm" class="sn-form" novalidate>
-      <!-- 좌 컬럼 -->
       <section class="sn-col">
         <div class="fg">
           <label for="brandName">브랜드명</label>
-          <input id="brandName" type="text" placeholder="" required>
+          <input id="brandName" type="text" placeholder="">
         </div>
 
         <div class="fg">
           <label for="title">제목</label>
-          <input id="title" type="text" placeholder="예) 신제품 협찬 캠페인" required>
+          <input id="title" type="text" placeholder="예) 신제품 협찬 캠페인">
         </div>
 
         <div class="fg">
           <label for="stype">유형</label>
-          <select id="stype" required>
-            <option value="shipping_gift">배송형(증정)</option>
+          <select id="stype">
+            <option value="shipping_gift" selected>배송형(증정)</option>
             <option value="rental_return">반납형(대여·반납)</option>
             <option value="experience_review">체험후기형</option>
           </select>
@@ -50,7 +44,7 @@
         <div class="fg fg-row">
           <div class="fg">
             <label for="fee">원고료(원)</label>
-            <input id="fee" inputmode="numeric" pattern="[0-9]*" placeholder="숫자만">
+            <input id="fee" inputmode="numeric" placeholder="숫자만(선택)">
             <small class="hint">‘협의’ 또는 ‘제품만 제공’ 선택 시 자동 비활성</small>
           </div>
           <div class="fg checkcol">
@@ -61,11 +55,10 @@
 
         <div class="fg">
           <label for="desc">설명/가이드</label>
-          <textarea id="desc" rows="6" placeholder="진행 방식, 유의사항 등을 적어주세요. (HTML 일부 허용)"></textarea>
+          <textarea id="desc" rows="6" placeholder="진행 방식, 유의사항 등을 적어주세요. (선택)"></textarea>
         </div>
       </section>
 
-      <!-- 우 컬럼 -->
       <section class="sn-col">
         <h2 class="sn-sub">상품 정보</h2>
 
@@ -76,20 +69,20 @@
 
         <div class="fg">
           <label for="plink">상품 링크(URL)</label>
-          <input id="plink" type="url" placeholder="https://…">
+          <input id="plink" type="url" placeholder="https://… (자동 보정)">
         </div>
 
         <div class="fg">
           <label>썸네일</label>
           <div class="sn-uploader">
             <div class="sn-thumb">
-              <img id="preview" alt="" />
+              <img id="preview" alt="">
               <span id="thumbPh">이미지 미리보기</span>
             </div>
             <div class="sn-upbtns">
               <input id="file" type="file" accept="image/*" hidden>
               <button type="button" id="btnPick" class="btn"><i class="ri-image-add-line"></i> 이미지 업로드</button>
-              <input id="thumbUrl" type="url" placeholder="이미지 URL(간단 시작)">
+              <input id="thumbUrl" type="url" placeholder="이미지 URL(선택)">
             </div>
           </div>
         </div>
@@ -97,19 +90,16 @@
 
       <div class="sn-actions">
         <div id="spMsg" class="sn-msg" role="status" aria-live="polite"></div>
-        <div class="sp-gap"></div>
         <button type="button" class="btn" id="btnCancel">취소</button>
         <button type="submit" class="btn pri" id="btnSubmit"><i class="ri-check-line"></i> 등록</button>
       </div>
     </form>
   </main>
 
-  <!-- 하단 탭 -->
   <footer id="bottom-tabs"></footer>
 
-  <!-- scripts -->
   <script src="js/config.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/sponsorship-new.js?v=1.1.0"></script>
+  <script src="js/sponsorship-new.js?v=1.2.0"></script>
 </body>
 </html>
