@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>협찬 공고 등록</title>
+
+  <!-- fonts & icon -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+
+  <!-- base -->
+  <link rel="stylesheet" href="css/reset-frame.css?v=1">
+  <link rel="stylesheet" href="css/main.css?v=2.13.2">
+
+  <!-- page -->
+  <link rel="stylesheet" href="css/sponsorship.css?v=1.0.0">
+</head>
+<body id="page-sponsorship-new">
+  <header id="appbar"></header>
+  <nav id="top-tabs"></nav>
+
+  <main class="container">
+    <h1 style="margin:14px 2px 12px;font-size:20px;font-weight:900">협찬 공고 등록</h1>
+    <form id="spForm" class="sp-form" autocomplete="on">
+      <div class="f"><label>브랜드명</label><input id="brandName" type="text" required></div>
+      <div class="f"><label>제목</label><input id="title" type="text" placeholder="예) 신제품 협찬 캠페인" required></div>
+      <div class="row">
+        <div class="f">
+          <label>유형</label>
+          <select id="type" required>
+            <option value="delivery_keep">배송형(증정)</option>
+            <option value="delivery_return">반납형</option>
+            <option value="experience_review">체험후기형</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>모집 마감일</label>
+          <input id="closeAt" type="date" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="f">
+          <label>원고료(원)</label>
+          <input id="fee" type="number" min="0" placeholder="숫자만">
+          <small>‘협의’ 또는 ‘제품만 제공’ 선택 시 비활성화</small>
+        </div>
+        <div class="f">
+          <label>옵션</label>
+          <div class="switch"><input id="feeNegotiable" type="checkbox"> <span>협의</span></div>
+          <div class="switch"><input id="productOnly" type="checkbox"> <span>제품만 제공</span></div>
+        </div>
+      </div>
+
+      <div class="f">
+        <label>설명/가이드</label>
+        <textarea id="desc" rows="6" placeholder="진행 방식, 유의사항 등을 적어주세요. (HTML 일부 허용)"></textarea>
+      </div>
+
+      <div class="notice">상품 정보</div>
+      <div class="f"><label>상품명</label><input id="pName" type="text" placeholder="옵션"></div>
+      <div class="f"><label>상품 링크(URL)</label><input id="pUrl" type="url" placeholder="https://..."></div>
+      <div class="row">
+        <div class="f">
+          <label>썸네일 URL</label>
+          <input id="pThumb" type="url" placeholder="이미지 URL(간단 시작)">
+        </div>
+        <div class="f">
+          <label>소비자가(원)</label>
+          <input id="pPrice" type="number" min="0" placeholder="옵션">
+        </div>
+      </div>
+
+      <div id="spMsg" class="notice" style="display:none"></div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <a class="btn" href="sponsorship.html">목록</a>
+        <button class="btn pri" type="submit">등록</button>
+      </div>
+    </form>
+  </main>
+
+  <footer id="bottom-tabs"></footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/sponsorship-new.js?v=1.0.0"></script>
+</body>
+</html>
