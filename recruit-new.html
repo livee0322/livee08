@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>공고 등록 - Livee</title>
 
-  <!-- 공통 -->
-  <link rel="stylesheet" href="css/main.css" />
+  <!-- 공통 스타일 -->
+  <link rel="stylesheet" href="css/reset-frame.css?v=1">
+  <link rel="stylesheet" href="css/main.css?v=2.13.2">
 
-  <!-- 이 페이지 전용 -->
-  <link rel="stylesheet" href="css/recruit-new.css" />
+  <!-- 페이지 전용 -->
+  <link rel="stylesheet" href="css/recruit-new.css?v=3.3.0">
+  <meta name="theme-color" content="#ffffff">
 </head>
-<body>
-  <header class="app-header">
-    <div class="h-wrap">
-      <a href="index.html" aria-label="뒤로" class="back">←</a>
-      <h1 class="h-logo">공고 등록</h1>
-    </div>
-  </header>
+<body id="recruit-new">
+  <!-- 상단바 / 상단탭 (ui.js가 채움) -->
+  <header id="appbar"></header>
+  <nav id="top-tabs"></nav>
 
   <main class="container">
+    <h1 class="page-title">공고 등록</h1>
     <div id="recruitMsg" class="notice" role="status" aria-live="polite"></div>
 
     <form id="recruitForm" novalidate>
@@ -27,7 +27,7 @@
       <label for="brandName">브랜드명 *</label>
       <input id="brandName" class="input" placeholder="예) ACME" required />
 
-      <!-- 2. 말머리(선택, 드롭다운) -->
+      <!-- 2. 말머리(선택) -->
       <label for="prefix">말머리 <span class="helper">(선택)</span></label>
       <select id="prefix" class="select">
         <option value="">선택 안 함</option>
@@ -44,22 +44,6 @@
       <!-- 4. 내용 -->
       <label for="content">내용</label>
       <textarea id="content" placeholder="요구역량/업무/준비물/참고링크 등을 자유롭게 입력"></textarea>
-
-      <!-- 4-1. 모집 직군(체크박스) -->
-      <fieldset class="roles">
-        <legend>모집 직군(복수 선택 가능)</legend>
-        <label class="chk"><input type="checkbox" value="쇼호스트"> 쇼호스트</label>
-        <label class="chk"><input type="checkbox" value="촬영"> 촬영</label>
-        <label class="chk"><input type="checkbox" value="작가"> 작가</label>
-        <label class="chk"><input type="checkbox" value="영상편집"> 영상편집</label>
-        <label class="chk"><input type="checkbox" value="보조"> 보조</label>
-        <label class="chk"><input type="checkbox" value="기획"> 기획</label>
-        <label class="chk"><input type="checkbox" value="장소섭외"> 장소섭외</label>
-        <label class="chk"><input type="checkbox" value="스타일리스트"> 스타일리스트</label>
-        <label class="chk"><input type="checkbox" value="사회"> 사회</label>
-        <label class="chk"><input type="checkbox" value="모델"> 모델</label>
-        <label class="chk"><input type="checkbox" value="기타"> 기타</label>
-      </fieldset>
 
       <!-- 5. 카테고리 / 6. 장소 -->
       <div class="grid grid-2">
@@ -102,7 +86,7 @@
       <label for="shootHours">촬영 시간(시간 기준) *</label>
       <input id="shootHours" class="input" type="number" min="1" step="0.5" placeholder="예) 3" required />
 
-      <!-- 10. 시작/종료 시간 (촬영시간 아래) -->
+      <!-- 10. 시작/종료 시간 -->
       <div class="grid grid-2">
         <div>
           <label for="startTime">시작 시간 *</label>
@@ -135,30 +119,74 @@
         </div>
       </div>
 
-      <!-- 대표 이미지 (선택) -->
-      <label>대표 이미지 <span class="helper">(선택)</span></label>
+      <!-- 대표 이미지(가로 16:9) -->
+      <label>대표 이미지 (16:9)</label>
       <div class="media">
         <img id="preview" class="preview" alt="미리보기" />
         <div>
           <input id="imageFile" type="file" accept="image/*" />
-          <div class="helper">이미지 선택 시 자동 업로드됩니다.</div>
-          <progress id="uploadProg" value="0" max="100" style="width:220px;display:none"></progress>
+          <div class="helper">이미지 선택 시 Cloudinary로 업로드됩니다.</div>
         </div>
       </div>
 
+      <!-- ===== 신규 섹션: 쇼핑라이브 / 상품 ===== -->
+      <h2 class="sec-title">쇼핑라이브 / 상품</h2>
+
+      <!-- 쇼핑라이브: 세로 커버 + 링크 -->
+      <div class="grid grid-2">
+        <div>
+          <label>쇼핑라이브 세로 커버(9:16)</label>
+          <div class="media">
+            <img id="liveCoverPreview" class="preview pv-vert" alt="라이브 커버 미리보기" />
+            <div>
+              <input id="liveCoverFile" type="file" accept="image/*">
+              <div class="helper">세로 이미지 권장 (자동 업로드)</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label for="liveLink">쇼핑라이브 링크</label>
+          <input id="liveLink" class="input" placeholder="예) www.naver.com/live/..." />
+        </div>
+      </div>
+
+      <!-- 상품: 사각 썸네일 + 이름 + 링크 -->
+      <div class="grid grid-2">
+        <div>
+          <label>상품 썸네일(정사각형)</label>
+          <div class="media">
+            <img id="prodThumbPreview" class="preview pv-square" alt="상품 썸네일 미리보기" />
+            <div>
+              <input id="prodThumbFile" type="file" accept="image/*">
+              <div class="helper">정사각형 권장 (자동 업로드)</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label for="productName">상품명</label>
+          <input id="productName" class="input" placeholder="예) 신제품 세럼 50ml" />
+          <label for="productLink" class="mt8">상품 링크</label>
+          <input id="productLink" class="input" placeholder="예) www.naver.com/item/..." />
+        </div>
+      </div>
+      <!-- ===== 신규 섹션 끝 ===== -->
+
       <div class="btns">
         <button id="submitBtn" class="btn pri" type="submit">공고 등록</button>
-        <a class="btn" href="index.html">취소</a>
+        <a class="btn" href="recruit-board.html">취소</a>
       </div>
     </form>
 
     <div class="page-bottom-space"></div>
   </main>
 
-  <!-- (선택) 아이콘 폰트가 필요하면 추가 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"/>
+  <!-- 하단 탭 (ui.js가 채움) -->
+  <footer id="bottom-tabs"></footer>
 
+  <!-- 스크립트 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
   <script src="js/config.js"></script>
-  <script src="js/recruit-new.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/recruit-new.js?v=3.3.0"></script>
 </body>
 </html>
