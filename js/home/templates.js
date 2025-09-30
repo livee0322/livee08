@@ -1,4 +1,4 @@
-/* home/templates.js — v2.14.1 (hero slider + sections + models hscroll + offer trigger) */
+/* home/templates.js — v2.15.0 (NOW Recruits: vertical-card hscroll) */
 (function (w) {
   'use strict';
   const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
@@ -24,134 +24,122 @@
       </div>`;
   }
 
-  /* ---------- Hot Recruits (row-card 레이아웃) ---------- */
-const tplLineupList = (items) => {
-  const pickThumb = (r) => r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
+  /* =======================================================================
+     NOW Recruits: 레퍼런스형 가로 스크롤 카드 (세로 썸네일)
+     - 섹션 제목: “지금 뜨는 쇼핑라이브 공고”
+     - 구성: [세로 커버] / 브랜드명 / (상태 · D-day[촬영일]) / [말머리]제목 / 출연료 / 상품칩(썸네일+상품명)
+     - 기존 index.js에서 tplLineupList를 호출하고 있으므로, 함수 이름은 그대로 유지하되
+       구현만 가로 스크롤 카드로 교체합니다.
+  ======================================================================= */
+  const tplLineupList = (items) => {
+    const pickCover = (r) =>
+      r.verticalCoverUrl || r.coverVerticalUrl || r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
 
-  const dday = (closeAt) => {
-    if (!closeAt) return '';
-    const t = new Date(closeAt); t.setHours(0,0,0,0);
-    const n = new Date();        n.setHours(0,0,0,0);
-    const d = Math.ceil((t - n) / 86400000);
-    return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
+    const firstProduct = (r) => {
+      const p = (r.products && r.products.length ? r.products[0] : null);
+      if (!p) return { title:'', imageUrl:'' };
+      return { title: (p.title || ''), imageUrl: (p.imageUrl || '') };
+    };
+
+    // 촬영일 기준 D-day
+    const ddayByShoot = (shootDate) => {
+      if (!shootDate) return '';
+      const t = new Date(shootDate); t.setHours(0,0,0,0);
+      const n = new Date();         n.setHours(0,0,0,0);
+      const d = Math.ceil((t - n) / 86400000);
+      return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
+    };
+
+    // 상태 라벨(모집중/예정/마감)
+    const statusInfo = (r) => {
+      const dd = ddayByShoot(r.recruit?.shootDate || r.shootDate);
+      if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
+      if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
+      return { text:'모집중', cls:'open' };
+    };
+
+    if (!items || !items.length) {
+      return `
+        <div class="now-hscroll">
+          <article class="now-card is-empty" aria-disabled="true">
+            <div class="now-thumb" style="background:#f3f4f6"></div>
+            <div class="now-body">
+              <div class="now-brand">브랜드</div>
+              <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
+              <div class="now-title">등록된 공고가 없습니다</div>
+              <div class="now-fee">출연료 미정</div>
+              <div class="prod-chip">
+                <div class="prod-thumb" style="background:#f3f4f6"></div>
+                <div class="prod-name">상품 준비 중</div>
+              </div>
+            </div>
+          </article>
+        </div>`;
+    }
+
+    return `<div class="now-hscroll">` + items.map(r => {
+      const idQ   = encodeURIComponent(r.id);
+      const stat  = statusInfo(r);
+      const dday  = ddayByShoot(r.recruit?.shootDate || r.shootDate) || '';
+      const cover = pickCover(r);
+      const p     = firstProduct(r);
+
+      return `
+        <article class="now-card" onclick="location.href='recruit-detail.html?id=${idQ}'">
+          <img class="now-thumb" src="${cover}" alt="" loading="lazy" decoding="async">
+          <div class="now-body">
+            <div class="now-brand">${r.brandName || '브랜드'}</div>
+            <div class="now-row">
+              <span class="now-stat ${stat.cls}">${stat.text}</span>
+              <span class="now-dday">${dday}</span>
+            </div>
+            <div class="now-title">${r.title || ''}</div>
+            <div class="now-fee">출연료 ${feeText(r.fee, r.feeNegotiable)}</div>
+
+            ${(p.title || p.imageUrl) ? `
+            <div class="prod-chip" onclick="event.stopPropagation()">
+              ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">` : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
+              <div class="prod-name">${p.title || ''}</div>
+            </div>` : ''}
+          </div>
+        </article>`;
+    }).join('') + `</div>`;
   };
 
-  const statusInfo = (r) => {
-    const dd = dday(r.closeAt);
-    if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
-    if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
-    return { text:'모집중', cls:'open' };
-  };
-
-  const feeText = (fee, nego) =>
-    nego ? '협의' : (fee != null ? ((fee||0).toLocaleString() + '원') : '출연료 미정');
-
-  if (!items || !items.length) {
-    return `<div class="rl-list">
-      <article class="rl-card" aria-disabled="true">
-        <div class="rl-thumb" style="background:#f3f4f6"></div>
-        <div class="rl-body">
-          <div class="rl-row rl-top"><span class="rl-stat scheduled">예정</span><span class="rl-dday">D-0</span></div>
-          <div class="rl-brand">브랜드</div>
-          <div class="rl-title">등록된 공고가 없습니다</div>
-          <div class="rl-row rl-bottom"><span></span><span class="rl-fee">출연료 미정</span></div>
-        </div>
-      </article>
-    </div>`;
-  }
-
-  return '<div class="rl-list">' + items.map(r => {
-    const stat = statusInfo(r);
-    const dd   = dday(r.closeAt);
-    const idQ  = encodeURIComponent(r.id);
-    return `
-      <article class="rl-card" onclick="location.href='recruit-detail.html?id=${idQ}'">
-        <img class="rl-thumb" src="${pickThumb(r)}" alt="" loading="lazy" decoding="async">
-        <div class="rl-body">
-          <div class="rl-row rl-top">
-            <span class="rl-stat ${stat.cls}">${stat.text}</span>
-            <span class="rl-dday">${dd || ''}</span>
+  /* ---------- Brand pick (세로 카드: 유지) ---------- */
+  const tplRecruitHScroll = (items) => items && items.length
+    ? '<div class="hscroll" id="brandPickH">' + items.map(r => `
+        <article class="card-vert bp" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
+          <div class="thumb-wrap">
+            <img class="thumb" src="${r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG}" alt="" loading="lazy" decoding="async">
+            <button class="bm" type="button" aria-label="북마크"><i class="ri-bookmark-line"></i></button>
           </div>
-          <div class="rl-brand">${r.brandName || '브랜드'}</div>
-          <div class="rl-title">${r.title}</div>
-          <div class="rl-row rl-bottom">
-            <span></span>
-            <span class="rl-fee">출연료 ${feeText(r.fee, r.feeNegotiable)}</span>
+          <div class="body">
+            <div class="bp-row bp-row--top">
+              <div class="bp-brand">${r.brandName || '브랜드'}</div>
+              <span class="bp-stat ${r.status==='closed'?'closed':(r.status==='scheduled'?'scheduled':'open')}">
+                ${r.status==='closed'?'마감':(r.status==='scheduled'?'예정':'모집중')}
+              </span>
+            </div>
+            <div class="bp-row bp-row--title">
+              <div class="bp-title">${r.title}</div>
+              <div class="bp-dday"></div>
+            </div>
+            <div class="bp-row bp-row--fee">
+              <div></div>
+              <div class="bp-fee">${feeText(r.fee, r.feeNegotiable)}</div>
+            </div>
+            <div class="bp-row bp-row--cta" onclick="event.stopPropagation()">
+              <a class="btn pri wfull" href="recruit-detail.html?id=${encodeURIComponent(r.id)}">지원하기</a>
+            </div>
           </div>
-        </div>
-      </article>`;
-  }).join('') + '</div>';
-};
+        </article>`).join('') + '</div>'
+    : `<div class="hscroll"><article class="card-vert" aria-disabled="true">
+         <div class="thumb-wrap"><div class="thumb" style="background:#f3f4f6"></div></div>
+         <div class="body"><div class="title">공고가 없습니다</div><div class="meta">새 공고를 등록해보세요</div></div>
+       </article></div>`;
 
-  /* ---------- Brand pick (가로 스크롤 · 대카드) ---------- */
-const tplRecruitHScroll = (items) => {
-  const pickThumb = (r) => r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
-
-  const dday = (closeAt) => {
-    if (!closeAt) return '';
-    const t = new Date(closeAt); t.setHours(0,0,0,0);
-    const n = new Date();        n.setHours(0,0,0,0);
-    const d = Math.ceil((t - n) / 86400000);
-    return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
-  };
-
-  const statusInfo = (r) => {
-    const dd = dday(r.closeAt);
-    if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
-    if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
-    return { text:'모집중', cls:'open' };
-  };
-
-  const feeText = (fee, nego) =>
-    nego ? '협의' : (fee != null ? ((fee||0).toLocaleString() + '원') : '출연료 미정');
-
-  if (!items || !items.length) {
-    return `<div class="hscroll">
-      <article class="card-vert bp" aria-disabled="true">
-        <div class="thumb-wrap"><div class="thumb" style="background:#f3f4f6"></div></div>
-        <div class="body">
-          <div class="bp-row bp-row--title"><div class="bp-title">공고가 없습니다</div></div>
-          <div class="bp-row bp-row--cta"><a class="btn wfull" href="recruit-new.html">공고 등록</a></div>
-        </div>
-      </article>
-    </div>`;
-  }
-
-  return '<div class="hscroll" id="brandPickH">' + items.map(r => {
-    const stat = statusInfo(r);
-    const dd   = dday(r.closeAt);
-    const idQ  = encodeURIComponent(r.id);
-    return `
-      <article class="card-vert bp" onclick="location.href='recruit-detail.html?id=${idQ}'">
-        <div class="thumb-wrap">
-          <img class="thumb" src="${pickThumb(r)}" alt="" loading="lazy" decoding="async">
-          <button class="bm" type="button" aria-label="북마크"><i class="ri-bookmark-line"></i></button>
-        </div>
-        <div class="body">
-          <div class="bp-row bp-row--top">
-            <div class="bp-brand">${r.brandName || '브랜드'}</div>
-            <span class="bp-stat ${stat.cls}">${stat.text}</span>
-          </div>
-
-          <div class="bp-row bp-row--title">
-            <div class="bp-title">${r.title}</div>
-            <div class="bp-dday">${dd || ''}</div>
-          </div>
-
-          <div class="bp-row bp-row--fee">
-            <div></div>
-            <div class="bp-fee">${feeText(r.fee, r.feeNegotiable)}</div>
-          </div>
-
-          <div class="bp-row bp-row--cta" onclick="event.stopPropagation()">
-            <a class="btn pri wfull" href="recruit-detail.html?id=${idQ}">지원하기</a>
-          </div>
-        </div>
-      </article>`;
-  }).join('') + '</div>';
-};
-
-  /* ---------- News ---------- */
+  /* ---------- (다른 템플릿들은 기존 그대로) ---------- */
   const tplNewsList = (items) => items && items.length
     ? '<div class="news-list">' + items.map(n => {
         const thumb = n.thumb || '';
@@ -167,11 +155,10 @@ const tplRecruitHScroll = (items) => {
       }).join('') + '</div>'
     : '<div class="news-list"><article class="news-item"><div class="news-item__title">표시할 뉴스가 없습니다</div></article></div>';
 
-  /* ---------- Portfolios (쇼호스트) ---------- */
   const tplPortfolios = (items) => items && items.length
     ? '<div class="pf-hlist">' + items.slice(0, 6).map(p => {
-        const pidRaw = p.id;                      // API용 (그대로)
-        const pidQ   = encodeURIComponent(pidRaw); // URL용 (인코딩)
+        const pidRaw = p.id;
+        const pidQ   = encodeURIComponent(pidRaw);
         const name  = (p.nickname || '쇼호스트');
         const intro = (p.headline || '소개 준비 중');
         return `
@@ -181,7 +168,6 @@ const tplRecruitHScroll = (items) => {
             <div class="pf-name">${name}</div>
             <div class="pf-intro">${intro}</div>
             <div class="pf-actions">
-              <!-- 제안 모달 트리거 -->
               <button class="btn pri" type="button" data-offer data-portfolio-id="${pidRaw}">
                 <i class="ri-send-plane-line"></i> 제안
               </button>
@@ -200,7 +186,6 @@ const tplRecruitHScroll = (items) => {
       }).join('') + '</div>'
     : '<div class="ed-grid"><article class="card-ed"><div class="card-ed__body"><div class="card-ed__title">포트폴리오가 없습니다</div><div class="card-ed__meta">첫 포트폴리오를 등록해보세요</div></div></article></div>';
 
-  /* ---------- HOT clips ---------- */
   const tplHotClips = (items) => items && items.length
     ? `<div class="shorts-hscroll" id="hotShorts">
         ${items.map(s => `
@@ -211,14 +196,12 @@ const tplRecruitHScroll = (items) => {
       </div>`
     : '<div class="shorts-hscroll"><div class="clip-empty">등록된 클립이 없습니다</div></div>';
 
-  /* ---------- CTA image banner ---------- */
   function tplImageBanner(){
     return '<a class="img-banner" href="byhen.html" aria-label="BYHEN 안내 배너">' +
            '<img src="ad_banner.jpg" alt="BYHEN 배너">' +
            '</a>';
   }
 
-  /* ---------- NEW: Models H-Scroll (2.5-up) ---------- */
   const tplModelsHScroll = (items) => {
     if (!items || !items.length) {
       return `<div class="hscroll models">
@@ -264,7 +247,8 @@ const tplRecruitHScroll = (items) => {
 
   H.tpl = {
     tplHeroSlider,
-    tplLineupList, tplRecruitHScroll, tplNewsList,
+    tplLineupList,           // ← 지금 뜨는 공고: 가로 스크롤 카드
+    tplRecruitHScroll, tplNewsList,
     tplPortfolios, tplHotClips, tplImageBanner,
     tplModelsHScroll, sectionBlock
   };
