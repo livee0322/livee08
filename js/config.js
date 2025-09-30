@@ -44,10 +44,13 @@
       sponsorshipBase:'/sponsorship-test'
     },
 
+    // ★ 썸네일 변환 프리셋(세로 커버/정사각 추가)
     thumb: {
-      square:   'c_fill,g_auto,w_320,h_320,f_auto,q_auto',
-      card169:  'c_fill,g_auto,w_640,h_360,f_auto,q_auto',
-      cover169: 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto'
+      square:   'c_fill,g_auto,w_640,h_640,f_auto,q_auto',       // 정사각(상품)
+      card169:  'c_fill,g_auto,w_640,h_360,f_auto,q_auto',       // 가로 카드(대표)
+      cover169: 'c_fill,g_auto,w_1280,h_720,f_auto,q_auto',      // 가로 커버(상세)
+      card916:  'c_fill,g_auto,w_720,h_1280,f_auto,q_auto',      // ★ 세로 커버(쇼핑라이브)
+      cover916: 'c_fill,g_auto,w_1080,h_1920,f_auto,q_auto'      // ★ 세로 커버 대형
     },
 
     placeholderThumb: 'default.jpg'
