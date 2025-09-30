@@ -8,37 +8,41 @@
     API_BASE:  'https://main-server-ekgr.onrender.com/api/v1',
 
     endpoints: {
-      recruits: '/recruit-test?status=published&limit=20',
-      recruitBase: '/recruit-test',
+      // ===== Recruit =====
+      recruits:     '/recruit-test?status=published&limit=20',
+      recruitBase:  '/recruit-test',
 
-      portfolios: '/portfolio-test?status=published&limit=24',
-      portfolioBase: '/portfolio-test',
+      // ===== Portfolio =====
+      portfolios:   '/portfolio-test?status=published&limit=24',
+      portfolioBase:'/portfolio-test',
 
-      news: '/news-test?status=published&limit=10',
-      newsBase: '/news-test',
+      // ===== News =====
+      news:         '/news-test?status=published&limit=10',
+      newsBase:     '/news-test',
 
-      // BRAND (router: routes/brand-test.js, model: models/Brand-test.js)
-      brand: '/brand-test?status=published&limit=10',
-      brandBase: '/brand-test',
+      // ===== Brand / Model / Shorts =====
+      brand:        '/brand-test?status=published&limit=10',
+      brandBase:    '/brand-test',
 
-      // MODEL
-      model: '/model-test?status=published&limit=24',
-      modelBase: '/model-test',
+      model:        '/model-test?status=published&limit=24',
+      modelBase:    '/model-test',
 
-      // SHORTS
-      shorts: '/shorts-test?status=published&limit=60',
-      shortsBase: '/shorts-test',
+      shorts:       '/shorts-test?status=published&limit=60',
+      shortsBase:   '/shorts-test',
 
-      // Upload signature (서명 업로드 엔드포인트)
+      // Upload signature
       uploadsSignature: '/uploads/signature',
 
-      // ===== OFFERS (proposals) =====
-      // inbox-proposals.js 는 offersBase 만 사용합니다.
-      offersBase: '/offers-test',
-      // 편의용(원하면 리스트 불러올 때 사용 가능)
-      offers: '/offers-test?limit=20',
-      offersInbox: '/offers-test?inbox=1&limit=20',
-      offersOutbox: '/offers-test?outbox=1&limit=20'
+      // ===== Offers (제안) =====
+      offersBase:   '/offers-test',
+      // (편의용) 필요 시 사용
+      offers:       '/offers-test?limit=20',
+      offersInbox:  '/offers-test?box=received&limit=20',
+      offersOutbox: '/offers-test?box=sent&limit=20',
+
+      // ===== Sponsorship (협찬·홍보) — NEW =====
+      sponsorship:      '/sponsorship-test?limit=20',
+      sponsorshipBase:  '/sponsorship-test'
     },
 
     thumb: {
