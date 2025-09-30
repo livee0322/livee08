@@ -41,9 +41,8 @@
       offersOutbox: '/offers-test?box=sent&limit=20',
 
       // ===== Sponsorship (협찬·홍보) — NEW =====
-      sponsorship:      '/sponsorship-test?limit=20',
-      sponsorshipBase:  '/sponsorship-test'
-    },
+      sponsorships: '/sponsorship-test?status=published&limit=20',
+sponsorshipBase: '/sponsorship-test',
 
     thumb: {
       square:   'c_fill,g_auto,w_320,h_320,f_auto,q_auto',
