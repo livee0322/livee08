@@ -317,13 +317,16 @@ html,body{
 @media (min-width:540px){ .now-card{ flex:0 0 56%; } }
 @media (min-width:992px){ .now-card{ flex:0 0 36%; } }
 
-.now-thumb{
-  width:100%;
-  aspect-ratio:9/16;      /* 세로 썸네일 */
-  object-fit:cover;
-  background:#f3f4f6;
-  display:block;
+/* === NOW Recruits: vertical-card hscroll (레퍼런스 스타일) === */
+.now-hscroll{
+  display:flex; gap:14px; overflow-x:auto; padding:2px 2px 8px;
+  scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
 }
+.now-hscroll::-webkit-scrollbar{ display:none; }
+
+.now-card{
+  flex:0 0 68%;           /* 모바일에서 1.3장 정도 보이게 */
+
 .now-body{ padding:12px 14px 14px; }
 
 .now-brand{ font-size:13px; font-weight:800; color:#1f2937; }
