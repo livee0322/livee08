@@ -1,8 +1,19 @@
-/* js/recruit-new.js — v3.2.0 (Recruit-test 스키마 정합) */
+/* js/recruit-new.js — v3.3.0 (쇼핑라이브/상품 섹션 추가 + 공통 UI 마운트) */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
-  const THUMB = CFG.thumb || { card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto" };
+  const TH = Object.assign({
+    card169:  "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
+    card916:  "c_fill,g_auto,w_720,h_1280,f_auto,q_auto",
+    square:   "c_fill,g_auto,w_640,h_640,f_auto,q_auto"
+  }, CFG.thumb || {});
+
+  // 공통 UI 마운트
+  try{
+    window.LIVEE_UI?.mountHeader?.({ title:'공고 등록' });
+    window.LIVEE_UI?.mountTopTabs?.({ active:'campaigns' });
+    window.LIVEE_UI?.mountTabbar?.({ active:'campaigns' });
+  }catch(_){}
 
   const $id = (s) => document.getElementById(s);
   const form=$id("recruitForm"), msgEl=$id("recruitMsg");
@@ -14,7 +25,11 @@
   const shootHours=$id("shootHours"), startTime=$id("startTime"), endTime=$id("endTime");
 
   const payEl=$id("pay"), negEl=$id("negotiable");
-  const fileEl=$id("imageFile"), previewEl=$id("preview");
+
+  // 이미지 업로드 3종
+  const fileMain=$id("imageFile"), prevMain=$id("preview");
+  const fileLive=$id("liveCoverFile"), prevLive=$id("liveCoverPreview");
+  const fileProd=$id("prodThumbFile"), prevProd=$id("prodThumbPreview");
 
   const say=(t,ok=false)=>{ if(!msgEl) return; msgEl.textContent=t; msgEl.classList.add('show'); msgEl.classList.toggle('ok',ok); };
   const headers=(json=true)=>{ const h={}; if(json) h["Content-Type"]="application/json";
@@ -22,31 +37,67 @@
     if(tok) h.Authorization=`Bearer ${tok}`; return h; };
   const withTransform=(url,t)=>{ try{ if(!url||!url.includes('/upload/')) return url||''; const [a,b]=url.split('/upload/'); return `${a}/upload/${t}/${b}`; }catch{ return url; } };
 
-  fileEl?.addEventListener('change', async e=>{
+  async function uploadToCloudinary(file){
+    const sig = await fetch(`${API_BASE}/uploads/signature`,{headers:headers(false)}).then(r=>r.json());
+    const {cloudName, apiKey, timestamp, signature} = sig.data||sig;
+    const fd=new FormData();
+    fd.append('file',file); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature);
+    const up = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd}).then(r=>r.json());
+    if(!up.secure_url) throw new Error('업로드 실패');
+    return up.secure_url;
+  }
+
+  // 메인(16:9)
+  fileMain?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
-    if(!/^image\//.test(f.type)) { say('이미지 파일만 업로드'); e.target.value=''; return; }
-    if(f.size>8*1024*1024) { say('이미지는 8MB 이하로'); e.target.value=''; return; }
     try{
       say('이미지 업로드 중…');
-      const sig = await fetch(`${API_BASE}/uploads/signature`,{headers:headers(false)}).then(r=>r.json());
-      const {cloudName, apiKey, timestamp, signature} = sig.data||sig;
-      const fd=new FormData();
-      fd.append('file',f); fd.append('api_key',apiKey); fd.append('timestamp',timestamp); fd.append('signature',signature);
-      const up = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{method:'POST',body:fd}).then(r=>r.json());
-      if(!up.secure_url) throw new Error('업로드 실패');
-      const cover=up.secure_url; const thumb=withTransform(cover, THUMB.card169);
-      previewEl.src=thumb; previewEl.dataset.cover=cover; previewEl.dataset.thumb=thumb;
+      const url = await uploadToCloudinary(f);
+      const thumb = withTransform(url, TH.card169);
+      prevMain.src=thumb; prevMain.dataset.cover=url; prevMain.dataset.thumb=thumb;
       say('이미지 업로드 완료', true);
     }catch(err){
-      previewEl.removeAttribute('src'); delete previewEl.dataset.cover; delete previewEl.dataset.thumb;
+      prevMain.removeAttribute('src'); delete prevMain.dataset.cover; delete prevMain.dataset.thumb;
       say('업로드 실패: '+(err.message||'오류'));
     }
   });
 
+  // 쇼핑라이브(세로 9:16)
+  fileLive?.addEventListener('change', async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      say('라이브 커버 업로드 중…');
+      const url = await uploadToCloudinary(f);
+      const thumb = withTransform(url, TH.card916);
+      prevLive.src=thumb; prevLive.dataset.cover=url; prevLive.dataset.thumb=thumb;
+      say('업로드 완료', true);
+    }catch(err){
+      prevLive.removeAttribute('src'); delete prevLive.dataset.cover; delete prevLive.dataset.thumb;
+      say('업로드 실패: '+(err.message||'오류'));
+    }
+  });
+
+  // 상품(정사각)
+  fileProd?.addEventListener('change', async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      say('상품 썸네일 업로드 중…');
+      const url = await uploadToCloudinary(f);
+      const thumb = withTransform(url, TH.square);
+      prevProd.src=thumb; prevProd.dataset.cover=url; prevProd.dataset.thumb=thumb;
+      say('업로드 완료', true);
+    }catch(err){
+      prevProd.removeAttribute('src'); delete prevProd.dataset.cover; delete prevProd.dataset.thumb;
+      say('업로드 실패: '+(err.message||'오류'));
+    }
+  });
+
+  // 협의 스위치
   negEl?.addEventListener('change', ()=>{
     if(negEl.checked){ payEl.value=''; payEl.disabled = true; } else { payEl.disabled = false; }
   });
 
+  // 네이티브 date/time 오픈
   document.addEventListener('click', (e)=>{
     const b=e.target.closest('[data-open]'); if(!b) return;
     const [, id] = String(b.dataset.open).split(':'); const t=$id(id); if(!t) return;
@@ -56,6 +107,7 @@
   form?.addEventListener('submit', async (ev)=>{
     ev.preventDefault();
 
+    // 기본 검증
     const brandName = (brandNameEl?.value||'').trim();
     const titleRaw  = (titleEl?.value||'').trim();
     if(!brandName) return say('브랜드명을 입력해주세요.');
@@ -66,12 +118,12 @@
     if(!shootHours.value) return say('촬영 시간을 입력해주세요.');
     if(!startTime.value || !endTime.value) return say('시작/종료 시간을 입력해주세요.');
 
+    // 말머리 적용
     const prefix = (prefixEl?.value||'').trim();
     let title = titleRaw;
     if(prefix && !/^\[.+\]/.test(titleRaw)) title = `[${prefix}] ${titleRaw}`;
 
-    const roles = Array.from(document.querySelectorAll('.roles input[type="checkbox"]:checked')).map(i=>i.value);
-
+    // 출연료
     let feeNum;
     if(!negEl.checked){
       const n = Number(String(payEl.value||'').replace(/,/g,'').trim());
@@ -79,8 +131,37 @@
       feeNum = n;
     }
 
-    const coverImageUrl = previewEl?.dataset?.cover || '';
-    const thumbnailUrl  = previewEl?.dataset?.thumb  || (coverImageUrl?withTransform(coverImageUrl,THUMB.card169):'');
+    // 대표 이미지
+    const coverImageUrl = prevMain?.dataset?.cover || '';
+    const thumbnailUrl  = prevMain?.dataset?.thumb  || (coverImageUrl?withTransform(coverImageUrl,TH.card169):'');
+
+    // 쇼핑라이브/상품 입력값
+    const liveLink = ($id('liveLink')?.value||'').trim();
+    const liveCoverUrl = prevLive?.dataset?.cover || '';
+    const productName  = ($id('productName')?.value||'').trim();
+    const productLink  = ($id('productLink')?.value||'').trim();
+    const productThumb = prevProd?.dataset?.cover || '';
+
+    // products 배열 구성 (스키마 호환)
+    const products = [];
+    if (liveLink || liveCoverUrl){
+      products.push({
+        url: liveLink || '',
+        marketplace: 'etc',
+        title: '쇼핑라이브',
+        imageUrl: liveCoverUrl || '',
+        detailHtml: 'type=live' // 용도 표기
+      });
+    }
+    if (productName || productLink || productThumb){
+      products.push({
+        url: productLink || '',
+        marketplace: 'smartstore',
+        title: productName || '',
+        imageUrl: productThumb || '',
+        detailHtml: 'type=product'
+      });
+    }
 
     const payload = {
       type:'recruit',
@@ -92,9 +173,8 @@
       ...(coverImageUrl?{coverImageUrl}:{}),
       ...(thumbnailUrl ?{thumbnailUrl }:{}),
       descriptionHTML: (contentEl?.value||'').trim(),
-      roles,
 
-      // 상위 요약(목록 카드에서 사용)
+      // 카드 요약
       ...(feeNum!==undefined ? { fee: feeNum } : {}),
       feeNegotiable: !!negEl.checked,
 
@@ -109,7 +189,10 @@
         pay: feeNum,
         payNegotiable: !!negEl.checked,
         requirements: (contentEl?.value||'').trim()
-      }
+      },
+
+      // 신규: 쇼핑라이브/상품 (Campaign.products 스키마)
+      ...(products.length ? { products } : {})
     };
 
     try{
