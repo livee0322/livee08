@@ -1,4 +1,4 @@
-/* home/templates.js — v2.15.0 (NOW Recruits: vertical-card hscroll) */
+/* home/templates.js — v2.16.1 (NOW Recruits: 1:1.5 cover, product chip, single IIFE) */
 (function (w) {
   'use strict';
   const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
@@ -13,30 +13,17 @@
 
   /* ---------- Hero slider ---------- */
   function tplHeroSlider() {
-    const candidates = ['banner1.jpg','banner2.jpg'];
-    const imgs = candidates.filter(Boolean);
+    const imgs = ['banner1.jpg','banner2.jpg'].filter(Boolean);
     const slides = imgs.map(src => `<div class="hero-slide"><img src="${src}" alt=""></div>`).join('');
     const dots   = imgs.map((_,i)=>`<span class="hero-dot${i===0?' is-on':''}"></span>`).join('');
-    return `
-      <div class="hero">
-        <div class="hero-track">${slides}</div>
-        <div class="hero-dots">${dots}</div>
-      </div>`;
+    return `<div class="hero"><div class="hero-track">${slides}</div><div class="hero-dots">${dots}</div></div>`;
   }
-
-  /* home/templates.js — v2.16.0 (NOW Recruits: 1:1.5 cover + product chip fix) */
-(function (w) {
-  'use strict';
-  const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
-  const FALLBACK_IMG = (H.FALLBACK_IMG || 'default.jpg');
 
   /* ---------- NOW Recruits: 가로 스크롤 카드 ---------- */
   const tplLineupList = (items) => {
-    // 세로 커버 우선 순위
     const pickCover = (r) =>
       r.verticalCoverUrl || r.coverVerticalUrl || r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
 
-    // 촬영일 기준 D-day
     const ddayByShoot = (shootDate) => {
       if (!shootDate) return '';
       const t = new Date(shootDate); t.setHours(0,0,0,0);
@@ -45,7 +32,6 @@
       return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
     };
 
-    // 상태 라벨
     const statusInfo = (r) => {
       const dd = ddayByShoot(r.recruit?.shootDate || r.shootDate);
       if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
@@ -53,32 +39,27 @@
       return { text:'모집중', cls:'open' };
     };
 
-    // ✅ products에서 “상품”을 확실히 찾아서(라이브가 0번이더라도) 노출
+    // 상품칩: products에서 ‘라이브’가 아닌 첫 항목 선택
     const getFirstProduct = (r) => {
       const arr = Array.isArray(r.products) ? r.products : [];
-      // marketplace가 etc가 아니거나, 제목이 '쇼핑라이브'가 아닌 첫 항목을 상품으로 간주
-      const prod = arr.find(p => (p && ((p.marketplace && p.marketplace !== 'etc') || (p.title && p.title !== '쇼핑라이브'))));
-      if (prod) return { title: prod.title || '', imageUrl: prod.imageUrl || '' };
-      // (혹시 서버가 제공한다면 보조 키도 체크)
-      if (r.firstProductTitle || r.firstProductImage) {
-        return { title: r.firstProductTitle || '', imageUrl: r.firstProductImage || '' };
-      }
+      const prod = arr.find(p => p && ((p.marketplace && p.marketplace !== 'etc') || (p.title && p.title !== '쇼핑라이브')));
+      if (prod) return { title: (prod.title||''), imageUrl: (prod.imageUrl||'') };
+      if (r.firstProductTitle || r.firstProductImage) return { title:r.firstProductTitle||'', imageUrl:r.firstProductImage||'' };
       return { title:'', imageUrl:'' };
     };
 
     if (!items || !items.length) {
-      return `
-        <div class="now-hscroll">
-          <article class="now-card is-empty" aria-disabled="true">
-            <div class="now-thumb" style="background:#f3f4f6"></div>
-            <div class="now-body">
-              <div class="now-brand">브랜드</div>
-              <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
-              <div class="now-title">등록된 공고가 없습니다</div>
-              <div class="now-fee">출연료 미정</div>
-            </div>
-          </article>
-        </div>`;
+      return `<div class="now-hscroll">
+        <article class="now-card is-empty" aria-disabled="true">
+          <div class="now-thumb" style="background:#f3f4f6"></div>
+          <div class="now-body">
+            <div class="now-brand">브랜드</div>
+            <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
+            <div class="now-title">등록된 공고가 없습니다</div>
+            <div class="now-fee">출연료 미정</div>
+          </div>
+        </article>
+      </div>`;
     }
 
     return `<div class="now-hscroll">` + items.map(r => {
@@ -99,11 +80,9 @@
             </div>
             <div class="now-title">${r.title || ''}</div>
             <div class="now-fee">출연료 ${r.feeNegotiable ? '협의' : (r.fee!=null ? (r.fee.toLocaleString()+'원') : '미정')}</div>
-
-            ${ (p.title || p.imageUrl) ? `
+            ${(p.title || p.imageUrl) ? `
               <div class="prod-chip" onclick="event.stopPropagation()">
-                ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">`
-                              : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
+                ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">` : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
                 <div class="prod-name">${p.title || ''}</div>
               </div>` : ``}
           </div>
@@ -111,11 +90,7 @@
     }).join('') + `</div>`;
   };
 
-  // 내보내기(다른 템플릿은 그대로 사용)
-  H.tpl = Object.assign({}, H.tpl, { tplLineupList });
-})(window);
-
-  /* ---------- Brand pick (세로 카드: 유지) ---------- */
+  /* ---------- Brand pick (세로 카드) ---------- */
   const tplRecruitHScroll = (items) => items && items.length
     ? '<div class="hscroll" id="brandPickH">' + items.map(r => `
         <article class="card-vert bp" onclick="location.href='recruit-detail.html?id=${encodeURIComponent(r.id)}'">
@@ -148,7 +123,7 @@
          <div class="body"><div class="title">공고가 없습니다</div><div class="meta">새 공고를 등록해보세요</div></div>
        </article></div>`;
 
-  /* ---------- (다른 템플릿들은 기존 그대로) ---------- */
+  /* ---------- News ---------- */
   const tplNewsList = (items) => items && items.length
     ? '<div class="news-list">' + items.map(n => {
         const thumb = n.thumb || '';
@@ -164,6 +139,7 @@
       }).join('') + '</div>'
     : '<div class="news-list"><article class="news-item"><div class="news-item__title">표시할 뉴스가 없습니다</div></article></div>';
 
+  /* ---------- Portfolios (쇼호스트) ---------- */
   const tplPortfolios = (items) => items && items.length
     ? '<div class="pf-hlist">' + items.slice(0, 6).map(p => {
         const pidRaw = p.id;
@@ -195,6 +171,7 @@
       }).join('') + '</div>'
     : '<div class="ed-grid"><article class="card-ed"><div class="card-ed__body"><div class="card-ed__title">포트폴리오가 없습니다</div><div class="card-ed__meta">첫 포트폴리오를 등록해보세요</div></div></article></div>';
 
+  /* ---------- HOT clips ---------- */
   const tplHotClips = (items) => items && items.length
     ? `<div class="shorts-hscroll" id="hotShorts">
         ${items.map(s => `
@@ -205,12 +182,14 @@
       </div>`
     : '<div class="shorts-hscroll"><div class="clip-empty">등록된 클립이 없습니다</div></div>';
 
+  /* ---------- CTA image banner ---------- */
   function tplImageBanner(){
     return '<a class="img-banner" href="byhen.html" aria-label="BYHEN 안내 배너">' +
            '<img src="ad_banner.jpg" alt="BYHEN 배너">' +
            '</a>';
   }
 
+  /* ---------- Models H-Scroll ---------- */
   const tplModelsHScroll = (items) => {
     if (!items || !items.length) {
       return `<div class="hscroll models">
@@ -228,7 +207,7 @@
       const thumb  = m.mainThumbnailUrl || m.coverImageUrl || FALLBACK_IMG;
       const name   = m.nickname || '모델';
       const intro  = m.headline || '';
-      const chips = [];
+      const chips  = [];
       const d = (m.demographics || {});
       if (d.genderPublic && d.gender) chips.push(d.gender === 'female' ? '여성' : d.gender === 'male' ? '남성' : '기타');
       if (d.sizePublic && d.height)   chips.push(`${d.height}cm`);
@@ -243,20 +222,21 @@
             <div class="intro">${intro}</div>
             ${chips.length ? `<div class="meta">${chips.map(c=>`<span class="chip">${c}</span>`).join('')}</div>` : ''}
           </div>
-        </article>
-      `;
+        </article>`;
     }).join('') + `</div>`;
   };
 
+  /* ---------- Section wrapper ---------- */
   const sectionBlock = (title, moreHref, innerHTML, secKey) =>
     '<div class="section" data-sec="' + (secKey || '') + '">' +
       '<div class="section-head"><h2>' + title + '</h2>' +
       '<a class="more" href="' + (moreHref || '#') + '">더보기</a></div>' +
       innerHTML + '</div>';
 
+  /* ---------- Export ---------- */
   H.tpl = {
     tplHeroSlider,
-    tplLineupList,           // ← 지금 뜨는 공고: 가로 스크롤 카드
+    tplLineupList,
     tplRecruitHScroll, tplNewsList,
     tplPortfolios, tplHotClips, tplImageBanner,
     tplModelsHScroll, sectionBlock
