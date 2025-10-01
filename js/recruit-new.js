@@ -1,14 +1,18 @@
-/* js/recruit-new.js — v3.3.0 (쇼핑라이브/상품 섹션 추가 + 공통 UI 마운트) */
+/* js/recruit-new.js — v3.3.1
+   (세로커버/라이브링크 모델 필드 적용 + products[0]=상품 보장) */
 (() => {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || "/api/v1").replace(/\/$/, "");
-  const TH = Object.assign({
-    card169:  "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
-    card916:  "c_fill,g_auto,w_720,h_1280,f_auto,q_auto",
-    square:   "c_fill,g_auto,w_640,h_640,f_auto,q_auto"
-  }, CFG.thumb || {});
+  const TH = Object.assign(
+    {
+      card169: "c_fill,g_auto,w_640,h_360,f_auto,q_auto",
+      card916: "c_fill,g_auto,w_720,h_1280,f_auto,q_auto",
+      square:  "c_fill,g_auto,w_640,h_640,f_auto,q_auto"
+    },
+    CFG.thumb || {}
+  );
 
-  // 공통 UI 마운트
+  // 공통 UI 마운트(상단바/탭/하단탭)
   try{
     window.LIVEE_UI?.mountHeader?.({ title:'공고 등록' });
     window.LIVEE_UI?.mountTopTabs?.({ active:'campaigns' });
@@ -26,16 +30,19 @@
 
   const payEl=$id("pay"), negEl=$id("negotiable");
 
-  // 이미지 업로드 3종
-  const fileMain=$id("imageFile"), prevMain=$id("preview");
-  const fileLive=$id("liveCoverFile"), prevLive=$id("liveCoverPreview");
-  const fileProd=$id("prodThumbFile"), prevProd=$id("prodThumbPreview");
+  // 업로드 3종
+  const fileMain=$id("imageFile"),      prevMain=$id("preview");             // 16:9
+  const fileLive=$id("liveCoverFile"),  prevLive=$id("liveCoverPreview");    // 9:16
+  const fileProd=$id("prodThumbFile"),  prevProd=$id("prodThumbPreview");    // 1:1
 
   const say=(t,ok=false)=>{ if(!msgEl) return; msgEl.textContent=t; msgEl.classList.add('show'); msgEl.classList.toggle('ok',ok); };
   const headers=(json=true)=>{ const h={}; if(json) h["Content-Type"]="application/json";
     const tok=localStorage.getItem("livee_token")||localStorage.getItem("liveeToken");
     if(tok) h.Authorization=`Bearer ${tok}`; return h; };
-  const withTransform=(url,t)=>{ try{ if(!url||!url.includes('/upload/')) return url||''; const [a,b]=url.split('/upload/'); return `${a}/upload/${t}/${b}`; }catch{ return url; } };
+  const withTransform=(url,t)=>{ try{
+      if(!url||!url.includes('/upload/')) return url||'';
+      const [a,b]=url.split('/upload/'); return `${a}/upload/${t}/${b}`;
+    }catch{ return url; } };
 
   async function uploadToCloudinary(file){
     const sig = await fetch(`${API_BASE}/uploads/signature`,{headers:headers(false)}).then(r=>r.json());
@@ -47,7 +54,7 @@
     return up.secure_url;
   }
 
-  // 메인(16:9)
+  // 대표(16:9)
   fileMain?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     try{
@@ -62,7 +69,7 @@
     }
   });
 
-  // 쇼핑라이브(세로 9:16)
+  // 쇼핑라이브(9:16)
   fileLive?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     try{
@@ -77,7 +84,7 @@
     }
   });
 
-  // 상품(정사각)
+  // 상품(1:1)
   fileProd?.addEventListener('change', async e=>{
     const f=e.target.files?.[0]; if(!f) return;
     try{
@@ -107,7 +114,7 @@
   form?.addEventListener('submit', async (ev)=>{
     ev.preventDefault();
 
-    // 기본 검증
+    // 기본 검증(테스트 환경이라 최소만 유지)
     const brandName = (brandNameEl?.value||'').trim();
     const titleRaw  = (titleEl?.value||'').trim();
     if(!brandName) return say('브랜드명을 입력해주세요.');
@@ -136,30 +143,31 @@
     const thumbnailUrl  = prevMain?.dataset?.thumb  || (coverImageUrl?withTransform(coverImageUrl,TH.card169):'');
 
     // 쇼핑라이브/상품 입력값
-    const liveLink = ($id('liveLink')?.value||'').trim();
-    const liveCoverUrl = prevLive?.dataset?.cover || '';
-    const productName  = ($id('productName')?.value||'').trim();
-    const productLink  = ($id('productLink')?.value||'').trim();
-    const productThumb = prevProd?.dataset?.cover || '';
+    const liveLink      = ($id('liveLink')?.value||'').trim();
+    const liveCoverUrl  = prevLive?.dataset?.cover || '';    // verticalCoverUrl에 저장
+    const productName   = ($id('productName')?.value||'').trim();
+    const productLink   = ($id('productLink')?.value||'').trim();
+    const productImgRaw = prevProd?.dataset?.cover || '';
+    const productImgSq  = prevProd?.dataset?.thumb || productImgRaw; // 정사각 우선
 
-    // products 배열 구성 (스키마 호환)
+    // products: 0번=상품, 1번=라이브(홈 카드가 products[0]을 상품칩으로 사용)
     const products = [];
+    if (productName || productLink || productImgSq){
+      products.push({
+        url: productLink || '',
+        marketplace: 'smartstore',
+        title: productName || '',
+        imageUrl: productImgSq || '',
+        detailHtml: 'type=product'
+      });
+    }
     if (liveLink || liveCoverUrl){
       products.push({
         url: liveLink || '',
         marketplace: 'etc',
         title: '쇼핑라이브',
         imageUrl: liveCoverUrl || '',
-        detailHtml: 'type=live' // 용도 표기
-      });
-    }
-    if (productName || productLink || productThumb){
-      products.push({
-        url: productLink || '',
-        marketplace: 'smartstore',
-        title: productName || '',
-        imageUrl: productThumb || '',
-        detailHtml: 'type=product'
+        detailHtml: 'type=live'
       });
     }
 
@@ -169,12 +177,19 @@
       title,
       category: categoryEl.value,
       brandName,
+
+      // 목록 카드 정보
       closeAt: `${deadline.value}T23:59:59.000Z`,
       ...(coverImageUrl?{coverImageUrl}:{}),
       ...(thumbnailUrl ?{thumbnailUrl }:{}),
+
+      // NEW: 세로커버/라이브링크(모델 필드)
+      ...(liveCoverUrl ? { verticalCoverUrl: liveCoverUrl } : {}),
+      ...(liveLink     ? { liveLink } : {}),
+
       descriptionHTML: (contentEl?.value||'').trim(),
 
-      // 카드 요약
+      // 상단 요약
       ...(feeNum!==undefined ? { fee: feeNum } : {}),
       feeNegotiable: !!negEl.checked,
 
@@ -191,13 +206,15 @@
         requirements: (contentEl?.value||'').trim()
       },
 
-      // 신규: 쇼핑라이브/상품 (Campaign.products 스키마)
+      // 쇼핑라이브/상품
       ...(products.length ? { products } : {})
     };
 
     try{
       say('등록 중…');
-      const r = await fetch(`${API_BASE}/recruit-test`, { method:'POST', headers:headers(true), body:JSON.stringify(payload) });
+      const r = await fetch(`${API_BASE}/recruit-test`, {
+        method:'POST', headers:headers(true), body:JSON.stringify(payload)
+      });
       const j = await r.json().catch(()=>({}));
       if(!r.ok || j.ok===false) throw new Error(j.message || `등록 실패 (${r.status})`);
       alert('공고가 등록되었습니다.');
