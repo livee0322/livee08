@@ -19,47 +19,58 @@
     return `<div class="hero"><div class="hero-track">${slides}</div><div class="hero-dots">${dots}</div></div>`;
   }
 
-  /* ---------- NOW Recruits: 가로 스크롤 카드 ---------- */
-  const tplLineupList = (items) => {
-    const pickCover = (r) =>
-      r.verticalCoverUrl || r.coverVerticalUrl || r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
+/* home/templates.js — NOW Recruits: 1:1.5 cover + product row (simple) */
+(function (w) {
+  'use strict';
+  const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
+  const FALLBACK_IMG = (H.FALLBACK_IMG || 'default.jpg');
 
-    const ddayByShoot = (shootDate) => {
-      if (!shootDate) return '';
-      const t = new Date(shootDate); t.setHours(0,0,0,0);
-      const n = new Date();         n.setHours(0,0,0,0);
-      const d = Math.ceil((t - n) / 86400000);
-      return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
-    };
+  function ddayByShoot(shootDate){
+    if (!shootDate) return '';
+    const t = new Date(shootDate); t.setHours(0,0,0,0);
+    const n = new Date();          n.setHours(0,0,0,0);
+    const d = Math.ceil((t - n) / 86400000);
+    return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
+  }
+  const statusInfo = (r) => {
+    const dd = ddayByShoot(r.recruit?.shootDate || r.shootDate);
+    if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
+    if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
+    return { text:'모집중', cls:'open' };
+  };
+  const pickCover = (r) =>
+    r.verticalCoverUrl || r.coverVerticalUrl || r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
 
-    const statusInfo = (r) => {
-      const dd = ddayByShoot(r.recruit?.shootDate || r.shootDate);
-      if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
-      if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
-      return { text:'모집중', cls:'open' };
-    };
+  // ✅ 단순화: 등록된 products 중
+  //   1) 제목이 '쇼핑라이브'가 아닌 항목을 우선
+  //   2) 없으면 이미지/제목이 있는 첫 항목을 사용
+  //   3) 그래도 없으면 보조 필드(firstProduct*) 사용
+  function getFirstProduct(r){
+    const arr = Array.isArray(r.products) ? r.products
+              : Array.isArray(r.product)  ? r.product : [];
+    let prod = arr.find(p => p && (p.imageUrl || p.title) && String(p.title||'').trim() !== '쇼핑라이브');
+    if (!prod) prod = arr.find(p => p && (p.imageUrl || p.title));
+    if (!prod && (r.firstProductTitle || r.firstProductImage)) {
+      return { title: r.firstProductTitle || '', imageUrl: r.firstProductImage || '' };
+    }
+    return prod ? { title: prod.title || '', imageUrl: prod.imageUrl || '' } : { title:'', imageUrl:'' };
+  }
 
-    // 상품칩: products에서 ‘라이브’가 아닌 첫 항목 선택
-    const getFirstProduct = (r) => {
-      const arr = Array.isArray(r.products) ? r.products : [];
-      const prod = arr.find(p => p && ((p.marketplace && p.marketplace !== 'etc') || (p.title && p.title !== '쇼핑라이브')));
-      if (prod) return { title: (prod.title||''), imageUrl: (prod.imageUrl||'') };
-      if (r.firstProductTitle || r.firstProductImage) return { title:r.firstProductTitle||'', imageUrl:r.firstProductImage||'' };
-      return { title:'', imageUrl:'' };
-    };
-
+  H.tpl = H.tpl || {};
+  H.tpl.tplLineupList = function(items){
     if (!items || !items.length) {
-      return `<div class="now-hscroll">
-        <article class="now-card is-empty" aria-disabled="true">
-          <div class="now-thumb" style="background:#f3f4f6"></div>
-          <div class="now-body">
-            <div class="now-brand">브랜드</div>
-            <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
-            <div class="now-title">등록된 공고가 없습니다</div>
-            <div class="now-fee">출연료 미정</div>
-          </div>
-        </article>
-      </div>`;
+      return `
+        <div class="now-hscroll">
+          <article class="now-card is-empty" aria-disabled="true">
+            <div class="now-thumb" style="background:#f3f4f6"></div>
+            <div class="now-body">
+              <div class="now-brand">브랜드</div>
+              <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
+              <div class="now-title">등록된 공고가 없습니다</div>
+              <div class="now-fee">출연료 미정</div>
+            </div>
+          </article>
+        </div>`;
     }
 
     return `<div class="now-hscroll">` + items.map(r => {
@@ -72,23 +83,29 @@
       return `
         <article class="now-card" onclick="location.href='recruit-detail.html?id=${idQ}'">
           <img class="now-thumb" src="${cover}" alt="" loading="lazy" decoding="async">
+
           <div class="now-body">
             <div class="now-brand">${r.brandName || '브랜드'}</div>
+
             <div class="now-row">
               <span class="now-stat ${stat.cls}">${stat.text}</span>
               <span class="now-dday">${dday}</span>
             </div>
+
             <div class="now-title">${r.title || ''}</div>
             <div class="now-fee">출연료 ${r.feeNegotiable ? '협의' : (r.fee!=null ? (r.fee.toLocaleString()+'원') : '미정')}</div>
-            ${(p.title || p.imageUrl) ? `
-              <div class="prod-chip" onclick="event.stopPropagation()">
-                ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">` : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
+
+            ${ (p.title || p.imageUrl) ? `
+              <div class="prod-row" onclick="event.stopPropagation()">
+                ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">`
+                              : `<div class="prod-thumb"></div>`}
                 <div class="prod-name">${p.title || ''}</div>
               </div>` : ``}
           </div>
         </article>`;
     }).join('') + `</div>`;
   };
+})(window);
 
   /* ---------- Brand pick (세로 카드) ---------- */
   const tplRecruitHScroll = (items) => items && items.length
