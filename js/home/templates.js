@@ -19,7 +19,7 @@
     return `<div class="hero"><div class="hero-track">${slides}</div><div class="hero-dots">${dots}</div></div>`;
   }
 
-/* home/templates.js — NOW Recruits: 1:1.5 cover + product row (simple) */
+  /* home/templates.js — NOW Recruits: 1:1.5 cover + product row (simple) */
 (function (w) {
   'use strict';
   const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
@@ -106,6 +106,34 @@
     }).join('') + `</div>`;
   };
 })(window);
+
+    return `<div class="now-hscroll">` + items.map(r => {
+      const idQ   = encodeURIComponent(r.id);
+      const stat  = statusInfo(r);
+      const dday  = ddayByShoot(r.recruit?.shootDate || r.shootDate) || '';
+      const cover = pickCover(r);
+      const p     = getFirstProduct(r);
+
+      return `
+        <article class="now-card" onclick="location.href='recruit-detail.html?id=${idQ}'">
+          <img class="now-thumb" src="${cover}" alt="" loading="lazy" decoding="async">
+          <div class="now-body">
+            <div class="now-brand">${r.brandName || '브랜드'}</div>
+            <div class="now-row">
+              <span class="now-stat ${stat.cls}">${stat.text}</span>
+              <span class="now-dday">${dday}</span>
+            </div>
+            <div class="now-title">${r.title || ''}</div>
+            <div class="now-fee">출연료 ${r.feeNegotiable ? '협의' : (r.fee!=null ? (r.fee.toLocaleString()+'원') : '미정')}</div>
+            ${(p.title || p.imageUrl) ? `
+              <div class="prod-chip" onclick="event.stopPropagation()">
+                ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">` : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
+                <div class="prod-name">${p.title || ''}</div>
+              </div>` : ``}
+          </div>
+        </article>`;
+    }).join('') + `</div>`;
+  };
 
   /* ---------- Brand pick (세로 카드) ---------- */
   const tplRecruitHScroll = (items) => items && items.length
