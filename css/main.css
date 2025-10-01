@@ -320,7 +320,7 @@ html,body{
 /* NOW Recruits: 세로 커버 비율 1:2로 교체 */
 .now-thumb{
   width:100%;
-  aspect-ratio: 1 / 2;   /* ← 9/16 대신 1:2 */
+  aspect-ratio: 1 / 1.6;   /* ← 9/16 대신 1:1.6 */
   object-fit:cover;
   background:#f3f4f6;
   display:block;
