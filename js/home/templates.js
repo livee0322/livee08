@@ -24,76 +24,96 @@
       </div>`;
   }
 
-  /* NOW Recruits: 가로 스크롤 카드 (세로커버 1:2, 상품 칩 보강) */
-const tplLineupList = (items) => {
-  const pickCover = (r) =>
-    r.verticalCoverUrl || r.coverVerticalUrl || r.thumb || r.thumbnailUrl || r.coverImageUrl || 'default.jpg';
+  /* home/templates.js — v2.16.0 (NOW Recruits: 1:1.5 cover + product chip fix) */
+(function (w) {
+  'use strict';
+  const H = w.LIVEE_HOME || (w.LIVEE_HOME = {});
+  const FALLBACK_IMG = (H.FALLBACK_IMG || 'default.jpg');
 
-  // 촬영일 기준 D-day
-  const ddayByShoot = (shootDate) => {
-    if (!shootDate) return '';
-    const t = new Date(shootDate); t.setHours(0,0,0,0);
-    const n = new Date();         n.setHours(0,0,0,0);
-    const d = Math.ceil((t - n) / 86400000);
-    return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
-  };
+  /* ---------- NOW Recruits: 가로 스크롤 카드 ---------- */
+  const tplLineupList = (items) => {
+    // 세로 커버 우선 순위
+    const pickCover = (r) =>
+      r.verticalCoverUrl || r.coverVerticalUrl || r.thumb || r.thumbnailUrl || r.coverImageUrl || FALLBACK_IMG;
 
-  // 상태 라벨
-  const statusInfo = (r) => {
-    const dd = ddayByShoot(r.recruit?.shootDate || r.shootDate);
-    if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
-    if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
-    return { text:'모집중', cls:'open' };
-  };
+    // 촬영일 기준 D-day
+    const ddayByShoot = (shootDate) => {
+      if (!shootDate) return '';
+      const t = new Date(shootDate); t.setHours(0,0,0,0);
+      const n = new Date();         n.setHours(0,0,0,0);
+      const d = Math.ceil((t - n) / 86400000);
+      return d > 0 ? `D-${d}` : (d === 0 ? 'D-DAY' : '마감');
+    };
 
-  // 상품(우선 products[0] → 없다면 firstProduct* 보조)
-  const getFirstProduct = (r) => {
-    if (r.products && r.products.length) {
-      const p = r.products[0] || {};
-      return { title: (p.title || ''), imageUrl: (p.imageUrl || '') };
+    // 상태 라벨
+    const statusInfo = (r) => {
+      const dd = ddayByShoot(r.recruit?.shootDate || r.shootDate);
+      if (r.status === 'scheduled') return { text:'예정', cls:'scheduled' };
+      if (r.status === 'closed' || dd === '마감') return { text:'마감', cls:'closed' };
+      return { text:'모집중', cls:'open' };
+    };
+
+    // ✅ products에서 “상품”을 확실히 찾아서(라이브가 0번이더라도) 노출
+    const getFirstProduct = (r) => {
+      const arr = Array.isArray(r.products) ? r.products : [];
+      // marketplace가 etc가 아니거나, 제목이 '쇼핑라이브'가 아닌 첫 항목을 상품으로 간주
+      const prod = arr.find(p => (p && ((p.marketplace && p.marketplace !== 'etc') || (p.title && p.title !== '쇼핑라이브'))));
+      if (prod) return { title: prod.title || '', imageUrl: prod.imageUrl || '' };
+      // (혹시 서버가 제공한다면 보조 키도 체크)
+      if (r.firstProductTitle || r.firstProductImage) {
+        return { title: r.firstProductTitle || '', imageUrl: r.firstProductImage || '' };
+      }
+      return { title:'', imageUrl:'' };
+    };
+
+    if (!items || !items.length) {
+      return `
+        <div class="now-hscroll">
+          <article class="now-card is-empty" aria-disabled="true">
+            <div class="now-thumb" style="background:#f3f4f6"></div>
+            <div class="now-body">
+              <div class="now-brand">브랜드</div>
+              <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
+              <div class="now-title">등록된 공고가 없습니다</div>
+              <div class="now-fee">출연료 미정</div>
+            </div>
+          </article>
+        </div>`;
     }
-    return { title: (r.firstProductTitle || ''), imageUrl: (r.firstProductImage || '') };
+
+    return `<div class="now-hscroll">` + items.map(r => {
+      const idQ   = encodeURIComponent(r.id);
+      const stat  = statusInfo(r);
+      const dday  = ddayByShoot(r.recruit?.shootDate || r.shootDate) || '';
+      const cover = pickCover(r);
+      const p     = getFirstProduct(r);
+
+      return `
+        <article class="now-card" onclick="location.href='recruit-detail.html?id=${idQ}'">
+          <img class="now-thumb" src="${cover}" alt="" loading="lazy" decoding="async">
+          <div class="now-body">
+            <div class="now-brand">${r.brandName || '브랜드'}</div>
+            <div class="now-row">
+              <span class="now-stat ${stat.cls}">${stat.text}</span>
+              <span class="now-dday">${dday}</span>
+            </div>
+            <div class="now-title">${r.title || ''}</div>
+            <div class="now-fee">출연료 ${r.feeNegotiable ? '협의' : (r.fee!=null ? (r.fee.toLocaleString()+'원') : '미정')}</div>
+
+            ${ (p.title || p.imageUrl) ? `
+              <div class="prod-chip" onclick="event.stopPropagation()">
+                ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">`
+                              : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
+                <div class="prod-name">${p.title || ''}</div>
+              </div>` : ``}
+          </div>
+        </article>`;
+    }).join('') + `</div>`;
   };
 
-  if (!items || !items.length) {
-    return `
-      <div class="now-hscroll">
-        <article class="now-card is-empty" aria-disabled="true">
-          <div class="now-thumb" style="background:#f3f4f6"></div>
-          <div class="now-body">
-            <div class="now-brand">브랜드</div>
-            <div class="now-row"><span class="now-stat open">모집중</span><span class="now-dday">D-0</span></div>
-            <div class="now-title">등록된 공고가 없습니다</div>
-            <div class="now-fee">출연료 미정</div>
-          </div>
-        </article>
-      </div>`;
-  }
-
-  return `<div class="now-hscroll">` + items.map(r => {
-    const idQ   = encodeURIComponent(r.id);
-    const stat  = statusInfo(r);
-    const dday  = ddayByShoot(r.recruit?.shootDate || r.shootDate) || '';
-    const cover = pickCover(r);
-    const p     = getFirstProduct(r);
-
-    return `
-      <article class="now-card" onclick="location.href='recruit-detail.html?id=${idQ}'">
-        <img class="now-thumb" src="${cover}" alt="" loading="lazy" decoding="async">
-        <div class="now-body">
-          <div class="now-brand">${r.brandName || '브랜드'}</div>
-          <div class="now-row"><span class="now-stat ${stat.cls}">${stat.text}</span><span class="now-dday">${dday}</span></div>
-          <div class="now-title">${r.title || ''}</div>
-          <div class="now-fee">출연료 ${r.feeNegotiable ? '협의' : (r.fee!=null ? (r.fee.toLocaleString()+'원') : '미정')}</div>
-          ${(p.title || p.imageUrl) ? `
-            <div class="prod-chip" onclick="event.stopPropagation()">
-              ${p.imageUrl ? `<img class="prod-thumb" src="${p.imageUrl}" alt="" loading="lazy">` : `<div class="prod-thumb" style="background:#f3f4f6"></div>`}
-              <div class="prod-name">${p.title || ''}</div>
-            </div>` : ``}
-        </div>
-      </article>`;
-  }).join('') + `</div>`;
-};
+  // 내보내기(다른 템플릿은 그대로 사용)
+  H.tpl = Object.assign({}, H.tpl, { tplLineupList });
+})(window);
 
   /* ---------- Brand pick (세로 카드: 유지) ---------- */
   const tplRecruitHScroll = (items) => items && items.length
