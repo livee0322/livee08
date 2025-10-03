@@ -1,12 +1,10 @@
-/* ===== recruit-detail.js (잡코리아 풍 상세) ===== */
+/* ===== recruit-detail.js (잡코리아 풍 상세) — v1.0.1 tokenless ===== */
 (function () {
   const CFG = window.LIVEE_CONFIG || {};
   const API_BASE = (CFG.API_BASE || '/api/v1').replace(/\/$/, '');
 
   // ---------- Util ----------
   const $ = (s, p=document) => p.querySelector(s);
-  const $$ = (s, p=document) => Array.from(p.querySelectorAll(s));
-
   const money = (n) => (n || 0).toLocaleString();
   const fmtDate = (d) => {
     if(!d) return '-';
@@ -29,13 +27,10 @@
   };
   const getParam = (k) => new URL(location.href).searchParams.get(k);
 
-  // products에서 '상품'을 뽑아내기(라이브/기타 제외 우선)
   function normalizeProducts(data){
     const arr = Array.isArray(data.products) ? data.products : [];
-    // 우선: marketplace 존재 && etc가 아닌 것 / 제목이 '쇼핑라이브'가 아닌 것
     let prods = arr.filter(p => (p && ((p.marketplace && p.marketplace !== 'etc') || (p.title && p.title !== '쇼핑라이브'))));
     if (!prods.length) {
-      // 없으면 라우터 보조 필드라도 1개 만든다
       const t = data.firstProductTitle || '';
       const img = data.firstProductImage || '';
       if (t || img) prods = [{ title: t, imageUrl: img, url: '', marketplace:'etc' }];
@@ -63,8 +58,7 @@
   function renderSpec(data){
     $('#specShootDate').textContent = fmtDate(data.recruit?.shootDate || data.shootDate);
     $('#specShootTime').textContent = data.recruit?.shootTime || data.shootTime || '-';
-    const loc = data.recruit?.location || data.location || '-';
-    $('#specLocation').textContent = loc;
+    $('#specLocation').textContent = data.recruit?.location || data.location || '-';
     $('#specCloseAt').textContent = fmtDate(data.closeAt);
     $('#specCategory').textContent = data.category || '-';
 
@@ -74,12 +68,7 @@
 
     const liveLink = data.liveLink || '';
     const liveBtn = $('#liveLinkBtn');
-    if(liveLink){
-      liveBtn.hidden = false;
-      liveBtn.href = liveLink;
-    }else{
-      liveBtn.hidden = true;
-    }
+    if(liveLink){ liveBtn.hidden = false; liveBtn.href = liveLink; } else { liveBtn.hidden = true; }
   }
   function renderProducts(data){
     const list = $('#rdProdList');
@@ -87,20 +76,13 @@
     list.innerHTML = '';
 
     const prods = normalizeProducts(data);
-    if(!prods.length){
-      empty.hidden = false;
-      return;
-    }
+    if(!prods.length){ empty.hidden = false; return; }
     empty.hidden = true;
 
     prods.forEach(p=>{
       const a = document.createElement('a');
       a.className = 'rd-prod';
-      a.href = p.url || '#';
-      if(!p.url) a.removeAttribute('href');
-      a.target = p.url ? '_blank' : '';
-      a.rel = p.url ? 'noopener' : '';
-
+      if (p.url) { a.href = p.url; a.target = '_blank'; a.rel = 'noopener'; }
       a.innerHTML = `
         <img class="rd-prod-thumb" src="${p.imageUrl || 'default.jpg'}" alt="${p.title || '상품'}" loading="lazy" decoding="async" />
         <div class="rd-prod-name">${p.title || ''}</div>
@@ -126,41 +108,29 @@
       applyBtn.setAttribute('disabled','true');
       applyBtn.removeAttribute('href');
     }else{
-      // 지원 페이지로 이동 시 현재 id 전달
       const id = getParam('id') || data.id;
       applyBtn.href = `recruit-apply.html?id=${encodeURIComponent(id)}`;
     }
   }
-
-  // 공유/북마크(간단 버전)
   function bindActions(data){
     $('#shareBtn')?.addEventListener('click', async ()=>{
-      const shareData = {
-        title: data.title || '공고 상세',
-        text: `${data.brandName || ''} · ${data.title || ''}`,
-        url: location.href
-      };
+      const shareData = { title: data.title || '공고 상세', text: `${data.brandName || ''} · ${data.title || ''}`, url: location.href };
       try{
         if(navigator.share){ await navigator.share(shareData); }
-        else{
-          await navigator.clipboard.writeText(location.href);
-          alert('링크가 복사되었습니다.');
-        }
+        else{ await navigator.clipboard.writeText(location.href); alert('링크가 복사되었습니다.'); }
       }catch(_){}
     });
   }
 
-  // ---------- Fetch & boot ----------
+  // ---------- Fetch (NO TOKEN) ----------
   async function fetchRecruit(id){
-    const headers = {};
-    const tok=localStorage.getItem('livee_token')||localStorage.getItem('liveeToken');
-    if(tok) headers.Authorization=`Bearer ${tok}`;
-    const r = await fetch(`${API_BASE}/recruit-test/${encodeURIComponent(id)}`, { headers });
+    const r = await fetch(`${API_BASE}/recruit-test/${encodeURIComponent(id)}`); // ← Authorization 헤더 제거
     const j = await r.json().catch(()=>({}));
     if(!r.ok || j.ok===false) throw new Error(j.message || `로드 실패(${r.status})`);
     return j.data || j;
   }
 
+  // ---------- boot ----------
   async function boot(){
     const id = getParam('id');
     if(!id){ alert('잘못된 접근입니다.'); history.back(); return; }
