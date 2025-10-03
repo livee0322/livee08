@@ -1,109 +1,160 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>쇼핑라이브 공고 상세</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>공고 상세 (레이아웃 시안) - Livee</title>
 
-  <!-- 공통 스타일(이미 있다면 유지) -->
-  <link rel="stylesheet" href="main.css" />
-  <!-- 상세 전용 -->
-  <link rel="stylesheet" href="css/recruit-detail.css" />
+  <!-- 폰트/아이콘 (선택) -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css">
+
+  <!-- 이 페이지 전용 CSS -->
+  <link rel="stylesheet" href="css/recruit-detail.css">
+  <meta name="theme-color" content="#ffffff">
 </head>
-<body id="recruit-detail">
+<body>
+  <!-- 상단 바 (간단 고정, JS 없이) -->
+  <header class="appbar" aria-label="상단바">
+    <div class="appbar__in">
+      <a class="appbar__back" href="recruit-board.html" aria-label="목록으로">
+        <i class="ri-arrow-left-line"></i>
+      </a>
+      <a class="appbar__logo" href="index.html" aria-label="Livee 홈">Livee</a>
+    </div>
+  </header>
 
-  <!-- 상단 공통 UI (있으면 마운트됨) -->
-  <header id="appbar"></header>
-  <nav id="top-tabs"></nav>
+  <!-- 본문 컨테이너 -->
+  <main class="container rd-page" role="main">
+    <!-- 메인(좌) -->
+    <section class="rd-main">
+      <!-- 커버(세로 1:1.5, 라운드, 테두리 없음) -->
+      <figure class="rd-cover">
+        <img
+          src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&h=1200&q=80"
+          alt="쇼핑라이브 커버"
+          loading="lazy" decoding="async">
+      </figure>
 
-  <main class="container rd">
-    <!-- 히어로(세로 커버) -->
-    <section class="rd-hero" id="rdHero" aria-label="공고 커버">
-      <img id="rdCover" class="rd-cover" src="" alt="" loading="lazy" decoding="async" />
-      <div class="rd-hero-badges">
-        <span id="rdStat" class="chip"></span>
-        <span id="rdDday" class="chip ghost"></span>
+      <!-- 헤더 정보 -->
+      <div class="rd-header">
+        <div class="rd-brandline">
+          <span class="rd-brand">ACME</span>
+          <span class="rd-dot" aria-hidden="true">·</span>
+          <span class="rd-status is-open">모집중</span>
+          <span class="rd-dday">D-3</span>
+        </div>
+        <h1 class="rd-title">[쇼호스트모집] 9월 신제품 런칭 쇼핑라이브 진행</h1>
+        <div class="rd-submeta">
+          <span class="meta">촬영일 <strong>2025-10-12</strong></span>
+          <span class="meta">시간 <strong>13:00~16:00</strong></span>
+          <span class="meta">장소 <strong>서울 성수동</strong></span>
+          <span class="meta">카테고리 <strong>패션/뷰티</strong></span>
+        </div>
       </div>
+
+      <!-- 상세 설명 -->
+      <article class="rd-desc">
+        <h2 class="rd-sec-title">상세 설명</h2>
+        <p>신규 컬렉션 론칭에 맞춰 쇼핑라이브를 진행할 쇼호스트/모델을 모집합니다. 제품 USP를 명확하게 설명할 수 있고
+          장시간 말하기에 무리가 없는 분을 선호합니다.</p>
+        <ul class="rd-desc-list">
+          <li>역할: 쇼호스트 1, 보조 1</li>
+          <li>대본/큐카드 제공, 리허설 1시간</li>
+          <li>복장: 깔끔한 비즈니스 캐주얼</li>
+          <li>참고 링크: <a href="#" aria-label="참고 링크">https://example.com</a></li>
+        </ul>
+      </article>
+
+      <!-- 상품 섹션: “썸네일 | 상품명” (여러 개 샘플) -->
+      <section class="rd-products">
+        <h2 class="rd-sec-title">상품</h2>
+
+        <div class="rd-prod-list">
+          <!-- 1 -->
+          <a class="rd-prod" href="#" target="_blank" rel="noopener">
+            <img class="rd-prod-thumb"
+                 src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=200&h=200&q=80"
+                 alt="ACME 스마트워치 Pro" loading="lazy" decoding="async">
+            <span class="rd-sep" aria-hidden="true">|</span>
+            <span class="rd-prod-name">ACME 스마트워치 Pro</span>
+          </a>
+
+          <!-- 2 -->
+          <a class="rd-prod" href="#" target="_blank" rel="noopener">
+            <img class="rd-prod-thumb"
+                 src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=200&h=200&q=80"
+                 alt="스킨케어 세트" loading="lazy" decoding="async">
+            <span class="rd-sep" aria-hidden="true">|</span>
+            <span class="rd-prod-name">스킨케어 세트 (클렌저/토너/크림)</span>
+          </a>
+
+          <!-- 3 -->
+          <a class="rd-prod" href="#" target="_blank" rel="noopener">
+            <img class="rd-prod-thumb"
+                 src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=200&h=200&q=80"
+                 alt="미니 백팩" loading="lazy" decoding="async">
+            <span class="rd-sep" aria-hidden="true">|</span>
+            <span class="rd-prod-name">미니 백팩 — 데일리/여행용</span>
+          </a>
+        </div>
+      </section>
     </section>
 
-    <!-- 헤더(브랜드/제목/출연료) -->
-    <section class="rd-header">
-      <div class="rd-brand-row">
-        <div id="rdBrand" class="rd-brand">브랜드</div>
+    <!-- 사이드(우) — 잡코리아풍 요약/지원 카드 -->
+    <aside class="rd-aside" aria-label="요약 및 지원">
+      <div class="rd-cta-card">
+        <div class="rd-cta-head">
+          <div class="rd-cta-brand">
+            <img class="rd-cta-logo"
+                 src="https://images.unsplash.com/photo-1504805572947-34fad45aed93?auto=format&fit=crop&w=80&h=80&q=80"
+                 alt="ACME 로고" loading="lazy" decoding="async">
+            <div class="rd-cta-brandcol">
+              <div class="bname">ACME</div>
+              <div class="bmeta">패션/뷰티</div>
+            </div>
+          </div>
+          <div class="rd-cta-badge is-open">모집중</div>
+        </div>
+
+        <div class="rd-cta-meta">
+          <div class="row">
+            <span class="k">출연료</span>
+            <span class="v strong">300,000원</span>
+          </div>
+          <div class="row">
+            <span class="k">촬영일</span>
+            <span class="v">2025-10-12 (D-3)</span>
+          </div>
+          <div class="row">
+            <span class="k">시간</span>
+            <span class="v">13:00 ~ 16:00</span>
+          </div>
+          <div class="row">
+            <span class="k">장소</span>
+            <span class="v">서울 성수동</span>
+          </div>
+        </div>
+
+        <div class="rd-cta-actions">
+          <a class="btn pri" href="#" aria-label="지원하기">지원하기</a>
+          <a class="btn ghost" href="#" aria-label="공유">
+            <i class="ri-share-line" aria-hidden="true"></i> 공유
+          </a>
+        </div>
       </div>
-      <h1 id="rdTitle" class="rd-title">제목</h1>
-      <div id="rdFee" class="rd-fee">출연료 미정</div>
-    </section>
-
-    <!-- 명세(스펙) 표: 잡코리아 풍 -->
-    <section class="rd-spec" aria-label="모집 요강">
-      <h2 class="rd-sec-title">모집 요강</h2>
-      <dl class="rd-dl">
-        <div class="rd-row">
-          <dt>촬영일</dt><dd id="specShootDate">-</dd>
-        </div>
-        <div class="rd-row">
-          <dt>촬영시간</dt><dd id="specShootTime">-</dd>
-        </div>
-        <div class="rd-row">
-          <dt>장소</dt><dd id="specLocation">-</dd>
-        </div>
-        <div class="rd-row">
-          <dt>마감일</dt><dd id="specCloseAt">-</dd>
-        </div>
-        <div class="rd-row">
-          <dt>카테고리</dt><dd id="specCategory">-</dd>
-        </div>
-        <div class="rd-row">
-          <dt>상태</dt><dd id="specStatus">-</dd>
-        </div>
-      </dl>
-      <div class="rd-spec-actions">
-        <a id="liveLinkBtn" class="btn line" href="#" target="_blank" rel="noopener" hidden>라이브 링크 열기</a>
-        <button id="shareBtn" class="btn">공유</button>
-      </div>
-    </section>
-
-    <!-- 상품칩 (썸네일 | 상품명) -->
-    <section class="rd-products" aria-label="상품 정보">
-      <h2 class="rd-sec-title">상품 정보</h2>
-      <div id="rdProdList" class="rd-prod-list">
-        <!-- JS가 채움 -->
-      </div>
-      <div id="rdProdEmpty" class="rd-empty" hidden>등록된 상품이 없습니다</div>
-    </section>
-
-    <!-- 상세 설명 -->
-    <section class="rd-desc" aria-label="상세 설명">
-      <h2 class="rd-sec-title">상세 설명</h2>
-      <div id="rdDesc" class="rd-desc-body"></div>
-    </section>
+    </aside>
   </main>
 
-  <!-- 하단 고정 CTA -->
-  <div class="rd-cta" id="rdCtaBar" role="region" aria-label="지원하기">
-    <div class="rd-cta-info">
-      <div class="rd-cta-fee" id="ctaFee">출연료 미정</div>
-      <div class="rd-cta-meta" id="ctaMeta"></div>
-    </div>
-    <a id="applyBtn" class="btn pri rd-cta-btn" href="recruit-apply.html">지원하기</a>
+  <!-- 모바일 하단 고정 지원 버튼(옵션) -->
+  <div class="rd-mobile-cta">
+    <a class="btn pri" href="#">지원하기</a>
   </div>
 
-  <!-- 하단 탭바 (있으면 마운트됨) -->
-  <nav id="bottom-tabs"></nav>
-
-  <!-- 환경 설정/공통 UI -->
-  <script src="js/config.js"></script>
-  <script>
-    // 공통 헤더/탭 마운트 (존재할 때만)
-    try{
-      window.LIVEE_UI?.mountHeader?.({ title:'공고 상세' });
-      window.LIVEE_UI?.mountTopTabs?.({ active:'campaigns' });
-      window.LIVEE_UI?.mountTabbar?.({ active:'campaigns' });
-    }catch(_){}
-  </script>
-
-  <!-- 상세 전용 로직 -->
-  <script src="js/recruit-detail.js"></script>
+  <!-- 푸터(간단) -->
+  <footer class="rd-footer" aria-label="사이트 정보">
+    <div class="rd-footer__in">© 2025 Livee. All rights reserved.</div>
+  </footer>
 </body>
 </html>
