@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>쇼핑라이브 공고 상세</title>
+
+  <!-- 공통 스타일(이미 있다면 유지) -->
+  <link rel="stylesheet" href="main.css" />
+  <!-- 상세 전용 -->
+  <link rel="stylesheet" href="css/recruit-detail.css" />
+</head>
+<body id="recruit-detail">
+
+  <!-- 상단 공통 UI (있으면 마운트됨) -->
+  <header id="appbar"></header>
+  <nav id="top-tabs"></nav>
+
+  <main class="container rd">
+    <!-- 히어로(세로 커버) -->
+    <section class="rd-hero" id="rdHero" aria-label="공고 커버">
+      <img id="rdCover" class="rd-cover" src="" alt="" loading="lazy" decoding="async" />
+      <div class="rd-hero-badges">
+        <span id="rdStat" class="chip"></span>
+        <span id="rdDday" class="chip ghost"></span>
+      </div>
+    </section>
+
+    <!-- 헤더(브랜드/제목/출연료) -->
+    <section class="rd-header">
+      <div class="rd-brand-row">
+        <div id="rdBrand" class="rd-brand">브랜드</div>
+      </div>
+      <h1 id="rdTitle" class="rd-title">제목</h1>
+      <div id="rdFee" class="rd-fee">출연료 미정</div>
+    </section>
+
+    <!-- 명세(스펙) 표: 잡코리아 풍 -->
+    <section class="rd-spec" aria-label="모집 요강">
+      <h2 class="rd-sec-title">모집 요강</h2>
+      <dl class="rd-dl">
+        <div class="rd-row">
+          <dt>촬영일</dt><dd id="specShootDate">-</dd>
+        </div>
+        <div class="rd-row">
+          <dt>촬영시간</dt><dd id="specShootTime">-</dd>
+        </div>
+        <div class="rd-row">
+          <dt>장소</dt><dd id="specLocation">-</dd>
+        </div>
+        <div class="rd-row">
+          <dt>마감일</dt><dd id="specCloseAt">-</dd>
+        </div>
+        <div class="rd-row">
+          <dt>카테고리</dt><dd id="specCategory">-</dd>
+        </div>
+        <div class="rd-row">
+          <dt>상태</dt><dd id="specStatus">-</dd>
+        </div>
+      </dl>
+      <div class="rd-spec-actions">
+        <a id="liveLinkBtn" class="btn line" href="#" target="_blank" rel="noopener" hidden>라이브 링크 열기</a>
+        <button id="shareBtn" class="btn">공유</button>
+      </div>
+    </section>
+
+    <!-- 상품칩 (썸네일 | 상품명) -->
+    <section class="rd-products" aria-label="상품 정보">
+      <h2 class="rd-sec-title">상품 정보</h2>
+      <div id="rdProdList" class="rd-prod-list">
+        <!-- JS가 채움 -->
+      </div>
+      <div id="rdProdEmpty" class="rd-empty" hidden>등록된 상품이 없습니다</div>
+    </section>
+
+    <!-- 상세 설명 -->
+    <section class="rd-desc" aria-label="상세 설명">
+      <h2 class="rd-sec-title">상세 설명</h2>
+      <div id="rdDesc" class="rd-desc-body"></div>
+    </section>
+  </main>
+
+  <!-- 하단 고정 CTA -->
+  <div class="rd-cta" id="rdCtaBar" role="region" aria-label="지원하기">
+    <div class="rd-cta-info">
+      <div class="rd-cta-fee" id="ctaFee">출연료 미정</div>
+      <div class="rd-cta-meta" id="ctaMeta"></div>
+    </div>
+    <a id="applyBtn" class="btn pri rd-cta-btn" href="recruit-apply.html">지원하기</a>
+  </div>
+
+  <!-- 하단 탭바 (있으면 마운트됨) -->
+  <nav id="bottom-tabs"></nav>
+
+  <!-- 환경 설정/공통 UI -->
+  <script src="js/config.js"></script>
+  <script>
+    // 공통 헤더/탭 마운트 (존재할 때만)
+    try{
+      window.LIVEE_UI?.mountHeader?.({ title:'공고 상세' });
+      window.LIVEE_UI?.mountTopTabs?.({ active:'campaigns' });
+      window.LIVEE_UI?.mountTabbar?.({ active:'campaigns' });
+    }catch(_){}
+  </script>
+
+  <!-- 상세 전용 로직 -->
+  <script src="js/recruit-detail.js"></script>
+</body>
+</html>
